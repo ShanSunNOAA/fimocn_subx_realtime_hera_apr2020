@@ -1,0 +1,26 @@
+  <task name="tracker_#t2#" maxtries="1">
+    <command>&FIM_RUN;/batchTemplate-tracker</command>
+    <account>&PROJECT;</account>
+    <cores>1</cores>
+    &PARTITION_JET;
+    <walltime>00:10:00</walltime>
+    <jobname><cyclestr>tracker_C_#t2#</cyclestr></jobname>
+    <join><cyclestr>&FIM_LOG;/tracker/tracker_C_#t2#_@Y@m@d@H.log</cyclestr></join>
+    <envar><name>WFM</name><value>1</value></envar>
+    <envar><name>FIM_HOME</name><value>&FIM_HOME;</value></envar>
+    <envar><name>FIM_RUN</name><value>&FIM_RUN;</value></envar>
+    <envar><name>TCVITALS</name><value>&TCVITALS;</value></envar>
+    <envar><name>TRACKER</name><value>&TRACKER;</value></envar>
+    <envar><name>FCST_INTERVAL</name><value>&FCST_INTERVAL;</value></envar>
+    <envar><name>MEMBER_ID</name><value>&MEMBER_ID;</value></envar>
+    <envar><name>ATCFNAME</name><value>&ATCFNAME;</value></envar>
+    <envar><name>yyyymmddhhmm</name><value><cyclestr>@Y@m@d@H@M</cyclestr></value></envar>
+    <envar><name>yyyymmddhh</name><value><cyclestr>@Y@m@d@H</cyclestr></value></envar>
+    <envar><name>PES</name><value>&PES;</value></envar>
+    <envar><name>GLVL</name><value>&GLVL;</value></envar>
+    <envar><name>NVL</name><value>&NVL;</value></envar>
+    <envar><name>T</name><value>#fcst#</value></envar>
+    <dependency>
+       <datadep><cyclestr>&FIM_RUN;/@Y@m@d@H/post_C/fim/NAT/grib1/@y@j@H000#t2#</cyclestr></datadep>
+    </dependency>
+  </task>

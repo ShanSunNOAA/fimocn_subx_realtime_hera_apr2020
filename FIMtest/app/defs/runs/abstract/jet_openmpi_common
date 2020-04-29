@@ -1,0 +1,20 @@
+ddts_extends: 'jet_common'
+ddts_baseline: 'jet_openmpi'
+namelists:
+  cntlnamelist:
+    glvl: 5
+    nvl: 50
+  oceannamelist:
+    atmonly: !unquoted '.true.'
+    coupled: !unquoted '.false.'
+  outputnamelist:
+    restart_freq: 999
+  postnamelist:
+    delta_t: 6
+    nsmooth_var: !unquoted "1,1,1,2,2,0,0,1,0"
+    t1: 0
+    t2: 24
+    var_list: !unquoted "'pr3D','ph3D','td3D','us3D','vs3D','ms2D','sn2D','rsds','rlds'"
+  prepnamelist:
+    cfsr_data: !unquoted '.false.'
+    curve: 0

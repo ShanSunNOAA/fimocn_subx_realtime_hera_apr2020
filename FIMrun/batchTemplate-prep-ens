@@ -1,0 +1,298 @@
+#!/bin/ksh --login
+
+# NOTE: When run via Rocoto, this script's output will be in FIMwfm/logs/prep.
+# Also see FIMwfm/logs/workflow for general Rocoto messages.
+
+CONTEXT="batchTemplate-prep-ens"
+
+# Source functions.ksh if needed.
+cd $FIM_RUN
+if [[ -z "$functions_sourced" ]]
+then
+  test -n "$WFM" && prefix=$FIM_RUN || prefix=.
+  . $prefix/functions.ksh # Most function definitions can be found here.
+fi
+print "in batchTemplate-prep.ens fimnamelist: $fimnamelist"
+
+ksh_insist # Ensure that we are running in ksh93
+
+# When run in the WFM with ENSEMBLE, sets up an ensemble run.
+
+test "$WFM" == "ENSEMBLE" && print "This is an ensemble run."
+
+# FIM_HOME must be defined for WFM-driven runs.
+
+test -n "$WFM" -a ! -d "$FIM_HOME" && fail "Define FIM_HOME for WFM runs."
+
+# For WFM runs, enter the appropriate run directory.
+
+if [[ -n "$WFM" ]]
+then
+  cd $FIM_RUN || fail
+fi
+
+# Run batchTemplate-setup if it has not already been run.
+
+test -z "$batchTemplate_setup_ran" && xsource ./batchTemplate-setup
+
+# Enter the appropriate run directory (as defined by batchTemplate-setup).
+
+FIMRUN="$PWD"
+cd $DIR || fail
+
+# FIMnamelist for members 6-10
+fimnamelist_wp=${fimnamelist}.wrf_physics
+
+# Preserve a pre-existing WFM prep dir by renaming with a timestamp.
+
+if [[ -n "$WFM" && -d "$PREP" ]]
+then
+  ls -ld --time-style=+%Y%m%d%H%M%S $PREP | awk '{print $6}' | \
+    read timestamp || fail "Cannot ls $PREP."
+  test -z "$timestamp" && fail "Cannot determine timestamp for $PREP."
+  mv $PREP $PREP.$timestamp || fail "Cannot move $PREP -> $PREP.$timestamp."
+fi
+
+# Make the prep directory.
+
+mkdir $PREP || fail
+
+# If a pre-existing prep directory was identified, link its contents.
+
+if [[ -d "$PREPDIR" ]]
+then
+  logically_true "$COMPARE_VAR_ON" && \
+    fail "Cannot use PREPDIR and COMPARE_VAR together."
+  linksafe $PREPDIR/* $PREP
+else
+  # Copy/link needed items.
+  cp $fimnamelist $PREP/$NLFILE                             || fail
+#  if [[ $MEMBER_ID -gt 5 ]]
+#  then
+#    cp ${fimnamelist}.wrf_physics $PREP/$NLFILE               || fail        ## copy wrf_physics FIMnamelist
+#  else
+    cp $fimnamelist $PREP/$NLFILE                             || fail
+#  fi
+  cp $thetacoor $PREP/theta_coor.txt                          || fail
+  cp $dpsig $PREP/dpsig.txt                                   || fail
+  cp $topgrid $PREP/top_grid                                  || fail
+  cp $DATADIR/HADISST_MONTHLY.1991-present $PREP/sst_dat      || fail
+  cp $DATADIR/ocean_bcs_ltln.360x180.dat $PREP/ocean_bcs_ltln || fail
+  cp $DATADIR/rucgrid $PREP/rucgrid                           || fail
+  test -d "$DATADIR" || fail "$DATADIR does not exist."
+  fimnamelist_dir="$PREP"
+  fimnamelist="$PREP/$NLFILE"
+  # If it has not already been created by pre-processing scripts, create
+  # the ensics directory for WFM runs.
+  ENSICS=$PREP/../ensics_${MEMBER_ID}
+  test -n "$WFM" -a ! -d $ENSICS && linksafe $DATADR2 $ENSICS
+
+  print $PWD | grep -q "/FIMtest/" && test_suite=1 || test_suite=0
+
+  get_nl_value "$fimnamelist" ISOBARICnamelist isobaric_levels_file ISOBARIC_LEVELS_FILE
+
+  if [[ -n "$WFM" && -f "$FIM_RUN/$ISOBARIC_LEVELS_FILE" ]]
+  then
+    cp $FIM_RUN/$ISOBARIC_LEVELS_FILE $PREP/$ISOBARIC_LEVELS_FILE
+  elif [[ -f "../$ISOBARIC_LEVELS_FILE" ]]
+  then
+    cp "../$ISOBARIC_LEVELS_FILE" $PREP/$ISOBARIC_LEVELS_FILE
+  else
+    fail "$ISOBARIC_LEVELS_FILE not found." 
+  fi
+
+  # TODO The following two blocks are almost identical. It'd be nice to combine
+  # TODO them in a single function and supply arguments to control the specifics.
+
+  # Check and (potentially) set gfsltln_file value in namelist file.
+
+  get_nl_value "$fimnamelist" PREPnamelist gfsltln_file GFSLTLNFILE
+  test -z "$GFSLTLNFILE" && fail "Cannot find gfsltln_file in $fimnamelist."
+  if [[ "$GFSLTLNFILE" == "no_such_file" ]]
+  then
+    test -n "$WFM" && sanlFile_dir=$PWD/ensics_${MEMBER_ID} || sanlFile_dir=$DATADIR
+    file2test=$sanlFile_dir/$sanlFile
+    cmd="$BINDIR/global_sighdr $file2test jcap"
+    endian_big 11
+    sanl_size=$($cmd)
+    endian_reset
+    if [[ "$sanl_size" -ne "254" && "sanl_size" -ne "382" && "$sanl_size" -ne "574" && "sanl_size" -ne 1534 ]]
+    then
+      fail "Unexpected value ($sanl_size) found in $file2test."
+    fi
+    GFSLTLNFILE="gfsltln_t${sanl_size}.dat"
+    set_nl_value $fimnamelist prepnamelist gfsltln_file \'$GFSLTLNFILE\' || fail
+  fi
+
+  # Retrieve resolution information from .sfcanl data file 
+
+  test -n "$WFM" && sfcanlFile_dir=$PWD/ensics_${MEMBER_ID} || sfcanlFile_dir=$DATADR2
+  file2test=$sfcanlFile_dir/$sfcanlFile
+  cmd="$BINDIR/global_sfchdr $file2test lonb"
+  endian_big 11
+  ret=$($cmd)
+  endian_reset
+  if   [[ "$ret" -eq 768 ]]; then
+    sfcanl_size=254
+  elif [[ "$ret" -eq 1152 ]]; then
+    sfcanl_size=382
+  elif [[ "$ret" -eq 1760 ]]; then
+    sfcanl_size=574
+  elif [[ "$ret" -eq 2640 ]]; then
+    sfcanl_size=878
+  elif [[ "$ret" -eq 3072 ]]; then
+    sfcanl_size=1534
+  else
+    fail "Unexpected value ($ret) found in $file2test."
+  fi
+ 
+  # Set the file name of the Gaussian grid (for surface analysis data file)
+  GFSLTLNFILE2="gfsltln_t${sfcanl_size}.dat"
+
+  # Check and (potentially) set mtnvar_file value in namelist file.
+
+  get_nl_value "$fimnamelist" PREPnamelist mtnvar_file MTNVARFILE
+  test -z "$MTNVARFILE" && fail "Cannot find mtnvar_file in $fimnamelist."
+  if [[ "$MTNVARFILE" == "no_such_file" ]]
+  then
+    MTNVARFILE="global_mtnvar.t${sfcanl_size}"
+    set_nl_value $fimnamelist prepnamelist mtnvar_file \'$MTNVARFILE\' || fail
+  fi
+
+  # Set the file name of the Gaussian grid (for mtnvar data file)
+  tnnn=`echo $MTNVARFILE | cut -f 2 -d "."`
+  GFSLTLNFILE3="gfsltln_${tnnn}.dat"
+
+  get_nl_value "$fimnamelist" PREPnamelist aerosol_file AEROSOLFILE
+  test -z "$AEROSOLFILE" && fail "Cannot get aerosol filename from $fimnamelist."
+
+  get_co2file
+
+  # Link or copy files.
+
+  if [[ "$test_suite" -eq 1 ]]
+  then
+    linksafe $DATADIR/$GFSLTLNFILE               $PREP
+    linksafe $DATADIR/$GFSLTLNFILE2              $PREP
+    linksafe $DATADIR/$GFSLTLNFILE3              $PREP
+    linksafe $DATADIR/$MTNVARFILE                $PREP
+    linksafe $DATADIR/$AEROSOLFILE               $PREP
+    linksafe $DATADIR/co2historicaldata_glob.txt $PREP
+    linksafe $co2file                            $PREP
+  else
+    cp -f $DATADIR/$GFSLTLNFILE                  $PREP || fail
+    cp -f $DATADIR/$GFSLTLNFILE2                 $PREP || fail
+    cp -f $DATADIR/$GFSLTLNFILE3                 $PREP || fail
+    cp -f $DATADIR/$MTNVARFILE                   $PREP || fail
+    cp -f $DATADIR/$AEROSOLFILE                  $PREP || fail
+    cp -f $DATADIR/co2historicaldata_glob.txt    $PREP || fail
+    cp -f $co2file                               $PREP || fail
+  fi
+
+  if [[ -n "$WFM" ]]
+  then
+    if [[ "$WFM" == "ENSEMBLE" ]]
+    then
+      linksafe $sanlFile $PREP/$sanlFilename
+      linksafe $sfcanlFile $PREP/$sfcanlFilename
+    else
+      test -d $PWD/ensics_${MEMBER_ID} && linksafe $PWD/ensics_${MEMBER_ID}/$sanlFile $PREP || \
+        linksafe $DATADR2/$sanlFile $PREP
+      test -d $PWD/ensics_${MEMBER_ID} && linksafe $PWD/ensics_${MEMBER_ID}/$sfcanlFile $PREP || \
+        linksafe $DATADR2/$sfcanlFile $PREP
+    fi
+  else
+    test -d "$DATADR2" || fail "$DATADR2 does not exist."
+    if [[ "$TEST_SUITE_RUN" == "yes" ]]
+    then
+      linksafe $DATADR2/$sanlFile   $PREP
+      linksafe $DATADR2/$sfcanlFile $PREP
+    else
+      cp $DATADR2/$sanlFile $PREP   || fail
+      cp $DATADR2/$sfcanlFile $PREP || fail
+    fi
+  fi
+
+  # For WFM runs, set yyyymmddhhmm in the namelist file's TIMEnamelist to the
+  # value in WFM-exported environment variable yyyymmddhhmm.
+
+  if [[ -n "$WFM" ]]
+  then
+    set_nl_value $fimnamelist timenamelist yyyymmddhhmm \'$yyyymmddhhmm\' || fail
+  fi
+
+  # Enter the prep directory.
+
+  cd $PREP || fail "Cannot cd to $PREP."
+
+  # Link files
+
+  for file in grid ginfo getlvl ssfc2icos slint_init_save
+  do
+    linksafe $BINDIR/$file
+  done
+
+  chem_prep_setup
+  
+  # If COMPARE_VAR is enabled, run prep twice using both task counts. Otherwise
+  # run prep once using $PES for task count.  
+
+  for taskcount in $taskcounts
+  do
+
+    if ( logically_true "$COMPARE_VAR_ON" )
+    then
+      cp $NLFILE $NLFILE.orig
+      set_nl_value $NLFILE queuenamelist computetasks $taskcount || fail
+    fi
+
+    # grid
+
+    ./grid || fail "grid failed."
+    [[ -f "$GRID_FILE" && -n "$GRID_FILE" ]] || fail "grid no file $GRID_FILE."
+    print "grid finished"
+
+    # ginfo
+
+    ./ginfo || fail "ginfo failed."
+    [[ -f "$INFO_FILE" && -n "$INFO_FILE" ]] || fail "grid no file $INFO_FILE."
+    print "ginfo finished"
+
+    # getlvl
+
+    ./getlvl || fail "getlvl failed."
+    [[ -f "$GLVL_FILE" && -n "$GLVL_FILE" ]] || fail "grid no file $GLVL_FILE."
+    print "getlvl finished"
+
+    # slint_init_save
+
+    ./slint_init_save || fail "slint_init_save failed."
+    print "slint_init_save finished"
+
+    chem_prep_newname
+    
+    # ssfc2icos
+
+    endian_big 11 21
+    endian_little 30
+    ./ssfc2icos || fail "ssfc2icos failed."
+    endian_reset
+
+    [[ -f "$GFSFC_FILE" && -n "$GFSFC_FILE" ]] || fail "grid: no file $GFSFC_FILE."
+    print "ssfc2icos finished"
+
+    if ( logically_true "$COMPARE_VAR_ON" )
+    then
+      mv $NLFILE $NLFILE.$taskcount
+      mv $NLFILE.orig $NLFILE
+    fi
+
+  done
+
+fi # if [[ -d "$PREPDIR" ]]
+
+cd $FIMRUN || fail "Cannot cd to $FIMRUN."
+
+print "\nprep finished\n"
+
+return 0

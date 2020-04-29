@@ -1,0 +1,39 @@
+  <task name="SpectralFile" maxtries="3">
+    <command>&SCRIPTS;/spectralFile_retro_zeus.ksh</command>
+    <account>&PROJECT;</account>
+    <cores>1</cores>
+    <queue>&SERVICE;</queue>
+    &PARTITION_SERVICE;
+    <walltime>00:10:00</walltime>
+    <jobname><cyclestr>spectral_@H</cyclestr></jobname>
+    <join><cyclestr>&FIM_LOG;/spectral/spectral_@Y@m@d@H.log</cyclestr></join>
+    <envar><name>WFM</name><value>1</value></envar>
+    <envar><name>FIM_HOME</name><value>&FIM_HOME;</value></envar>
+    <envar><name>FIM_RUN</name><value>&FIM_RUN;</value></envar>
+    <envar><name>DATADR2</name><value>&DATADR2;</value></envar>
+<!--xue -->
+    <envar><name>YEAR</name><value><cyclestr>@Y</cyclestr></value></envar>
+    <envar><name>MONTH</name><value><cyclestr>@m</cyclestr></value></envar>
+    <envar><name>DAY</name><value><cyclestr>@d</cyclestr></value></envar>
+<!--xue -->
+    <envar><name>YR</name><value><cyclestr>@y</cyclestr></value></envar>
+    <envar><name>JDY</name><value><cyclestr>@j</cyclestr></value></envar>
+    <envar><name>HOUR</name><value><cyclestr>@H</cyclestr></value></envar>
+    <envar><name>yyyymmddhhmm</name><value><cyclestr>@Y@m@d@H@M</cyclestr></value></envar> 
+    <envar><name>PES</name> <value>&PES;</value></envar>
+    <envar><name>GLVL</name> <value>&GLVL;</value></envar> 
+    <envar><name>NVL</name> <value>&NVL;</value></envar>
+<!--    <dependency>
+      <and> 
+        <datadep age="300"> <cyclestr>&DATADR2;/@m/@Y@m@d@H00.tar.gz</cyclestr> </datadep>
+      </and>
+    </dependency>-->
+
+    <dependency>
+      <and>
+        <datadep age="300"> <cyclestr>&DATADR2;/@Y@m@d@H@M/ensics/@y@j@H00.gfs.t@Hz.sanl</cyclestr> </datadep>
+        <datadep age="300"> <cyclestr>&DATADR2;/@Y@m@d@H@M/ensics/@y@j@H00.gfs.t@Hz.sfcanl</cyclestr> </datadep>
+      </and>
+    </dependency>
+
+  </task>

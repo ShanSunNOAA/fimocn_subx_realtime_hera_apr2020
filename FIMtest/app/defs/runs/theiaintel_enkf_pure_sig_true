@@ -1,0 +1,5 @@
+ddts_extends: 'theiaintel_enkf_common'
+ddts_baseline: 'theiaintel_enkf_pure_sig_true'
+namelists: 
+  modelnamelist:
+    pure_sig: !unquoted '.true.'

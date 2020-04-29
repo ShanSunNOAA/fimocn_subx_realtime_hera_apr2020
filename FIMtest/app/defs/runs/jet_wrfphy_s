@@ -1,0 +1,6 @@
+ddts_extends: 'jet_wrfphy_p'
+ddts_build: 'jet_nag_serial'
+namelists:
+  queuenamelist:
+    computetasks: '1'
+    maxqueuetime: '00:45:00'

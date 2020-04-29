@@ -1,0 +1,2 @@
+ddts_extends: 'theiaintel_ocn_common'
+ddts_build: 'theiaintel_parallel'

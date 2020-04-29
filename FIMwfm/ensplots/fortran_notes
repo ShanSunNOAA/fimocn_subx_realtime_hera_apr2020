@@ -1,0 +1,5 @@
+
+
+module load intel
+ifort file.F90 -o file
+

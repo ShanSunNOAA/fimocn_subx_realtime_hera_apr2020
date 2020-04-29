@@ -1,0 +1,43 @@
+#
+# Code below has been appended from  macros.make.all
+#
+# ESMF
+
+LINK_FLAGS_NOESMF       = 
+LINK_LIBS_NOESMF        = 
+LINK_FLAGS_ESMF         = $(ESMF_F90LINKPATHS) $(ESMF_F90LINKRPATHS)
+LINK_LIBS_ESMF          = $(ESMF_F90ESMFLINKLIBS)
+
+ifdef FIM_ESMF_INSTALL_LIBDIR_ABSPATH
+# Include makefile fragment "esmf.mk" for ESMF, used by the nems target. Note
+# that all variables defined in esmf.mk begin with "ESMF_" and should not
+# conflict with other make variables even when nems target is not being built.
+# FIM_ESMF_INSTALL_LIBDIR_ABSPATH is defined in fim_setup.ksh.
+include $(FIM_ESMF_INSTALL_LIBDIR_ABSPATH)/esmf.mk
+endif
+
+# NetCDF
+
+# Rely on NETCDF environment variable by default, if defined.
+ifdef NETCDF
+LIBNETCDF               = -L$(NETCDF)/lib -lnetcdf -lnetcdff
+INCNETCDF               = -I$(NETCDF)/include
+endif
+# Override with NETCDF4 environment variable, if present
+ifdef NETCDF4
+LIBNETCDF               = -L$(NETCDF4)/lib -lnetcdff
+INCNETCDF               = -I$(NETCDF4)/include
+endif
+
+# Paths
+
+BINDIR                  = $(RUNMASTER)
+LIBDIR                  = $(BUILDMASTER)/lib
+MKDEPENDS               = $(BUILDMASTER)/tools/mkDepends
+
+# cpp ifdef for Fortran name-mangling (needed when linebuf_stdout.c is enabled). Options are:
+# For now, all Fortran compilers used by FIM append a single underscore to external names
+# FORTRAN_UNDERSCORING = -DFORTRANUNDERSCORE
+# FORTRAN_UNDERSCORING = -DFORTRANDOUBLEUNDERSCORE
+# FORTRAN_UNDERSCORING = 
+FORTRAN_UNDERSCORING = -DFORTRANUNDERSCORE

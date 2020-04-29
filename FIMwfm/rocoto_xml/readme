@@ -1,0 +1,23 @@
+This is the real time SubX run:
+
+/apps/rocoto/default/bin/rocotorun -w /scratch1/BMC/gsd-fv3/rtsubx/FIMwfm/rocoto_xml/driver_rtsubx.xml -d /scratch1/BMC/gsd-fv3/rtsubx/FIMwfm/rocoto_xml/driver_rtsubx.db
+
+
+rocotorun -d driver_retro_subx.db -w driver_retro_subx.xml
+rocotostat -d driver_retro_subx.db -w driver_retro_subx.xml
+
+If the above didn't run in time, the one below will make it up using retro mode (not real time mode)
+/apps/rocoto/1.3.0-RC5/bin/rocotorun -w /scratch2/BMC/fim/subx_FIMr1p1_rt_slurm/FIMwfm/rocoto_xml/driver_subx_retro.xml -d /home/rtfim/retro_dbfiles/subx_rt_makeup.db
+
+Useful commands:
+/apps/rocoto/1.3.0-RC5/bin/rocotorun   -w /scratch2/BMC/fim/subx_FIMr1p1_rt_slurm/FIMwfm/rocoto_xml/driver_subx_rt.xml    -d /home/rtfim/retro_dbfiles/subx_rt2019.db
+/apps/rocoto/1.3.0-RC5/bin/rocotostat  -w /scratch2/BMC/fim/subx_FIMr1p1_rt_slurm/FIMwfm/rocoto_xml/driver_subx_rt.xml    -d /home/rtfim/retro_dbfiles/subx_rt2019.db
+/apps/rocoto/1.3.0-RC5/bin/rocotocheck -w /scratch2/BMC/fim/subx_FIMr1p1_rt_slurm/FIMwfm/rocoto_xml/driver_subx_rt.xml    -d /home/rtfim/retro_dbfiles/subx_rt2019.db -c
+
+/apps/rocoto/1.3.0-RC5/bin/rocotorun   -w /scratch2/BMC/fim/subx_FIMr1p1_rt_slurm/FIMwfm/rocoto_xml/driver_subx_retro.xml -d /home/rtfim/retro_dbfiles/subx_rt_makeup.db
+/apps/rocoto/1.3.0-RC5/bin/rocotostat  -w /scratch2/BMC/fim/subx_FIMr1p1_rt_slurm/FIMwfm/rocoto_xml/driver_subx_retro.xml -d /home/rtfim/retro_dbfiles/subx_rt_makeup.db
+/apps/rocoto/1.3.0-RC5/bin/rocotocheck -w /scratch2/BMC/fim/subx_FIMr1p1_rt_slurm/FIMwfm/rocoto_xml/driver_subx_retro.xml -d /home/rtfim/retro_dbfiles/subx_rt_makeup.db -c
+
+----   obsolete   ----
+
+/apps/rocoto/1.3.0-RC5/bin/rocotorun -w /scratch2/BMC/fim/subx_FIMr1p1_rt_slurm/FIMwfm/rocoto_xml/driver_subx_rt.xml -d /home/rtfim/retro_dbfiles/subx_rt2019.db

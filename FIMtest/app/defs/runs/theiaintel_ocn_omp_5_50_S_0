@@ -1,0 +1,7 @@
+ddts_extends: 'theiaintel_omp_ocn_serial'
+namelists:
+  queuenamelist:
+    computetasks: '1'
+    maxqueuetime: '00:30:00'
+  writetasknamelist:
+    num_write_tasks: 0

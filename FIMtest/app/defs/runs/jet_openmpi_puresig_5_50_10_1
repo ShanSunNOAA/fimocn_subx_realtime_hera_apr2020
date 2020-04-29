@@ -1,0 +1,12 @@
+ddts_extends: 'jet_openmpi_5_50_10_1'
+ddts_baseline: 'jet_openmpi_puresig'
+namelists:
+  cntlnamelist:
+    nvl: 64
+  modelnamelist:
+    pure_sig: !unquoted '.true.'
+  outputnamelist:
+    archvintvl: 6
+    totaltime: 6
+  postnamelist:
+    t2: 6

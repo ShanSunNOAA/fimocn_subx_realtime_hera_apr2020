@@ -1,0 +1,15 @@
+  <task name="atcf#fcst#" maxtries="3">
+    <command>&SCRIPTS;/ATCFtoTCMT.ksh</command>
+    <account>&PROJECT;</account>
+    <cores>1</cores>
+    &PARTITION_JET;
+    <walltime>00:05:00</walltime>
+    <jobname><cyclestr>atcf#fcst#</cyclestr></jobname>
+    <join><cyclestr>&FIM_LOG;/tracker/atcf#fcst#_@Y@m@d@H.log</cyclestr></join>
+    <envar><name>yyyymmddhh</name><value> <cyclestr>@Y@m@d@H</cyclestr></value></envar>
+    <envar><name>SCRIPTS</name><value>&SCRIPTS;</value></envar>
+    <envar><name>fcst</name><value>#fcst#</value></envar>
+    <dependency>
+        <datadep age="120"><cyclestr>&FIM_RUN;/@Y@m@d@H/tracker_C/#fcst#/track.@Y@m@d@H00.FIM9</cyclestr></datadep>
+    </dependency>
+  </task>

@@ -1,0 +1,52 @@
+  <task name ="ncl_diff_NAT_&MEMBER_ID;_#t1#_#t2#" maxtries="3">
+    <command>&FIM_RUN;/batchTemplate-postncldiff</command>
+    <account>&PROJECT;</account>
+    <cores>12</cores>
+    &PARTITION_JET;
+    <walltime>&NCLDIFF_WALLTIME;</walltime>  
+    <jobname><cyclestr>ncldiff_NAT_C_#t1#_#t2#_@H_&GLVL;_&NVL;</cyclestr></jobname>
+    <join><cyclestr>&FIM_LOG;/ncldiff/ncldiff_NAT_C_#t1#_#t2#_@Y@m@d@H.log</cyclestr></join>
+    <envar><name>WFM</name><value>1</value></envar>
+    <envar><name>GETJOBID</name><value>&FIM_RUN;/qsubGetJobID</value></envar>
+    <envar><name>ATCFNAME</name><value>&ATCFNAME;</value></envar>
+    <envar><name>GRID_NAMES</name><value>&GRID_NAMES;</value></envar>
+    <envar><name>GRID_SPECS</name> <value>&GRID_SPECS;</value></envar>
+    <envar><name>FIM_HOME</name><value>&FIM_HOME;</value></envar>
+    <envar><name>FIM_RUN</name><value>&FIM_RUN;</value></envar>
+    <envar><name>FIM_HOME_NO_X</name><value>&FIM_HOME_NO_X;</value></envar>
+    <envar><name>FIM_RUN_NO_X</name><value>&FIM_RUN_NO_X;</value></envar>
+    <envar><name>PES_NO_X</name><value>&PES_NO_X;</value></envar>
+    <envar><name>NCL_ROOT</name><value>&NCL_DIFF_HOME;</value></envar>
+    <envar><name>NCL_HOME</name><value>&NCL_DIFF_HOME;</value></envar>
+    <envar><name>yyyymmddhhmm</name><value><cyclestr>@Y@m@d@H@M</cyclestr></value></envar>
+    <envar><name>PES</name><value>&PES;</value></envar>
+    <envar><name>GLVL</name><value>&GLVL;</value></envar>
+    <envar><name>NVL</name><value>&NVL;</value></envar>
+    <envar><name>FCST_LENGTH</name><value>&FCST_LENGTH;</value></envar>
+    <envar><name>FCST_INTERVAL</name><value>&FCST_INTERVAL;</value></envar>
+    <envar><name>GRID_NAME</name><value>fim</value></envar>
+    <envar><name>T1</name><value>#t1#</value></envar>
+    <envar><name>T2</name><value>#t2#</value></envar>
+    <envar><name>ATCFNAME</name><value>&ATCFNAME;</value></envar>
+    <envar><name>MODL</name><value>&DIFF_MODL;_&MEMBER_ID;</value> </envar>
+    <envar><name>MEMBER_ID</name><value>&MEMBER_ID;</value></envar>
+    <envar> <name>IS</name><value>1</value></envar>
+    <dependency>
+      <and>
+        <datadep age="120"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/post_&MEMBER_ID;/fim/NAT/grib1/@y@j@H000#t2#</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/post_&MEMBER_ID;/236/NAT/grib1/@y@j@H000#t2#</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/post_&MEMBER_ID;/244/NAT/grib1/@y@j@H000#t2#</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/post_&MEMBER_ID;/201/NAT/grib1/@y@j@H000#t2#</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/post_&MEMBER_ID;/174/NAT/grib1/@y@j@H000#t2#</cyclestr></datadep>
+        <datadep age="300"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/tracker_&MEMBER_ID;/#fcst#/track.@Y@m@d@H@M.&ATCFNAME;</cyclestr></datadep>
+     
+        <datadep age="120"><cyclestr>&FIM_RUN_NO_X;/fim_&GLVL;_&NVL;_&PES_NO_X;_@Y@m@d@H@M/post_&MEMBER_ID;/fim/NAT/grib1/@y@j@H000#t2#</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN_NO_X;/fim_&GLVL;_&NVL;_&PES_NO_X;_@Y@m@d@H@M/post_&MEMBER_ID;/236/NAT/grib1/@y@j@H000#t2#</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN_NO_X;/fim_&GLVL;_&NVL;_&PES_NO_X;_@Y@m@d@H@M/post_&MEMBER_ID;/244/NAT/grib1/@y@j@H000#t2#</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN_NO_X;/fim_&GLVL;_&NVL;_&PES_NO_X;_@Y@m@d@H@M/post_&MEMBER_ID;/201/NAT/grib1/@y@j@H000#t2#</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN_NO_X;/fim_&GLVL;_&NVL;_&PES_NO_X;_@Y@m@d@H@M/post_&MEMBER_ID;/174/NAT/grib1/@y@j@H000#t2#</cyclestr></datadep>
+        <datadep age="300"><cyclestr>&FIM_RUN_NO_X;/fim_&GLVL;_&NVL;_&PES_NO_X;_@Y@m@d@H@M/tracker_&MEMBER_ID;/#fcst#/track.@Y@m@d@H@M.&ATCFNAME_NO_X;</cyclestr></datadep>
+      </and>
+    </dependency>
+
+  </task>

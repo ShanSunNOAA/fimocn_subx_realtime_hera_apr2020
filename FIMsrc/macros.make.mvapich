@@ -1,0 +1,155 @@
+# Target being built (i.e. as defined by makefim <target>)
+MAKEFIM_TARGET = mvapich
+
+# Preprocessor and flags
+CPP = /lib/cpp
+CPPFLAGS = -C -P -DUSEMPIMOD
+# Intel settings
+
+BACIO_FFLAGS     = $(PREP_FFLAGS)
+CC               = cc
+CFLAGS           = -O2
+CHEM_FFLAGS      = 
+COL_FFLAGS       = -r8
+FDEBUG           = -O0 -g -traceback -C -fpe0 -ftz
+FFLAGS_NO_DEBUG  = $(PREP_FFLAGS)
+FIM_FFLAGS       = 
+FIXEDFLAG        = -fixed
+FREEFLAG         = -free
+GPTL_FLAGS       = 
+GRIBIO_CPPFLAGS  = -DSUN
+ICOSIO_FFLAGS    = 
+LINKFLAGS        = $(LINK_FLAGS_NOESMF)
+LINKLIBS         = $(LINK_LIBS_NOESMF)
+NEMS             = 
+POST_FFLAGS      = -O2
+PREP_FFLAGS      = -O2 -fp-model precise
+SP_FFLAGS        = -O2
+W3_FFLAGS        = $(PREP_FFLAGS)
+
+# Compile-time flag to enable debug print for PrintIpnDiag
+DEBUGPRINT = no
+ifeq ($(DEBUGPRINT),yes)
+  CPPFLAGS += -DDEBUGPRINT
+endif
+
+# Number of parallel tasks for gmake
+GMAKEMINUSJ = -j8
+
+# Record control word flag (currently required only by gfortran: specifies 4-byte RCW)
+RCWFLAG =
+
+# Flag to ensure local variables in routines in threaded regions are on thread-stack
+THREADSTACKFLAG = -recursive
+
+# Enable theading in prep/post
+OPENMP_PREPPOST = yes
+ifeq ($(OPENMP_PREPPOST),yes)
+  OMPFLAG_PREPPOST = -openmp
+endif
+
+# Flag to enable OpenMP in dynamics and ss2icos
+# GCCOMPFLAG assumes C compiler is gcc
+OPENMP = no
+ifeq ($(OPENMP),yes)
+  CPPFLAGS += -DWHOLE_MODEL_OMP -D_OPENMP
+  OMPFLAG = -openmp
+  GCCOMPFLAG = -fopenmp
+else
+# Flag to enable OpenMP in ss2icos only: Set to "no" only if failures in ss2icos occur
+  OPENMP_SS2ICOS = yes
+  ifeq ($(OPENMP_SS2ICOS),yes)
+    CPPFLAGS += -D_OPENMP
+    OMPFLAG_SS2ICOS = -openmp
+    GCCOMPFLAG = -fopenmp
+  endif
+endif
+
+# Optimization flags
+OPTFLAGS = -fp-model precise -openmp-report1
+
+# Load flags. In most cases this can be empty due to the use of MPI compiler wrappers
+LDFLAGS =
+
+# To turn on debugging, set DEBUG = yes. When -g is specified, ifort defaults to
+# -O0, but this may be overriden here, in OPTFLAGS.
+DEBUG = no
+ifeq ($(DEBUG),yes)
+  OPTFLAGS = -g -O0 -traceback -check all -fpe0 -ftz -ftrapuv
+endif
+
+# gfortran doesn't provide all degree-based trig functions as intrinsics
+# Most compilers provide these and it is safe to set NEED_SINDCOSD = no
+NEED_SINDCOSD = no
+
+# To enable attaching a debugger such as gdb or ddd to a running process, set ATTACH_DEBUGGER = yes
+ATTACH_DEBUGGER = no
+
+# Default to using dummy GPTL stubs
+
+GPTL_CPPFLAGS = -I../../dummygptl
+GPTL_LDFLAGS = -L../../dummygptl -lgptl
+
+# Set "USE_GPTL = yes" to use the real GPTL
+
+USE_GPTL = yes
+ifeq ($(USE_GPTL),yes)
+  ifeq ($(P),p) # parallel build
+    # Set include path for GPTL
+    GPTLROOT = /home/hpc/GPTL/gptl-v5.0/mvapich
+    GPTL_CPPFLAGS = -I$(GPTLROOT)/include
+    # For auto-profiling of MPI functions, set USE_PMPI=yes. The name of the GPTL
+    # library in this case is libgptl_pmpi.a. Otherwise the name is libgptl.a
+    USE_PMPI = no
+    ifeq ($(USE_PMPI),yes)
+      GPTL_LDFLAGS = -L$(GPTLROOT)/lib -lgptl_pmpi
+    else
+      GPTL_LDFLAGS = -L$(GPTLROOT)/lib -lgptl
+    endif
+    # AUTOINST=yes enables function-level compiler-generated auto-profiling,
+    AUTOINST = no
+    ifeq ($(AUTOINST),yes)
+      GPTL_FFLAGS = -finstrument-functions -g -O2
+      GPTL_LDFLAGS += -finstrument-functions
+    endif
+    # If GPTL was built with PAPI support, add the required flags
+    # On jet systems, "module load papi" provides $PAPI_ROOT
+    HAVE_PAPI = no
+    ifeq ($(HAVE_PAPI),yes)
+      GPTL_LDFLAGS += -L$(PAPI_ROOT)/lib -lpapi
+    endif
+  else # serial build
+  endif
+endif
+
+# These items are specific to running F2C and CUDA on the GPU (or emulator). They will 
+# be ignored when HW=CPU
+NVCC = $(CUDA)/bin/nvcc
+ifeq ($(HW),emu)
+  NVCC_FLAGS = -pg -arch=sm_13 -deviceemu
+else
+  NVCC_FLAGS = -pg -arch=sm_20
+  ifeq ($(DEBUG),yes)
+    NVCC_FLAGS += -g -G
+  endif
+endif
+GPU_HOME   = /whome/govett/F2C-ACC_V3.7
+F2C        = $(GPU_HOME)/bin/F2C-ACC
+M4         = /usr/bin/m4
+M4_INCLUDE = $(GPU_HOME)/include/logical.m4 $(GPU_HOME)/include/ARCH.m4
+mCUDA      = /whome/govett/cuda
+LIBCUDA    = -L/home/govett/cuda3/lib64 -lcudart -L/lfs0/projects/acb/govett/NVIDIA_GPU_Computing_SDK/C/lib -lcutil_x86_64
+
+# SMS settings
+
+# MPI include location
+INCMPI=$(MPIROOT)/include
+# Ruby interpreter location
+export SMS__RUBY=/home/hpc/SMS/ruby-1.9.3-p448/bin/ruby
+# SMS library location
+ifeq ($(USE_GPTL),yes)
+# If available, use SMS version compiled with auto-profiling flag
+  SMS = /home/hpc/SMS/sms_r828/jet-intel-mvapich
+else
+  SMS = /home/hpc/SMS/sms_r828/jet-intel-mvapich
+endif

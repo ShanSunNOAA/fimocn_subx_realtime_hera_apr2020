@@ -1,0 +1,22 @@
+#!/bin/csh
+# Script to run in MIC-only mode
+# Make sure you have source ~/interactive_setup
+# Make sure have built stampedexeonphi
+# cd into where host run completed
+# Edit FIMnamelist to change cpn, nthreads
+# Edit this script to ensure MIC_PPN and MIC_OMP_NUM_THREADS
+#   are set appropriately (MIC_PPN needs to match mpipn)
+# Then run this script
+
+#setenv MIC_OMP_SCHEDULE guided
+setenv MIC_OMP_SCHEDULE static
+setenv MIC_STACKSIZE 4G
+setenv MIC_OMP_STACKSIZE 16M
+setenv MIC_KMP_AFFINITY granularity=fine,compact,verbose
+#setenv MIC_KMP_AFFINITY scatter
+setenv MIC_PPN 1
+setenv MIC_OMP_NUM_THREADS 240
+
+ibrun.symm -m ../../../../FIMsrc_stampedexeonphi/bin/fim
+
+

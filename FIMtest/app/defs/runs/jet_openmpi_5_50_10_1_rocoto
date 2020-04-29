@@ -1,0 +1,6 @@
+ddts_extends: jet_openmpi_5_50_10_1
+lib_run: 'lib_run_rocoto'
+lib_run_check: 'lib_run_check_rocoto'
+lib_run_prep: 'lib_run_prep_rocoto'
+lib_submit_script: !delete
+wfxml: 'fimts-jet.xml'

@@ -1,0 +1,26 @@
+*** change paths in the commands below
+
+
+module load rocoto
+==========
+no OMP run
+==========
+rocotorun -w /scratch2/BMC/fim/sun/v3f_ens/FIMwfm/rocoto_xml/FIMENS_RETRO.xml -d /home/Shan.Sun/retro_dbfiles/FIMENS_RETRO.db
+rocotostat -w /scratch2/BMC/fim/sun/v3f_ens/FIMwfm/rocoto_xml/FIMENS_RETRO.xml -d /home/Shan.Sun/retro_dbfiles/FIMENS_RETRO.db
+rocotoboot -w /scratch2/BMC/fim/sun/v3f_ens/FIMwfm/rocoto_xml/FIMENS_RETRO.xml -d /home/Shan.Sun/retro_dbfiles/FIMENS_RETRO.db
+rocotocheck -w /scratch2/BMC/fim/sun/v3f_ens/FIMwfm/rocoto_xml/FIMENS_RETRO.xml -d /home/Shan.Sun/retro_dbfiles/FIMENS_RETRO.db
+
+=======
+OMP run
+=======
+rocotorun -w /scratch2/BMC/fim/sun/v3f_ens/FIMwfm/rocoto_xml/FIMENS_RETRO_omp.xml -d /home/Shan.Sun/retro_dbfiles/FIMENS_RETRO_omp.db
+rocotostat -w /scratch2/BMC/fim/sun/v3f_ens/FIMwfm/rocoto_xml/FIMENS_RETRO_omp.xml -d /home/Shan.Sun/retro_dbfiles/FIMENS_RETRO_omp.db
+rocotoboot -w /scratch2/BMC/fim/sun/v3f_ens/FIMwfm/rocoto_xml/FIMENS_RETRO_omp.xml -d /home/Shan.Sun/retro_dbfiles/FIMENS_RETRO_omp.db -c 201401010000 -t SpectralFileRetro_03
+rocotocheck -w /scratch2/BMC/fim/sun/v3f_ens/FIMwfm/rocoto_xml/FIMENS_RETRO_omp.xml -d /home/Shan.Sun/retro_dbfiles/FIMENS_RETRO_omp.db -c 201401010000 -t SpectralFileRetro_03
+
+
+
+crontab entry:  
+
+*/5 * * * * /apps/rocoto/1.2.3/bin/rocotorun -w /scratch2/BMC/fim/sun/v3f_ens/FIMwfm/rocoto_xml/FIMENS_RETRO_omp.xml -d /home/Shan.Sun/retro_dbfiles/FIMENS_RETRO_omp.db
+*/5 * * * * /apps/rocoto/1.2.3/bin/rocotorun -w /scratch2/BMC/fim/sun/v3f_ens/FIMwfm/rocoto_xml/FIMENS_RETRO.xml -d /home/Shan.Sun/retro_dbfiles/FIMENS_RETRO.db

@@ -1,0 +1,27 @@
+SHELL=  /bin/sh
+RSIZE = 64
+#COMP=   xlf
+COMP=   ifort
+#LIBS=   -L/home/bluevista/dtcrt/CT2007/wrfpostprocV2/lib/ -lw3
+LIBS=     ../w3lib/libw3.a
+#LDFLAGS= -bloadmap:loadmap -bnoquiet
+LDFLAGS=
+#FFLAGS= -O2 -qarch=auto -qintsize=$(ISIZE) -qrealsize=$(RSIZE)
+#FFLAGS= -g -O0 -qcheck -qextchk -qarch=auto -qflttrap=ov:zero:inv:enable -qintsize=$(ISIZE) -qrealsize=$(RSIZE)
+#FFLAGS= -O2 -qcheck -qarch=auto -qflttrap=ov:zero:inv:enable -qintsize=$(ISIZE) -qrealsize=$(RSIZE)
+FFLAGS= -g -M32 -check noformat -fpe1 -r4 -traceback
+
+gettrk:      gettrk_main.with_orders.f gettrk_modules.o
+	@echo " "
+	@echo "  Compiling the tracking program....."
+	$(COMP) $(FFLAGS) $(LDFLAGS) gettrk_modules.o gettrk_main.with_orders.f $(LIBS) -o gettrk.gfs.x
+	@echo " "
+
+gettrk_modules.o:    gettrk_modules.f
+	@echo " "
+	@echo "  Compiling the modules....."
+	$(COMP) $(FFLAGS) -c gettrk_modules.f -o gettrk_modules.o
+	@echo " "  
+
+clean:
+	rm -f *.o *.mod gettrk

@@ -1,0 +1,15 @@
+ddts_extends: 'jet_openmpi_ocn_common'
+ddts_build: 'jet_mvapich_parallel_omp'
+ddts_baseline: 'jet_openmpi_ocn'
+namelists:
+  oceannamelist:
+    atmonly: !unquoted '.false.'
+    coupled: !unquoted '.true.'
+  queuenamelist:
+    computetasks: '2'
+  writetasknamelist:
+    cpn: 8
+    nthreads: 8
+    mpipn: 1
+    max_write_tasks_per_node: 1
+    num_write_tasks: 0

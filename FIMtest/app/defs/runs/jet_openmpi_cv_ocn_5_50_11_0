@@ -1,0 +1,18 @@
+ddts_extends: 'jet_openmpi_ocn_parallel'
+ddts_baseline: !delete
+lib_run_prep: 'lib_run_prep_compare_var'
+lib_run: 'lib_run_compare_var'
+ignore_pop: true
+namelists:
+  outputnamelist:
+    totaltime: 12
+  postnamelist:
+    fimout: !unquoted .false.
+  queuenamelist:
+    computetasks: '11'
+    maxqueuetime: '00:40:00'
+  writetasknamelist:
+    num_write_tasks: 0
+# nthreads=1 since root_own_node must be false and ompss2icos may be threaded
+    nthreads: 1
+    root_own_node: !unquoted .false.

@@ -1,0 +1,66 @@
+#group_alt_land_f:
+#  - theiaintel_5_50_10_1_alt_land_f
+#group_altphys:
+# - theiaintel_altphys_5_50_S_0
+#  - theiaintel_altphys_restart_5_50_10_0
+#group_chem:
+#  - theiaintel_chem_5_50_10_1
+#group_chem_smoketest_intel:
+#  - theiaintel_chem_smoketest
+#group_compare_var:
+#  - theiaintel_cv_5_50_11_0
+#group_digifilt:
+#  - theiaintel_digifilt_5_50_10_1
+#group_enkf_pure_sig_true:
+#  - theiaintel_enkf_pure_sig_true
+#group_enkf_pure_sig_false:
+#  - theiaintel_enkf_pure_sig_false
+#group_debug:
+#  - theiaintel_4_38_16_0_curve3_restart
+#  - theiaintel_4_38_16_1_curve1
+#  - theiaintel_4_38_16_8
+#group_puresig:
+#  - theiaintel_puresig_5_50_10_1
+#group_std:
+#  - theiaintel_5_50_10_1
+#  - theiaintel_5_50_S_0
+#  - theiaintel_hilbert_5_50_9_16
+#  - theiaintel_ijblock_5_50_10_1
+#  - theiaintel_nems_5_50_10_1
+#  - theiaintel_omp_5_50_10_1_rocoto
+#  - theiaintel_omp_5_50_2_0
+#  - theiaintel_omp_5_50_10_1
+#  - theiaintel_omp_5_50_S_0
+#  - theiaintel_omp_5_50_1_0
+#  - theiaintel_square_5_50_40_1
+#group_t1534:
+#  - theia_t1534
+#group_trisect:
+#  - theiaintel_trisect_4_50_16_0
+#group_wrfphy:
+#  - theiaintel_wrfphy_p
+#  - theiaintel_wrfphy_s
+#group_compare_var_ocn:
+#  - theiaintel_cv_ocn_5_50_11_0
+group_ocn_debug:
+#ss  - theiaintel_ocn_4_38_16_0_curve3_restart
+  - theiaintel_ocn_4_38_16_1_curve1
+  - theiaintel_ocn_4_38_16_8
+group_ocn_std:
+  - theiaintel_ocn_5_50_10_1
+#  - theiaintel_ocn_5_50_S_0
+  - theiaintel_ocn_omp_5_50_2_0
+  - theiaintel_ocn_omp_5_50_10_1
+  - theiaintel_ocn_omp_5_50_S_0
+  - theiaintel_ocn_omp_5_50_1_0
+group_cpl_debug:
+#ss  - theiaintel_cpl_4_38_16_0_curve3_restart
+  - theiaintel_cpl_4_38_16_1_curve1
+  - theiaintel_cpl_4_38_16_8
+group_cpl_std:
+  - theiaintel_cpl_5_50_10_1
+#  - theiaintel_cpl_5_50_S_0
+  - theiaintel_cpl_omp_5_50_2_0
+  - theiaintel_cpl_omp_5_50_10_1
+  - theiaintel_cpl_omp_5_50_S_0
+  - theiaintel_cpl_omp_5_50_1_0

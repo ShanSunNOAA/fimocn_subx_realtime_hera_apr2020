@@ -1,0 +1,32 @@
+!$OMP PARALLEL DO PRIVATE (edg,ipx,k) SCHEDULE (runtime)
+    do ipn=ips,ipe
+      flxdv(:,ipn) = 0.
+      do edg=1,nprox(ipn)
+        ipx = prox(edg,ipn)		! neighbor across shared edge
+        do k=k1,k2			! loop through levels
+          flxdv(k,ipn) = flxdv(k,ipn) + (fld(k,ipn) - fld(k,ipx))*sideln(edg,ipn)
+#ifdef DEBUGPRINT
+          if (ipn.eq.PrintIpnDiag .and. mod(k,7).eq.k1) then
+            write (*,'(a,2i8,i4,a,2f12.1)')				&
+            '(dffusn_lev) ipn,ipx,k=',perm(ipn),perm(prox(edg,ipn)),	&
+            k,'  fld,fldx=',fld(k,ipn),fld(k,prox(edg,ipn))
+          end if
+#endif
+        end do				! loop through levels
+      end do				! loop through edges
+    end do
+      
+!$OMP PARALLEL DO PRIVATE (k,factor) SCHEDULE (runtime)
+    do ipn=ips,ipe
+      do k=k1,k2				! loop through levels
+        factor = -dfflen(k)*rarea(ipn)
+        fld(k,ipn) = fld(k,ipn) + flxdv(k,ipn)*factor
+#ifdef DEBUGPRINT
+        if (ipn.eq.PrintIpnDiag .and. mod(k,7).eq.k1) then
+          write (*,'(i8,i4,a,2es11.2,f12.1)') perm(ipn),k,		&
+          '  (dffusn_lev) flxdv,fac,fld=',flxdv(k,ipn),factor,fld(k,ipn)
+        end if
+#endif
+      end do				! loop through levels
+    end do				! horizontal loop
+

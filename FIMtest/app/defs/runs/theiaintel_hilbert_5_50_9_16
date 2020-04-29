@@ -1,0 +1,13 @@
+ddts_extends: 'theiaintel_omp_5_50_10_1'
+namelists:
+  outputnamelist:
+    fixedgridorder: !unquoted '.true.'
+  prepnamelist:
+    curve: 1
+  queuenamelist:
+    computetasks: '9'
+  writetasknamelist:
+    mpipn: 8
+    nthreads: 6
+    max_write_tasks_per_node: 8
+    num_write_tasks: 16

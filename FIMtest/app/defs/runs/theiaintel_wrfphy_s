@@ -1,0 +1,6 @@
+ddts_extends: 'theiaintel_wrfphy_p'
+ddts_build: 'theiaintel_serial_debug'
+namelists:
+  queuenamelist:
+    computetasks: '1'
+    maxqueuetime: '00:40:00'

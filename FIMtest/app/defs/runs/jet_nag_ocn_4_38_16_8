@@ -1,0 +1,13 @@
+ddts_extends: 'jet_nag_ocn_common'
+namelists:
+  outputnamelist:
+    archvintvl: 4
+    totaltime: 8
+  postnamelist:
+    delta_t: 4
+    t2: 8
+  writetasknamelist:
+    max_write_tasks_per_node: 8
+    num_write_tasks: 8
+  queuenamelist:
+    maxqueuetime: '00:30:00'

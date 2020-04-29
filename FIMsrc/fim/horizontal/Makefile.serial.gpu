@@ -1,0 +1,22 @@
+# horizontal/Makefile.serial.gpu
+
+# Makefile for FIM horizontal to compile serially for the GPU
+
+include ../../macros.make
+include FIM_HORIZONTAL_OBJS
+
+all: $(OBJS_GPU)
+
+.SUFFIXES:
+.SUFFIXES: .o .cu .F90 .f90
+.PRECIOUS: %.cu
+
+%.cu: %.F90
+	$(CPP) $(CPPFLAGS) $(GPU_FLAGS) $*.F90 > $*_cpp.f90
+	$(F2C) --Generate=CUDA --Constant NZ=$(MAXNZ),IMS=1,IME=$(MAXGP),NPP=6,NVARS=6 $*_cpp.f90
+	$(M4) -I $(M4_INCLUDE) $*_cpp.m4 > $*.cu
+
+%0: %.cu
+	$(NVCC) -c $(NVCC_FLAGS) $(GPU_FLAGS) -I$(mCUDA)/common/inc -I$(GPU_HOME)/include $*.cu
+
+-include DEPENDENCIES

@@ -1,0 +1,54 @@
+  <!-- theia -->
+
+  <!ENTITY SCHEDULER   "slurm">
+  <!ENTITY PROJECT "globemb">
+  <!ENTITY RTPROJECT "rtfim">
+  <!ENTITY SERIALPE "batch">
+  <!ENTITY PE "batch">
+  <!ENTITY SERVICE "service">
+  <!ENTITY MPIRUN       "srun --export=ALL">
+  <!ENTITY PARTITION    " ">
+
+  <!ENTITY FIM_LOG "&FIM_HOME;/FIMwfm/log">
+  <!ENTITY FIM_RUN "&FIM_HOME;/FIMrun_theiaintel_p">
+  <!ENTITY FIM_WFM "&FIM_HOME;/FIMwfm">
+  <!ENTITY SCRIPTS "&FIM_HOME;/FIMwfm/rocoto_scripts">
+  <!ENTITY FIM_POST_DIR_NAME "/fim/NAT/grib1">
+<!--   <!ENTITY FIM_RUN_NO_X "&FIM_HOME_NO_X;/FIMrun"> -->
+  <!ENTITY RTFIM_HOME "/home/rtfim">
+  <!ENTITY SCRATCH4_ROOT "/scratch2/BMC/fim">
+
+  <!ENTITY DATADIR "&SCRATCH4_ROOT;/fimdata">
+  <!ENTITY DATADR2 "&SCRATCH4_ROOT;/GFS_RETRO_FILES_2015/">
+  <!ENTITY CHEM_DATADIR "&SCRATCH4_ROOT;/fimdata_chem">
+  <!ENTITY CLIMATE_DIR "&SCRATCH4_ROOT;/cmean/">
+
+  <!ENTITY IDL "idl">
+  <!ENTITY NCL_HOME "&FIM_HOME;/FIMwfm/ncl/fimall">
+  <!ENTITY NCL_DIFF_HOME "&FIM_HOME;/FIMwfm/ncl/fimalldiff">
+  <!ENTITY TRACKER "&RTFIM_HOME;/tracker">
+  <!ENTITY TCVITALS "&SCRATCH4_ROOT;/tcvitals">
+  <!ENTITY WGRIB "wgrib">
+  <!ENTITY NCL "ncl">
+  <!ENTITY COPYGB "/home/rtfim/WPPV3.2_intel-12.0.4_opt_mpt-2.05/exec/copygb.exe">  <!-- CHECK THIS  !!! -->
+  <!ENTITY CNVGRIB "cnvgrib">
+  <!ENTITY WGRIB "wgrib">
+  <!ENTITY FIM_SOUNDINGS "&RTFIM_HOME;/new_soundings/fim_soundings_grib2.x">
+
+
+  <!ENTITY IDL_PROG "pzmfb">
+  <!ENTITY DIFFGB "&RTFIM_HOME;/diffgb/diffgb">
+  <!ENTITY PUB_DIR "/scratch2/BMC/public/">
+  <!ENTITY GFS_VERIF_DIR "&SCRATCH4_ROOT;/GFS_RETRO_VERIF_FILES_2015/GFS">
+  <!ENTITY GFS_VERIF_DIR "&PUB_DIR;/data/grids/gfs/0p5deg/grib">       <!-- only uses first one if duplicate entry -->
+  <!ENTITY FIM_VERIF_DIR "&FIM_RUN;">
+<!-- xue -->
+  <!ENTITY GFS_TMP_DIR "&FIM_RUN;/verif/gfs">
+
+  <!ENTITY NLFILE "&FIM_RUN;/FIMnamelist">
+  <!ENTITY ARCHVTIMEUNIT "hr">
+
+  <!ENTITY PARTITION_JET_PP "">
+  <!ENTITY PARTITION_JET_FIM "">
+  <!ENTITY PARTITION_JET "">
+  <!ENTITY PARTITION_SERVICE "">

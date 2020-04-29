@@ -1,0 +1,21 @@
+ddts_extends: theiaintel_5_50_10_1
+ddts_baseline: 'theia_t1534'
+ddts_build: 'theiaintel_omp_parallel'
+namelists:
+  outputnamelist:
+    totaltime: 6
+  postnamelist:
+    t2: 6
+  prepnamelist:
+    gfsltln_file: 'gfsltln_t1534.dat'
+    mtnvar_file: 'global_mtnvar.t1534'
+  queuenamelist:
+    computetasks: '2'
+    maxqueuetime: '00:15:00'
+  timenamelist:
+    yyyymmddhhmm: '201409030000'
+  writetasknamelist:
+    num_write_tasks: 0
+    nthreads: 24
+    mpipn: 1
+

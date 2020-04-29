@@ -1,0 +1,17 @@
+ddts_extends: 'theiaintel_debug_ocn_common'
+lib_run: 'lib_run_restart'
+namelists:
+  outputnamelist:
+    archvintvl: 4
+    fixedgridorder: !unquoted '.true.'
+    restart_freq: 4
+    totaltime: 4
+  postnamelist:
+    delta_t: 4
+    t2: 8
+  prepnamelist:
+    curve: 3
+  queuenamelist:
+    maxqueuetime: '00:15:00'
+  writetasknamelist:
+    num_write_tasks: 0

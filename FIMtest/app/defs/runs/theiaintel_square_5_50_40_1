@@ -1,0 +1,8 @@
+ddts_extends: 'theiaintel_omp_5_50_10_1'
+namelists:
+  outputnamelist:
+    fixedgridorder: !unquoted '.true.'
+  prepnamelist:
+    curve: 3
+  queuenamelist:
+    computetasks: '40'

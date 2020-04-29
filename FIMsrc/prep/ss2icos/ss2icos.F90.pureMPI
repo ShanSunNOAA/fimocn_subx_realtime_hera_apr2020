@@ -1,0 +1,1127 @@
+!----------------------------------------------------------------------------------
+! This file contains the subroutines that transform GFS analysis in spherical
+! spectral coefficients to physical domain and interpolate them from Gaussian
+! grid to an specified icosahedral grid.
+! 
+! History:
+!   2006 - 2013: Jin Lee, Jacques Middlecoeff, and Ning Wang adapted spectral
+!   transform code from NCEP subroutine ss2gg(), and developed a horizontal
+!   interpolation package. Rainer Bleck developed vertical interpolation code 
+!   to transform initial condition from sigma to hybrid-isentropic coordinate. 
+!
+!   2009: Rainer Bleck added solid rotation subroutine as a part of test code. 
+!
+!   2014: Ning Wang rewrite and re-arrange the computation to reduce memory 
+!   usage, in preparation for the use of high resolution initial condition 
+!   (T1534)
+!
+!   2014: Jim Rosinski rewrite for MPI parallelism instead of OpenMP. For now this
+!   routine is "mothballed" into file named ss2icos.F90.pureMPI. Perhaps it can
+!   re-emerge when the full FIM model is OpenMP-capable. The current problem with
+!   using this implementation of ss2icos.F90 is that the spectral transform uses
+!   TONS of memory, almost all of it in array PLN declared in init_sp. When 
+!   multiple MPI tasks on a single node allocate this array, the executable runs
+!   out of memory. But if only one or two MPI tasks are running per node, the
+!   memory usage will not be so bad. The additional advantage of MPI parallelism
+!   over OpenMP is that more degrees of freedom exist for parallelism, meaning a
+!   potential for faster initialization.
+!
+!   Details of parallel algorithm: This code is somewhat complicated. MPI 
+!   parallelism is necessarily implemented via pure-MPI rather than SMS, because
+!   SMS cannot currently handle multiple decompositions. The root process reads
+!   in spectral coefficients, then hands them out to available compute tasks to
+!   perform the spectral transform, and interpolation to the icos grid. 
+!   Parallelism is handled on a per-k basis. Results are returned to the root task, 
+!   who then performs additional required processing (e.g. summation from surface 
+!   to TOA of geopotential height in transform_interp_4). Then SMS is used in 
+!   cases where results need to be distributed to the other compute tasks.
+!
+!   TODO: Some additional code clarity may be obtained by replacing MPI_Send and
+!   MPI_Recv with collectives. Simpler additional clarity may come from 
+!   restructuring the if-then-else logic
+! 
+!   TODO: After FIM runs in hybrid OpenMP/MPI mode, enable hybrid OpenMP/MPI
+!   parallelism in ss2icos.
+!
+!----------------------------------------------------------------------------------
+module ss_gfs
+
+  use headers,only: testcurveheader,testglvlheader
+  use module_variables, only: us3d, vs3d, dp3d, mp3d, pr3d, ex3d, ph3d, tr3d
+  use sigio_module
+  use sptsnv, only: init_sp, end_sp, sptez_mod, sptezmv_mod
+  use module_control,only: glvl,nvl,nvlp1,nip,ntra,ntrb,curve,		&
+                           alt_topo,pure_sig, yyyymmddhhmm, gfsltln_file
+  use module_constants, only: rd, cp, qvmin, grvity, sigak, sigbk, raddeg, p1000
+  USE slint, ONLY: bilinear_init, bilinear_interp, bilinear_interp_uv
+  use stencilprint
+  use findmaxmin2
+  use module_core_setup, only: nthreads
+  use infnan, only: negint
+  use units, only: getunit, returnunit
+  use module_core_setup, only: my_comm
+  use global_bounds, only: myrank, npes
+  use globalutils, only: maxinfo, mininfo
+
+#ifdef USEMPIMOD
+  use mpi
+#endif
+
+  implicit none
+
+  private
+  public :: ss2icos
+
+#ifndef USEMPIMOD
+  include 'mpif.h'
+#endif
+
+!sms$distribute(dh,1) begin
+  real(4), allocatable :: hs_lev(:)               ! surface height (m)
+  real(4), allocatable :: ps_lev(:)               ! surface pressure in pascals
+!sms$distribute end
+
+! The value of nvp is not yet known, so these arrays must be allocatable
+
+!sms$distribute(dh,2) begin
+  real(4), allocatable :: t_lyr (:,:)         ! temperature in Kelvins
+  real(4), allocatable :: qv_lyr(:,:)         ! specific humidity
+  real(4), allocatable :: qc_lyr(:,:)         ! cloud condensate
+  real(4), allocatable :: u_lyr (:,:)         ! zonal velocity
+  real(4), allocatable :: v_lyr (:,:)         ! meridional velocity
+  real(4), allocatable :: o3_lyr(:,:)         ! ozone mixing ratio
+  real(4), allocatable :: p_lev (:,:)         ! interface pressure
+  real(4), allocatable :: gz_lev(:,:)         ! geopotential height
+!sms$distribute end
+
+  real(4), allocatable :: hs(:)
+  real(4), allocatable :: ps(:)
+!JR These things can go away when the ak/bk bug is fixed
+  real(4), allocatable :: akfixed(:)
+  real(4), allocatable :: bkfixed(:)
+  
+! Storage for GFS input on Gaussian grid -- may be used multiply as indicated by '/'
+  real(4), allocatable :: f1(:,:)           ! surface pressure on gaussian grid
+  real(4), allocatable :: f2(:,:)           ! surface height (m) on gaussian grid
+
+! Gaussian grid
+  integer :: imax = negint          ! size of lon dim on gaussian grid: init to bad value
+  integer :: jmax = negint          ! size of lat dim on gaussian grid: init to bad value
+  integer :: nvp = negint           ! size of vertical dim on gaussian grid: init to bad value
+  integer :: idsl = negint          ! head%idsl
+  integer :: maxwv = negint
+  integer :: nc = negint            ! size of 2d spectral coefficient array. This is computed as
+                                    ! (jcap+1)*(jcap+2) in sigio_aldata, but not made public
+                                    ! so the computation is duplicated here :-(
+
+! Distribution of transform duties across MPI tasks
+  integer :: niter = negint         ! Number of iterations required for each MPI task
+  integer, allocatable :: kbeg(:)   ! Starting k-index for each iteration set
+  integer, allocatable :: kend(:)   ! Ending k-index for each iteration set
+
+! NCEP data structures
+  type(sigio_head), save :: head
+  type(sigio_data), save :: data
+
+  integer, parameter :: idrt = 4    ! needed by spectral transform code
+  character(len=24) :: msg
+
+#include <gptl.inc>
+
+contains
+
+  subroutine ss2icos ()
+! read spherical data (GFS) and perform 2-step transform:
+! --- (1) horizontal transform from spherical to icos grid
+! --- (2) vertical transform from sigma to hybrid-isentropic coord.
+
+! Local workspace
+
+    character(len=14), parameter :: thisfunc = 'gsi2gauss2icos'
+    character :: string*8
+    integer :: ipn, k, n
+    logical :: vrbos = .false.
+    integer :: luglvl = negint           ! unit number for glvl.dat file
+    integer :: ierr
+    integer, parameter :: tag = 0
+    integer :: status(MPI_STATUS_SIZE)
+    integer(sigio_intkind) :: iret
+    integer :: ret                    ! GPTL return code
+
+    ret = gptlstart (thisfunc)
+! Slaves need to know nvp,imax,jmax,nc for dimensioning
+!SMS$SERIAL (<nvp,imax,jmax,nc,maxwv,idsl,OUT> : default=ignore)  BEGIN
+    ret = gptlprint_memusage ('start '//thisfunc)
+    call initialize_ss ()
+    nvp = head%levs			! # of layers in input grid
+    imax = head%lonb
+    jmax = head%latb
+    maxwv = head%jcap
+    nc = (maxwv+1)*(maxwv+2)
+    idsl = head%idsl
+!SMS$SERIAL END
+
+    call init_sp (0, maxwv, 4, imax, jmax) ! 4 means gaussian grid
+
+! All tasks doing spectral transform work need hs and ps
+    allocate (hs(nc))
+    allocate (ps(nc))
+    if (myrank == 0) then
+      hs(:) = data%hs(:)
+      ps(:) = data%ps(:)
+    end if
+
+    do n=1,min(npes-1,nvp)
+      if (myrank == 0) then
+        call mpi_send (hs, nc, MPI_REAL, n, tag, my_comm, ierr)
+        call mpi_send (ps, nc, MPI_REAL, n, tag, my_comm, ierr)
+      else if (myrank == n) then
+        call mpi_recv (hs, nc, MPI_REAL, 0, tag, my_comm, status, ierr)
+        call mpi_recv (ps, nc, MPI_REAL, 0, tag, my_comm, status, ierr)
+      end if
+    end do
+    write(6,*)'got thru send/recv hs/ps'
+    call flush(6)
+
+    allocate (hs_lev(nip))
+    allocate (ps_lev(nip))
+    allocate (t_lyr (nvp  ,nip))
+    allocate (qv_lyr(nvp  ,nip))
+    allocate (qc_lyr(nvp  ,nip))
+    allocate (u_lyr (nvp  ,nip))
+    allocate (v_lyr (nvp  ,nip))
+    allocate (o3_lyr(nvp  ,nip))
+    allocate (p_lev (nvp+1,nip))
+    allocate (gz_lev(nvp+1,nip))
+    allocate (akfixed(nvp+1))
+    allocate (bkfixed(nvp+1))
+    allocate(f1(imax,jmax))
+    allocate(f2(imax,jmax))
+
+! All ranks doing interpolation need to call bilinear_init.
+! Require !sms$ignore region so multiple ranks can read from glvl.dat
+!SMS$IGNORE BEGIN
+    if (myrank <= min(npes-1,nvp)) then
+      ret = gptlstart ('bilinear_init')
+      luglvl = getunit ()
+      open (unit=luglvl, file="glvl.dat", status='old', form='unformatted')
+      call TestGlvlHeader (luglvl, "glvl.dat", thisfunc, glvl)
+      call TestCurveHeader(luglvl, "glvl.dat", thisfunc, curve)
+      CALL bilinear_init(gfsltln_file, imax*jmax, luglvl, nip)
+      close (luglvl)
+      call returnunit (luglvl)
+      ret = gptlstop ('bilinear_init')
+    end if
+!SMS$IGNORE END
+
+! Set up arrays that determine who does the transform work
+    call set_distribution (nvp, npes, niter, kbeg, kend)
+
+    call transform_interp_1 (hs_lev, ps_lev)
+    call transform_interp_2 (qv_lyr)
+
+! avoid zero pressure at top, and preserve for now the ak, bk bug found by Ning
+!SMS$SERIAL (default=ignore) BEGIN
+    akfixed(:nvp) = head%ak(:nvp)
+    akfixed(nvp+1) = max (head%ak(nvp+1), 0.2*head%ak(nvp))
+
+    bkfixed(:nvp) = head%bk(:nvp)
+    bkfixed(nvp+1) = 0.
+!JR Need to explicitly restrict the range because size of head%ak is something like 101 (i.e. padded)
+    head%ak(:nvp+1) = akfixed(:nvp+1)
+    head%bk(:nvp+1) = bkfixed(:nvp+1)
+!SMS$SERIAL END
+
+! These arrays are used elsewhere in FIM, so they will not be deallocated, and need an OUT clause
+! on the SERIAL directive
+    allocate (sigak(nvp+1))
+    allocate (sigbk(nvp+1))
+
+!SMS$SERIAL (<p_lev,sigak,sigbk,OUT> : default=ignore) BEGIN
+    call transform_interp_3 (p_lev, sigak, sigbk)
+!SMS$SERIAL END
+
+    write(6,*)'sigak=',sigak
+    write(6,*)'sigbk=',sigbk
+
+    call transform_interp_4 (gz_lev, t_lyr)
+    call transform_interp_5 (u_lyr, v_lyr)
+
+! --- replace pole wind vectors by the average of their 5 neighbors
+!    call polvec (nvp, u_lyr, v_lyr)
+
+    do k=1,nvp,7
+      write (string,'(a,i3)') 'k=',k
+      call findmxmn2 (u_lyr, nvp, nip, k, thisfunc//' u_lyr '//string)
+      call findmxmn2 (v_lyr, nvp, nip, k, thisfunc//' v_lyr '//string)
+    end do
+
+    call stencl (u_lyr, nvp, 1., thisfunc//' -u- wind')
+    call stencl (v_lyr, nvp, 1., thisfunc//' -v- wind')
+
+    call transform_interp_6 (o3_lyr, qc_lyr)
+
+!SMS$SERIAL (default=ignore)  BEGIN
+    call sigio_axdata (data, iret)     ! deallocate array
+!SMS$SERIAL END
+! horizontal interpolation done.
+! also done with these
+    deallocate (f1)
+    deallocate (f2)
+    deallocate (hs)
+    deallocate (ps)
+    deallocate (kbeg)
+    deallocate (kend)
+
+    if (alt_topo) then
+     
+!SMS$SERIAL (<hs_lev,INOUT> : default=ignore)  BEGIN
+  ! get topo on icos grid
+     !call rdtopo(hs_lev,nip)
+      ret = gptlstart ('mktopo')
+      call mktopo (hs_lev, nip)
+      ret = gptlstop ('mktopo')
+!SMS$SERIAL END
+
+      ! correct zg for new topo
+      ret = gptlstart ('ss2ggtopo')
+      call ss2ggtopo ()
+      ret = gptlstop ('ss2ggtopo')
+    end if
+
+    call stencl (hs_lev, 1, 1., thisfunc//' surface height (m)')
+
+!SMS$PARALLEL (dh,ipn) BEGIN
+    do ipn=1,nip
+      hs_lev(ipn) = hs_lev(ipn)*grvity	! surface height => surface geopot
+    end do
+!SMS$PARALLEL END
+
+    ! Now do vertical interpolation.
+
+    ret = gptlstart ('fimini')
+    call fimini (nvp,hs_lev,ps_lev,gz_lev,p_lev,t_lyr,qv_lyr,	&
+                 u_lyr,v_lyr,o3_lyr,qc_lyr,us3d,vs3d,		&
+                 dp3d,mp3d,pr3d,ex3d,ph3d,tr3d)
+
+    ret = gptlstop ('fimini')
+
+    deallocate (hs_lev)
+    deallocate (ps_lev)
+    deallocate (t_lyr )
+    deallocate (qv_lyr)
+    deallocate (qc_lyr)
+    deallocate (u_lyr )
+    deallocate (v_lyr )
+    deallocate (o3_lyr)
+    deallocate (p_lev )
+    deallocate (gz_lev)
+    deallocate (akfixed)
+    deallocate (bkfixed)
+
+    ret = gptlstop (thisfunc)
+  end subroutine ss2icos
+
+  subroutine initialize_ss ()
+    character(len=14), parameter :: thisfunc = 'initialize_gsi'
+    CHARACTER(len=2 ) :: hh
+    CHARACTER(len=9 ) :: jdate
+    CHARACTER(len=80) :: sanlFile
+    integer(sigio_intkind) :: lusig = negint            ! unit number for NCEP sigio interface
+    integer :: ret
+    
+    call GetJdate(yyyymmddhhmm,jdate)		! Julian date conversion
+    hh = yyyymmddhhmm(9:10)
+
+    sanlFile = jdate // ".gfs.t" // hh // "z.sanl"
+    PRINT *,' get initial state from ', trim(sanlFile)
+
+! sigio reads big-endian data so need to request a specific unit number known by surrounding 
+! scriptery to be big-endian
+    lusig = getunit (82)
+    if (lusig < 0) then
+      print*,thisfunc//': getunit failed for unit=82. stopping'
+      stop
+    end if
+
+    ret = gptlstart ('sigio_srohdc')
+! Read in all 3 dimensions of all spectral fields. At T1534 this is a HUGE amount of data
+    call sigio_srohdc (lusig, sanlfile, head, data, ret)
+    IF (ret /= 0) THEN
+      PRINT '(a)',thisfunc//': error reading '//sanlFile
+      STOP
+!TBH:  this code hangs because errexit does not call MPI_ABORT
+!    call errmsg('dyn_init: error reading '//sanlFile)
+!    call errexit(2)
+    END IF
+    CALL returnunit (lusig)
+
+    if (pure_sig .and. nvl /= head%levs) then
+      call errmsg (thisfunc//': in "pure_sig" mode, nvl must match head%levs')
+      print '(a,2i5)','nvl,head%levs =',nvl,head%levs
+      STOP 
+    end if
+    if (head%idvc < 2) then
+      call errmsg (thisfunc//': head%idvc < 2 is NOT SUPPORTED')
+      call errmsg ('It is documented in sigio_module.F90 as OBSCOLESCENT')
+      call errmsg ('The last FIM rev. which enabled idvc < 2 was r4356')
+      call errmsg ('But probably idvc < 2 had bugs in it then')
+      STOP
+    end if
+
+    ret = gptlstop ('sigio_srohdc')
+    ret = gptlprint_memusage ('end '//thisfunc)
+  end subroutine initialize_ss
+
+  subroutine transform_interp_1 (hs_lev, ps_lev)
+!sms$distribute(dh,1) begin
+    real(4), intent(inout) :: hs_lev(nip)
+    real(4), intent(inout) :: ps_lev(nip)
+!sms$distribute end
+    real(4) :: hs_lev_loc(nip)
+    real(4) :: ps_lev_loc(nip)
+
+    character(len=18), parameter :: thisfunc = 'transform_interp_1'
+    real(4) :: gauss2d(imax,jmax)
+    integer :: i, j, ipn, n
+    integer :: ret
+
+    ret = gptlstart (thisfunc)
+
+! Initialize bilinear interpolation
+! perform spherical transform on surface height: hs->f2, and surface pressure ps->f1
+! Then interpolate to icos grid.
+! Cannot yet do these 2 in parallel with OpenMP because the 1st call to sptez does the initialization
+    if (myrank <= kend(1)-kbeg(1)) then
+      call sptez_mod (0, maxwv, idrt, imax, jmax, hs, f2, 1)
+      CALL bilinear_interp (f2, hs_lev_loc)
+
+      call sptez_mod (0, maxwv, idrt, imax, jmax, ps, f1, 1)
+!$OMP PARALLEL DO PRIVATE (i)
+      do j=1,jmax
+        do i=1,imax
+          f1(i,j) = exp(f1(i,j))*1.e3		! convert ln(ps) in centibars to ps in Pa.
+        end do
+      end do
+!$OMP END PARALLEL DO
+      CALL bilinear_interp (f1, ps_lev_loc)	! unit in pascal
+    end if
+
+!sms$serial (<hs_lev,ps_lev,out> : default=ignore) begin
+    do ipn=1,nip
+      hs_lev(ipn) = hs_lev_loc(ipn)
+      ps_lev(ipn) = ps_lev_loc(ipn)
+    end do
+!sms$serial end
+
+    print 100,'min,max of srf.height on spherical grid:', minval(f2),maxval(f2)
+    print 100,'min,max of srf.press  on spherical grid:', minval(f1),maxval(f1)
+    print 100,'min,max of srf.height on icos grid:',      minval(hs_lev),maxval(hs_lev)
+    print 100,'min,max of srf.press  on icos grid:',      minval(ps_lev),maxval(ps_lev)
+100 format (a,2f13.2)
+    ret = gptlstop (thisfunc)
+  end subroutine transform_interp_1
+
+  subroutine transform_interp_2 (qv_lyr)
+!sms$distribute(dh,2) begin
+    real(4), intent(inout) :: qv_lyr(nvp,nip)
+!sms$distribute end
+!sms$distribute(dh,1) begin
+    real(4) :: qv_lyrk(nip)
+!sms$distribute end
+
+    character(len=18), parameter :: thisfunc = 'transform_interp_2'
+    integer, parameter :: tag = 2
+    integer :: k,ipn,n
+    integer :: workertask
+    integer :: status(MPI_STATUS_SIZE)
+    integer :: ierr
+    integer :: ret
+    real(4) :: gauss2d(imax,jmax)
+    real(4) :: icos2d(nip)                    ! work array on icos grid
+    real(4) :: spec(nc)
+
+    ret = gptlstart (thisfunc)
+    do n=1,niter
+! Loop over k: send input (host), recv input (slave), or copy (host=slave)
+      do k=kbeg(n),kend(n)
+        workertask = k - kbeg(n)
+        if (myrank == 0) then
+          if (workertask == 0) then
+            spec(:) = data%q(:,k,1)
+          else
+            call mpi_send (data%q(1,k,1), nc, MPI_REAL, workertask, tag, my_comm, ierr)
+          end if
+        else if (myrank == workertask) then
+          call mpi_recv (spec, nc, MPI_REAL, 0, tag, my_comm, status, ierr)
+        end if
+      end do
+
+! Do the spectral transform and interpolation to icos
+      if (myrank <= kend(n)-kbeg(n)) then
+        call sptez_mod (0, maxwv, idrt, imax, jmax, spec, gauss2d, 1)
+        CALL bilinear_interp (gauss2d, icos2d)
+      end if
+
+! Loop over k: recv output (host), send output (slave). If host=slave, the data are already there
+! NOTE: MUST loop kbeg(n),kend(n) instead of reverse because root does computations for kbeg(n)
+      do k=kbeg(n),kend(n)
+        workertask = k - kbeg(n)
+        if (myrank == 0) then
+          if (workertask /= 0) then
+            call mpi_recv (icos2d, nip, MPI_REAL, workertask, tag, my_comm, status, ierr)
+          end if
+        else if (myrank == workertask) then
+          call mpi_send (icos2d, nip, MPI_REAL, 0, tag, my_comm, ierr)
+        end if
+!sms$serial (<qv_lyrk,out> : default=ignore) begin
+        do ipn=1,nip
+          qv_lyrk(ipn) = max(icos2d(ipn),qvmin)
+        end do
+!sms$serial end
+!sms$parallel (dh,ipn) begin
+        do ipn=1,nip
+          qv_lyr(k,ipn) = qv_lyrk(ipn)
+        end do
+!sms$parallel end
+      end do
+    end do
+
+    ret = gptlstop (thisfunc)
+  end subroutine transform_interp_2
+
+  subroutine transform_interp_3 (p_lev, sigak, sigbk)
+    real(4), intent(out) :: p_lev(nvp+1,nip)
+    real(4), intent(out) :: sigak(nvp+1)
+    real(4), intent(out) :: sigbk(nvp+1)
+
+    character(len=18), parameter :: thisfunc = 'transform_interp_3'
+    integer :: k, j, i, ipn
+    integer :: ret
+    real(4) :: gauss2d(imax,jmax)
+    real(4) :: icos2d(nip)                    ! work array on icos grid
+
+    ret = gptlstart (thisfunc)
+    write (*,'(/a)') 'GFS intfc.prs is defined as p(k) = ak(k) + bk(k) * surf.prs'
+    sigak(:) = akfixed(:)
+    sigbk(:) = bkfixed(:)
+!$OMP PARALLEL DO PRIVATE(j,i,ipn,gauss2d,icos2d)
+    do k=1,nvp+1
+      do j=1,jmax
+        do i=1,imax
+          gauss2d(i,j) = akfixed(k) + bkfixed(k)*f1(i,j)
+        end do
+      end do
+      CALL bilinear_interp (gauss2d, icos2d)
+      do ipn=1,nip
+        p_lev(k,ipn) = icos2d(ipn)
+      end do
+    end do
+!$OMP END PARALLEL DO
+
+    ret = gptlstop (thisfunc)
+    ret = gptlprint_memusage ('end '//thisfunc)
+  end subroutine transform_interp_3
+
+  subroutine transform_interp_4 (gz_lev, t_lyr)
+!sms$distribute(dh,2) begin
+    real(4), intent(out) :: gz_lev(nvp+1,nip)
+    real(4), intent(out) :: t_lyr(nvp,nip)
+!sms$distribute end
+
+! Local workspace
+!sms$distribute(dh,1) begin
+    real(4) :: t_lyrk(nip)
+    real(4) :: gz_levk(nip)
+!sms$distribute end
+
+    character(len=18), parameter :: thisfunc = 'transform_interp_4'
+    integer, parameter :: tag = 4
+    real(4) :: gauss2d_lo
+    real(4) :: gauss2d_up
+    real(4) :: pl2d
+    real(4) :: vtmp2d(imax,jmax)
+    real(4) :: exlo, exup
+    integer j,i,k,ipn,k3d,n
+    integer :: ierr
+    integer :: workertask
+    integer :: status(MPI_STATUS_SIZE)
+    integer :: ret
+    real :: pid, piu
+    real,parameter :: rocp  = 287.05/1004.6
+    real,parameter :: rocp1 = rocp+1
+    real,parameter :: rocpr = 1/rocp
+    real(4) :: spec(nc)
+    real(4) :: gauss2d(imax,jmax)
+    real(4) :: icos2d(nip)                    ! work array on icos grid
+
+    ret = gptlstart (thisfunc)
+! perform spherical transform on virt.temp. (t) and specif.hum. (q) field
+! Compute geopotential on interfaces (still on Gaussian grid!)
+
+    if (myrank == 0) then
+!$OMP PARALLEL DO PRIVATE(i)
+      do j=1,jmax
+        do i=1,imax
+          gauss2d(i,j) = f2(i,j)*grvity  ! f2 = surface height
+        end do
+      end do
+      CALL bilinear_interp (gauss2d, icos2d)
+    end if
+
+!sms$serial (<gz_levk,out> : default=ignore) begin
+    do ipn=1,nip
+      gz_levk(ipn) = icos2d(ipn)
+    end do
+!sms$serial end
+!sms$parallel (dh,ipn) begin
+    do ipn=1,nip
+      gz_lev(1,ipn) = gz_levk(ipn)
+    end do
+!sms$parallel end
+
+    do n=1,niter
+! Loop over k: send input (host->worker), recv input (worker<-host), or copy (host is worker)
+      do k=kbeg(n),kend(n)
+        workertask = k - kbeg(n)
+        if (myrank == 0) then
+          if (workertask == 0) then
+            spec(:) = data%t(:,k)
+          else
+            call mpi_send (data%t(1,k), nc, MPI_REAL, workertask, tag, my_comm, ierr)
+          end if
+        else if (myrank == workertask) then
+          call mpi_recv (spec, nc, MPI_REAL, 0, tag, my_comm, status, ierr)
+        end if
+
+! Do the spectral transform and interpolate to icos
+        if (myrank == workertask) then
+          call sptez_mod (0, maxwv, idrt, imax, jmax, spec, vtmp2d, 1)
+          CALL bilinear_interp (vtmp2d, icos2d)
+        end if
+        if (myrank == 0) then
+          if (workertask /= 0) then
+            call mpi_recv (icos2d, nip, MPI_REAL, workertask, tag, my_comm, status, ierr)
+            call mpi_recv (vtmp2d, imax*jmax, MPI_REAL, workertask, tag, my_comm, status, ierr)
+          end if
+!$OMP PARALLEL DO PRIVATE (i,pid,piu,pl2d,gauss2d_lo,gauss2d_up)
+          do j=1,jmax
+            do i=1,imax
+              pid = akfixed(k)   + bkfixed(k  )*f1(i,j)
+              piu = akfixed(k+1) + bkfixed(k+1)*f1(i,j)
+              if (idsl == 2) then
+                pl2d = (pid+piu)/2
+              else 
+                pl2d = ((pid**rocp1 - piu**rocp1)/(rocp1*(pid - piu)))**rocpr
+              end if
+              gauss2d_lo = cp*((akfixed(k  ) + bkfixed(k  )*f1(i,j))/p1000)**(rd/cp)
+              gauss2d_up = cp*((akfixed(k+1) + bkfixed(k+1)*f1(i,j))/p1000)**(rd/cp)
+              gauss2d(i,j) = gauss2d(i,j) + (gauss2d_lo-gauss2d_up)*vtmp2d(i,j)*(p1000/pl2d)**(rd/cp)
+            end do
+          end do
+!$OMP END PARALLEL DO
+        else if (myrank == workertask) then
+          call mpi_send (icos2d, nip, MPI_REAL, 0, tag, my_comm, ierr)
+          call mpi_send (vtmp2d, imax*jmax, MPI_REAL, 0, tag, my_comm, ierr)
+        end if
+!sms$serial (<t_lyrk,gz_levk,out> : default=ignore) begin
+        do ipn=1,nip
+          t_lyrk(ipn) = icos2d(ipn)
+        end do
+        CALL bilinear_interp (gauss2d, icos2d)
+        do ipn=1,nip
+          gz_levk(ipn) = icos2d(ipn)
+        end do
+!sms$serial end
+!sms$parallel (dh,ipn) begin
+        do ipn=1,nip
+          gz_lev(k+1,ipn) = gz_levk(ipn)
+          t_lyr(k,ipn) = t_lyrk(ipn)
+        end do
+!sms$parallel end
+      end do
+    end do
+
+    write (*,'(a/(5f14.6))') 'ak array:',(head%ak(k),k=1,nvp+1)
+    write (*,'(a/(5f14.6))') 'bk array:',(head%bk(k),k=1,nvp+1)
+
+    ret = gptlstop (thisfunc)
+    ret = gptlprint_memusage ('end '//thisfunc)
+  end subroutine transform_interp_4
+
+  subroutine transform_interp_5 (u_lyr, v_lyr)
+!sms$distribute(dh,2) begin
+    real(4), intent(out) :: u_lyr(nvp,nip)
+    real(4), intent(out) :: v_lyr(nvp,nip)
+!sms$distribute end
+!sms$distribute(dh,1) begin
+    real(4) :: u_lyrk(nip)
+    real(4) :: v_lyrk(nip)
+!sms$distribute end
+
+! Local workspace
+    character(len=18), parameter :: thisfunc = 'transform_interp_5'
+    integer, parameter :: tag = 5
+    real(4) :: icos2d1(nip)
+    real(4) :: icos2d2(nip)
+    real(4) :: gauss2d1(imax,jmax)
+    real(4) :: gauss2d2(imax,jmax)
+    real(4) :: d(nc)
+    real(4) :: z(nc)
+    integer :: j,k,ipn,n
+    integer :: status(MPI_STATUS_SIZE)
+    integer :: workertask
+    integer :: ierr
+    integer :: ret
+
+    ret = gptlstart (thisfunc)
+
+    do n=1,niter
+! Loop over k: send input (host), recv input (slave), or copy (host=slave)
+      do k=kbeg(n),kend(n)
+        workertask = k - kbeg(n)
+        if (myrank == 0) then
+          if (workertask == 0) then
+            d(:) = data%d(:,k)
+            z(:) = data%z(:,k)
+          else
+            call mpi_send (data%d(1,k), nc, MPI_REAL, workertask, tag, my_comm, ierr)
+            call mpi_send (data%z(1,k), nc, MPI_REAL, workertask, tag, my_comm, ierr)
+          end if
+        else if (myrank == workertask) then
+          call mpi_recv (d, nc, MPI_REAL, 0, tag, my_comm, status, ierr)
+          call mpi_recv (z, nc, MPI_REAL, 0, tag, my_comm, status, ierr)
+        end if
+      end do
+
+! Do the spectral transform and interpolation to icos
+      if (myrank <= kend(n)-kbeg(n)) then
+        call sptezmv_mod (0, maxwv, idrt, imax, jmax, 1, d, z, gauss2d1, gauss2d2, 1)
+        CALL bilinear_interp_uv (gauss2d1, icos2d1, gauss2d2, icos2d2)
+      end if
+
+! Loop over k: recv output (host), send output (slave). If host=slave, the data are already there
+! NOTE: MUST loop kbeg(n),kend(n) instead of reverse because root does computations for kbeg(n)
+      do k=kbeg(n),kend(n)
+        workertask = k - kbeg(n)
+        if (myrank == 0) then
+          if (workertask /= 0) then
+            call mpi_recv (icos2d1, nip, MPI_REAL, workertask, tag, my_comm, status, ierr)
+            call mpi_recv (icos2d2, nip, MPI_REAL, workertask, tag, my_comm, status, ierr)
+          end if
+        else if (myrank == workertask) then
+          call mpi_send (icos2d1, nip, MPI_REAL, 0, tag, my_comm, ierr)
+          call mpi_send (icos2d2, nip, MPI_REAL, 0, tag, my_comm, ierr)
+        end if
+!sms$serial (<u_lyrk,v_lyrk,out> : default=ignore) begin
+        do ipn=1,nip
+          u_lyrk(ipn) = icos2d1(ipn)
+          v_lyrk(ipn) = icos2d2(ipn)
+        end do
+!sms$serial end
+!sms$parallel (dh,ipn) begin
+        do ipn=1,nip
+          u_lyr(k,ipn) = u_lyrk(ipn)
+          v_lyr(k,ipn) = v_lyrk(ipn)
+        end do
+!sms$parallel end
+      end do
+    end do
+    ret = gptlstop (thisfunc)
+    ret = gptlprint_memusage ('end '//thisfunc)
+  end subroutine transform_interp_5
+
+  subroutine transform_interp_6 (o3_lyr, qc_lyr)
+!sms$distribute(dh,2) begin
+    real(4),intent(out) :: o3_lyr(nvp,nip)
+    real(4),intent(out) :: qc_lyr(nvp,nip)
+!sms$distribute end
+!sms$distribute(dh,1) begin
+    real(4) :: o3_lyrk(nip)
+    real(4) :: qc_lyrk(nip)
+!sms$distribute end
+
+! Local workspace
+    character(len=18), parameter :: thisfunc = 'transform_interp_6'
+    integer, parameter :: tag = 6
+    integer :: k,ipn,n
+    integer :: workertask
+    integer :: ierr
+    integer :: status(MPI_STATUS_SIZE)
+    integer :: ret
+    real(4) :: o3(nc)
+    real(4) :: qc(nc)
+    real(4) :: gauss2d1(imax,jmax)
+    real(4) :: gauss2d2(imax,jmax)
+    real(4) :: icos2d1(nip)                    ! work array on icos grid
+    real(4) :: icos2d2(nip)                    ! work array on icos grid
+
+    ret = gptlstart (thisfunc)
+
+    do n=1,niter
+! Loop over k: send input (host), recv input (slave), or copy (host=slave)
+      do k=kbeg(n),kend(n)
+        workertask = k - kbeg(n)
+        if (myrank == 0) then
+          if (workertask == 0) then
+            o3(:) = data%q(:,k,2)
+            qc(:) = data%q(:,k,3)
+          else
+            call mpi_send (data%q(1,k,2), nc, MPI_REAL, workertask, tag, my_comm, ierr)
+            call mpi_send (data%q(1,k,3), nc, MPI_REAL, workertask, tag, my_comm, ierr)
+          end if
+        else if (myrank == workertask) then
+          call mpi_recv (o3, nc, MPI_REAL, 0, tag, my_comm, status, ierr)
+          call mpi_recv (qc, nc, MPI_REAL, 0, tag, my_comm, status, ierr)
+        end if
+      end do
+
+! Do the spectral transform and interpolation to icos
+      if (myrank <= kend(n) - kbeg(n)) then
+! perform spherical transform on ozone (g1) field
+        call sptez_mod (0, maxwv, idrt, imax, jmax, o3, gauss2d1, 1)
+        call sptez_mod (0, maxwv, idrt, imax, jmax, qc, gauss2d2, 1)
+        CALL bilinear_interp (gauss2d1, icos2d1)
+        CALL bilinear_interp (gauss2d2, icos2d2)
+      end if
+
+! Loop over k: recv output (host), send output (slave). If host=slave, the data are already there
+! NOTE: MUST loop kbeg(n),kend(n) instead of reverse because root does computations for kbeg(n)
+      do k=kbeg(n),kend(n)
+        workertask = k - kbeg(n)
+        if (myrank == 0) then
+          if (workertask /= 0) then
+            call mpi_recv (icos2d1, nip, MPI_REAL, workertask, tag, my_comm, status, ierr)
+            call mpi_recv (icos2d2, nip, MPI_REAL, workertask, tag, my_comm, status, ierr)
+          end if
+        else if (myrank == workertask) then
+          call mpi_send (icos2d1, nip, MPI_REAL, 0, tag, my_comm, ierr)
+          call mpi_send (icos2d2, nip, MPI_REAL, 0, tag, my_comm, ierr)
+        end if
+!sms$serial (<o3_lyrk,qc_lyrk,out> : default=ignore) begin
+        do ipn=1,nip
+          o3_lyrk(ipn) = max( icos2d1(ipn), 0. )
+          qc_lyrk(ipn) = max( icos2d2(ipn), 0. )
+        end do
+!sms$serial end
+!sms$parallel (dh,ipn) begin
+        do ipn=1,nip
+          o3_lyr(k,ipn) = o3_lyrk(ipn)
+          qc_lyr(k,ipn) = qc_lyrk(ipn)
+        end do
+!sms$parallel end
+      end do
+    end do
+
+    ret = gptlstop (thisfunc)
+    ret = gptlprint_memusage ('end '//thisfunc)
+  end subroutine transform_interp_6
+
+  subroutine ss2ggtopo ()
+! Local workspace
+    integer :: j,k,k1,ipn
+    real    :: exlo,exup,th_lyr,pkap,gznew,hmax,hmin,pmax,pmin
+    real    :: gzold(nip)
+    integer :: kgrnd(nip)
+
+    print *,'switch to non-GFS surface height (topo dat file) ....'
+
+!SMS$PARALLEL (dh,ipn) BEGIN
+    do ipn=1,nip			! horiz. loop
+      do k=1,nvp			! vert. loop
+        if (gz_lev(k+1,ipn).gt.hs_lev(ipn)*grvity) then
+
+! --- level k+1 is above ground. integrate hydrostat.eqn down from there.
+! --- sequence of operations (layer k is sandwiched between interfaces k,k+1):
+! --- (a) get old midlayer p^kappa from (partial p^(1+kappa))/(partial p)
+! --- (b) get old theta from
+! ---     partial phi_old / partial pi_old = -theta_old
+! --- (c) set theta_new = theta_old (not optimal, but tolerable for now)
+! --- (d) get new bottom pressure from
+! ---     partial phi_new / partial pi_new = -theta_new
+! --- (e) get new surf.temp. from theta_new and new bottom pressure
+
+          exup=cp*(p_lev(k+1,ipn)/p1000)**(rd/cp)
+          exlo=cp*(p_lev(k  ,ipn)/p1000)**(rd/cp)
+!      pkap=(exlo*p_lev(k,ipn)-exup*p_lev(k+1,ipn))/		&
+!       ((rd+cp)*(p_lev(k,ipn)-     p_lev(k+1,ipn)))
+          th_lyr=(gz_lev(k+1,ipn)-gz_lev(k,ipn))/(exlo-exup)
+          exlo=exup+(gz_lev(k+1,ipn)-hs_lev(ipn)*grvity)/th_lyr
+          p_lev(1,ipn)=p1000*(exlo/cp)**(cp/rd)		! new srf.pres.
+          ps_lev(ipn)=p_lev(1,ipn)
+          if (exlo.gt.exup+.01) then
+            pkap=(exlo*p_lev(1,ipn)-exup*p_lev(k+1,ipn))/		&
+                 ((rd+cp)*(p_lev(1,ipn)-     p_lev(k+1,ipn)))
+          else
+            pkap=.5*(exlo+exup)/cp
+          end if
+!      pkap=(exlo*p_lev(1,ipn)-exup*p_lev(k+1,ipn))/		&
+!       ((rd+cp)*(p_lev(1,ipn)-     p_lev(k+1,ipn)))
+          t_lyr(1,ipn)=th_lyr*pkap				! new srf.temp.
+          gz_lev(1,ipn)=hs_lev(ipn)*grvity			! new srf.geopot.
+          do k1=2,k
+            p_lev (k1,ipn)=p_lev (1,ipn)
+            t_lyr (k1,ipn)=t_lyr (1,ipn)
+            gz_lev(k1,ipn)=gz_lev(1,ipn)
+          end do
+          kgrnd(ipn)=k
+          gzold(ipn)=gz_lev(k+1,ipn)
+          exit
+        end if
+      end do                      ! vert. loop
+    end do                       ! horiz. loop
+!SMS$PARALLEL END
+
+    hmin = minval(hs_lev(1:nip))
+    hmax = maxval(hs_lev(1:nip))
+    pmin = minval(ps_lev(1:nip))
+    pmax = maxval(ps_lev(1:nip))
+!SMS$REDUCE(hmax,pmax,max)
+!SMS$REDUCE(hmin,pmin,min)
+
+    print 100,'min,max of new srf.height on icos grid:',hmin,hmax
+    print 100,'min,max of new srf.press  on icos grid:',pmin,pmax
+100 format (a,2f13.2)
+
+! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+! optional: re-compute geopotential on interfaces to check for errors
+!SMS$PARALLEL (dh,ipn) BEGIN
+    do ipn=1,nip
+      gznew=gz_lev(1,ipn)
+      exup=cp*(p_lev(1,ipn)/p1000)**(rd/cp)
+      do k=1,kgrnd(ipn)
+        exlo=exup
+        exup=cp*(p_lev(k+1,ipn)/p1000)**(rd/cp)
+        if (exlo.gt.exup+.01) then
+          pkap=(exlo*p_lev(1,ipn)-exup*p_lev(k+1,ipn))/			&
+               ((rd+cp)*(p_lev(1,ipn)-     p_lev(k+1,ipn)))
+        else
+          pkap=.5*(exlo+exup)/cp
+        end if
+        gznew=gznew+(exlo-exup)*t_lyr(k,ipn)/pkap
+      end do
+      k=kgrnd(ipn)
+      if (abs(gznew-gzold(ipn)).gt.1.)					&
+           print '(a,2i7,f11.1,f9.1)',					&
+           'height discrepancy at ipn,kgrnd =',ipn,k,gzold(ipn),gznew
+    end do
+!SMS$PARALLEL END
+! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    return
+  end subroutine ss2ggtopo
+
+
+  subroutine solidrot(deg_lat,deg_lon,u,v,vrbos,ipn)
+!<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+! --- generate u,v components representing solid-rotation flow across pole
+!
+! --- transform lat/lon into spher.coord.system rotated 90 deg
+! --- solid rotation will be about k axis in rotated system.
+
+! --- there are 2 options:
+
+! --- (1) rotation about vector i => make vectors i/j/k the new k/i/j vectors
+
+! ---              / cos lat cos lon \
+! --- unit vector |  cos lat sin lon  | is represented in the new system as
+! ---              \ sin lat         /
+
+! ---  / cos lat sin lon \     / cos latp cos lonp \
+! --- |  sin lat          | = |  cos latp sin lonp  |
+! ---  \ cos lat cos lon /     \ sin latp          /
+
+
+! --- (2) rotation about vector j => make vectors i/j/k the new j/k/i vectors
+
+! ---              / cos lat cos lon \
+! --- unit vector |  cos lat sin lon  | is represented in the new system as
+! ---              \ sin lat         /
+
+! ---  / sin lat         \     / cos latp cos lonp \
+! --- |  cos lat cos lon  | = |  cos latp sin lonp  |
+! ---  \ cos lat sin lon /     \ sin latp          /
+
+!<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+    real,   intent(IN) :: deg_lat,deg_lon	! latitude/longitude (deg)
+    real,  intent(OUT) :: u,v			! velocity components
+    integer,intent(IN) :: ipn
+    logical,intent(IN) :: vrbos
+    real*8 alat,alon,alatp,alonp,dlat,dlon,dlatp,dlonp
+    real,parameter :: small=1.e-9, speed=100.
+
+#if ( defined NEED_SINDCOSD )
+!JR Define required statement functions for situations where
+!JR compiler doesn't support them (e.g. gfortran)
+    real*8 :: val, sind, cosd, asind, acosd, x, y, atan2d, tand
+    real*8, parameter :: pi = 3.14159265358979
+    sind(val) = sin(val*pi/180.)
+    cosd(val) = cos(val*pi/180.)
+    tand(val) = tan(val*pi/180.)
+    
+    asind(val) = (180./pi)*asin(val)
+    acosd(val) = (180./pi)*acos(val)
+    atan2d(x,y) = (180./pi)*atan2(x, y)
+#endif
+
+    alat=deg_lat
+    alon=deg_lon
+
+! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+! --- option 1: rotation about original vector 
+
+! --- forward transform:
+    alatp = asind(cosd(alat)*cosd(alon))
+    alonp = atan2d(tand(alat),sind(alon))
+
+! --- solid rotation: compute derivatives w.r.t. transformed longitude
+! --- (using 'back transform' formulae given below)
+    dlat = cosd(alatp)*cosd(alonp)/max(small*1._8,sqrt(1.-(cosd(alatp)*sind(alonp))**2))	! return 0 if 0/0
+    dlon =-tand(alatp)*sind(alonp)/max(small*1._8,tand(alatp)**2+cosd(alonp)**2)		! return 0 if 0/0
+
+    u = dlon*cosd(alat) * speed
+    v = dlat            * speed
+
+    if (vrbos) then
+      print 101,'(solrot1) la/lo,latp/lonp,u,v=',alat,alon,alatp,alonp,u,v
+
+! --- back transform (diagnostic use):
+      alat=asind(cosd(alatp)*sind(alonp))
+      alon=atan2d(cosd(alonp),tand(alatp))
+      alon=mod(alon+360._8,360._8)
+      
+      print 101,'(solrot1) alat/lon,alatp/lonp=',alat,alon,alatp,alonp
+
+      dlatp=-cosd(alat )*sind(alon )/max(small*1._8,sqrt(1.-(cosd(alat )*cosd(alon ))**2))	! return 0 if 0/0
+      dlonp=-tand(alat )*cosd(alon )/max(small*1._8,tand(alat )**2+sind(alon )**2)		! return 0 if 0/0
+
+      print 101,'(solrot1) dlat/lon,dlatp/lonp=',dlat,dlon,dlatp,dlonp
+
+! ---check derivatives by evaluating them in finite difference form
+      dlat =(asind (cosd(alatp)*sind(alonp+small))		&
+            -asind (cosd(alatp)*sind(alonp-small)))/(2.*small)
+      dlon =(atan2d(cosd(alonp+small),tand(alatp))		&
+            -atan2d(cosd(alonp-small),tand(alatp)))/(2.*small)
+      dlatp=(asind (cosd(alat)*cosd(alon+small))			&
+            -asind (cosd(alat)*cosd(alon-small)))/(2.*small)
+      dlonp=(atan2d(tand(alat),sind(alon+small))			&
+            -atan2d(tand(alat),sind(alon-small)))/(2.*small)
+      if (dlon .gt. 179./(2.*small)) dlon =dlon -180./(2.*small)
+      if (dlon .lt.-179./(2.*small)) dlon =dlon +180./(2.*small)
+      if (dlonp.gt. 179./(2.*small)) dlonp=dlonp-180./(2.*small)
+      if (dlonp.lt.-179./(2.*small)) dlonp=dlonp+180./(2.*small)
+      
+      print 101,'(solrot1) dlat/lon,dlatp/lonp=',dlat,dlon,dlatp,dlonp
+
+! --- print l.h.s., r.h.s. of the 3 equations we are solving
+      print 100,cosd(alat)*sind(alon),cosd(alatp)*cosd(alonp)
+      print 100,sind(alat)           ,cosd(alatp)*sind(alonp)
+      print 100,cosd(alat)*cosd(alon),sind(alatp)
+    end if			! vrbos
+
+! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+! ! --- option 2: rotation about original vector j
+! 
+! ! --- forward transform:
+!    alatp=asind(cosd(alat)*sind(alon))
+!    alonp=atan2d(cosd(alon),tand(alat))
+! 
+! ! --- solid rotation: compute derivatives w.r.t. transformed longitude
+! ! --- (using 'back transform' formulae given below)
+!    dlat = -cosd(alatp)*sind(alonp)				&
+!     /max(small,sqrt(1.-(cosd(alatp)*cosd(alonp))**2))	! return 0 if 0/0
+!    dlon =-tand(alatp)*cosd(alonp)				&
+!     /max(small,tand(alatp)**2+sind(alonp)**2)		! return 0 if 0/0
+! 
+!    u=dlon*cosd(alat) * speed
+!    v=dlat            * speed
+! 
+!    if (vrbos) then
+!     print 101,'(solrot2) la/lo,latp/lonp,u,v=',alat,alon,alatp,alonp,u,v
+! 
+! ! --- back transform (diagnostic use):
+!     alat=asind(cosd(alatp)*cosd(alonp))
+!     alon=atan2d(tand(alatp),sind(alonp))
+!     alon=mod(alon+360.,360.)
+! 
+!     print 101,'(solrot2) alat/lon,alatp/lonp=',alat,alon,alatp,alonp
+! 
+!     dlatp= cosd(alat )*cosd(alon )				&
+!       /max(small,sqrt(1.-(cosd(alat )*sind(alon ))**2))	! return 0 if 0/0
+!     dlonp=-tand(alat )*sind(alon )				&
+!       /max(small,tand(alat )**2+cosd(alon )**2)		! return 0 if 0/0
+! 
+!     print 101,'(solrot2) dlat/lon,dlatp/lonp=',dlat,dlon,dlatp,dlonp
+! 
+! ! ---check derivatives by evaluating them in finite difference form
+!     dlat =(asind (cosd(alatp)*cosd(alonp+small))		&
+!           -asind (cosd(alatp)*cosd(alonp-small)))/(2.*small)
+!     dlon =(atan2d(tand(alatp),sind(alonp+small))		&
+!           -atan2d(tand(alatp),sind(alonp-small)))/(2.*small)
+!     dlatp=(asind (cosd(alat)*sind(alon+small))			&
+!           -asind (cosd(alat)*sind(alon-small)))/(2.*small)
+!     dlonp=(atan2d(cosd(alon+small),tand(alat))			&
+!           -atan2d(cosd(alon-small),tand(alat)))/(2.*small)
+!     if (dlon .gt. 179./(2.*small)) dlon =dlon -180./(2.*small)
+!     if (dlon .lt.-179./(2.*small)) dlon =dlon +180./(2.*small)
+!     if (dlonp.gt. 179./(2.*small)) dlonp=dlonp-180./(2.*small)
+!     if (dlonp.lt.-179./(2.*small)) dlonp=dlonp+180./(2.*small)
+! 
+!     print 101,'(solrot2) dlat/lon,dlatp/lonp=',dlat,dlon,dlatp,dlonp
+! 
+! ! --- print l.h.s., r.h.s. of the 3 equations we are solving
+!     print 100,sind(alat)           ,cosd(alatp)*cosd(alonp)
+!     print 100,cosd(alat)*cosd(alon),cosd(alatp)*sind(alonp)
+!     print 100,cosd(alat)*sind(alon),sind(alatp)
+!    end if			! vrbos
+! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+100 format ('equation check (numbers should match)',2f11.5)
+101 format (a,4f9.3,2f7.1)
+
+    return
+  end subroutine solidrot
+
+! Pass in args even though most are available in the module, since this routine could easily
+! be used as a general-purpose routine.
+  subroutine set_distribution (nvp, npes, niter, kbeg, kend)
+    integer, intent(in)  :: nvp     ! number of things to iterate over
+    integer, intent(in)  :: npes    ! number of tasks to do the work
+    integer, intent(out) :: niter   ! number of iterations required to do all the work
+    integer, intent(out), allocatable :: kbeg(:) ! starting index for each iteration
+    integer, intent(out), allocatable :: kend(:) ! ending index for each iteration
+
+    integer :: k,n
+
+    if (nvp < 1) then
+      write(6,*)'set_distribution: nvp must exceed 0 got ', nvp
+      stop
+    end if
+
+    if (npes < 1) then
+      write(6,*)'set_distribution: npes must exceed 0 got ', npes
+      stop
+    end if
+
+    niter = max (nvp/npes, 1)
+    if (mod(nvp,npes) /= 0) then
+      niter = niter + 1
+    end if
+    allocate(kbeg(niter))
+    allocate(kend(niter))
+
+    kbeg(1) = 1
+    kend(1) = min(nvp,kbeg(1) + npes - 1)
+    do n=2,niter
+      kbeg(n) = kend(n-1) + 1
+      kend(n) = min(nvp, kbeg(n) + npes - 1)
+    end do
+
+    write(6,*)'set_distribution:',nvp,' levels of data will be processed by',min(npes,nvp),' tasks in ', &
+              niter,' iterations.'
+    do n=1,niter
+      do k=kbeg(n),kend(n)
+        write(6,*)'iter=',n,' k=',k,' worker task=',k-kbeg(n)
+      end do
+    end do
+  end subroutine set_distribution
+end module ss_gfs

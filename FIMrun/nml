@@ -1,0 +1,4 @@
+#!/bin/sh
+
+NMLJAR=$(cd $(dirname $0) && pwd)/nml.jar
+java -client -Xms50M -Xmx50M -XX:+UseSerialGC -jar $NMLJAR "$@"

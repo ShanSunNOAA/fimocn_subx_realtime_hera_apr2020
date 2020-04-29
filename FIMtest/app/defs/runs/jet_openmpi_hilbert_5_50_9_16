@@ -1,0 +1,11 @@
+ddts_extends: 'jet_openmpi_5_50_10_1'
+namelists:
+  outputnamelist:
+    fixedgridorder: !unquoted '.true.'
+  prepnamelist:
+    curve: 1
+  queuenamelist:
+    computetasks: '9'
+  writetasknamelist:
+    max_write_tasks_per_node: 8
+    num_write_tasks: 16

@@ -1,0 +1,2 @@
+ddts_extends: 'jet_lahey_chem_smoketest'
+ddts_build: 'jet_openmpi_serial_debug'

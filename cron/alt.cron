@@ -1,0 +1,71 @@
+MAILTO="xue.wei@noaa.gov,judy.k.henderson@noaa.gov"
+# Retro RUns
+
+#XXX15 0,6,12,18 * * *  /home/rtfim/bin/purge_FIMENSRETRO_logs.sh /scratch4/BMC/fim/FIMENS_RETRO_gf/FIMwfm/log > /scratch4/BMC/fim/FIMENS_RETRO_gf/FIMwfm/log/purge/purge.log
+
+## FIMENS Retro - Dec 2013
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch4/BMC/rtfim/FIMENS_RETRO/FIMwfm/rocoto_xml/FIMENS_RETRO.xml -d /home/rtfim/retro_dbfiles/FIMENS_RETRO.db
+
+## FIMENS GF Retro - Feb 2014
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch4/BMC/rtfim/FIMENS_RETRO_gf/FIMwfm/rocoto_xml/FIMENS_RETRO_gf.xml -d /home/rtfim/retro_dbfiles/FIMENS_RETRO_gf.db
+
+## FIMENS GF Retro "New" - Feb 2014
+1-59/4 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch4/BMC/rtfim/FIMENS_RETRO_gf_new/FIMwfm/rocoto_xml/FIMENS_RETRO_gf_new.xml -d /home/rtfim/retro_dbfiles/FIMENS_RETRO_gf_new.db 
+
+# purge realtime files and logs
+45 10,20 * * * /home/rtfim/bin/purgeFIMfiles.sh > /scratch4/BMC/rtfim/logs/purgeFIM.log.$$ 2>&1
+
+# status script
+*/15 * * * * /home/rtfim/statFIM_alt.pl 120  > /scratch4/BMC/rtfim/logs/statFIM_alt.log 2>&1
+
+# push the output file from the status script to /w3/rapb/fim/from_jet
+5,20,35,50 * * * * /home/rtfim/mv_statusAll_alt.py > /scratch4/BMC/rtfim/logs/mv_statusAll_alt.log 2>&1
+
+# Realtime Runs
+#
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch4/BMC/rtfim/rtruns/FIMXALT/FIMwfm/rocoto_xml/FIMXG8ALT_omp.xml -d /home/rtfim/rt_dbfiles/FIMXALT_omp.db
+
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch4/BMC/rtfim/rtruns/FIMXALT/FIMwfm/rocoto_xml/FIMXG8ALT_omp_retro.xml -d /home/rtfim/rt_dbfiles/FIMXALT_omp_retro.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch4/BMC/rtfim/rtruns/FIMXALT/FIMwfm/rocoto_xml/FIMXG8ALT_omp_retro_post.xml -d /home/rtfim/rt_dbfiles/FIMXALT_omp_retro_post.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch4/BMC/rtfim/rtruns/FIMXALT/FIMwfm/rocoto_xml/FIMXG8ALT_retro_posttracker.xml -d /home/rtfim/rt_dbfiles/FIMXG8ALT_retro_posttracker.db
+
+# MPAS
+00 00,12 * * * /home/rtfim/qsubnclmpas nclmpas.ksh >> /scratch4/BMC/rtfim/logs/nclmpas.log 2>&1
+
+# Copy this crontab file every hour
+00 * * * * /bin/crontab -l > cron_theia.save
+
+# FIM ensemble verification - Hamilton
+MAILTO="jeffrey.a.hamilton@noaa.gov"
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch3/BMC/fim/SPPVerification/FIMwfm/rocoto_xml/FIM_GEFS_gf_Verification_retro.xml -d /scratch3/BMC/fim/SPPVerification/FIMwfm/log/FIM_GEFS_gf_Verification_retro.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch3/BMC/fim/SPPVerification/FIMwfm/rocoto_xml/FIM_GEFS_gf_Verification_retro_spring.xml -d /scratch3/BMC/fim/SPPVerification/FIMwfm/log/FIM_GEFS_gf_Verification_retro_spring.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch3/BMC/fim/SPPVerification/FIMwfm/rocoto_xml/GEFSVerification_retro.xml -d /scratch3/BMC/fim/SPPVerification/FIMwfm/log/GEFS_Verification_retro.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch3/BMC/fim/SPPVerification/FIMwfm/rocoto_xml/FIM_GEFS_gf_Verification_retro_D.xml -d /scratch3/BMC/fim/SPPVerification/FIMwfm/log/FIM_GEFS_gf_Verification_retro_D.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch3/BMC/fim/SPPVerification/FIMwfm/rocoto_xml/FIM_GEFS_gf_Verification_retro_JF.xml -d /scratch3/BMC/fim/SPPVerification/FIMwfm/log/FIM_GEFS_gf_Verification_retro_JF.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch3/BMC/fim/SPPVerification/FIMwfm/rocoto_xml/GEFSVerification_retro_D.xml -d /scratch3/BMC/fim/SPPVerification/FIMwfm/log/GEFS_Verification_retro_D.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch3/BMC/fim/SPPVerification/FIMwfm/rocoto_xml/GEFSVerification_retro_JF.xml -d /scratch3/BMC/fim/SPPVerification/FIMwfm/log/GEFS_Verification_retro_JF.db
+
+# NAVGEM HIWPP/EMB Verification
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch4/BMC/fim/NAVGEMVerification/FIMwfm/rocoto_xml/NAVGEMVerification.xml -d /scratch4/BMC/fim/NAVGEMVerification/FIMwfm/log/NAVGEM_Verification.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch4/BMC/fim/NAVGEMVerification/FIMwfm/rocoto_xml/NAVGEMVerification_EMB.xml -d /scratch4/BMC/fim/NAVGEMVerification/FIMwfm/log/NAVGEM_Verification_EMB.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch4/BMC/fim/NAVGEMVerification/FIMwfm/rocoto_xml/NAVGEM_op_Verification_EMB.xml -d /scratch4/BMC/fim/NAVGEMVerification/FIMwfm/log/NAVGEM_op_Verification_EMB.db
+#0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch4/BMC/fim/NAVGEMVerification/FIMwfm/rocoto_xml/NAVGEMVerification_EMB_retro.xml -d /scratch4/BMC/fim/NAVGEMVerification/FIMwfm/log/NAVGEM_Verification_EMB_retro.db
+#0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch4/BMC/fim/NAVGEMVerification/FIMwfm/rocoto_xml/NAVGEM_op_Verification.xml -d /scratch4/portfolios/BMC/fim/NAVGEMVerification/FIMwfm/log/NAVGEM_op_Verification.db
+#0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch4/BMC/fim/NAVGEMVerification/FIMwfm/rocoto_xml/NAVGEMVerification_retro.xml -d /scratch4/BMC/fim/NAVGEMVerification/FIMwfm/log/NAVGEM_Verification_retro.db
+0 1,13 * * * /scratch4/BMC/fim/NAVGEMVerification/FIMwfm/rocoto_scripts/purge_NAVGEM.pl > /scratch4/BMC/fim/NAVGEMVerification/FIMwfm/log/purge/purge_NAVGEM.log.$$ 2>&1
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch3/BMC/fim/hamilton/GFSVerification/FIMwfm/rocoto_xml/GFS_HIWPP_verification_retro.xml -d /scratch3/BMC/fim/hamilton/GFSVerification/FIMwfm/rocoto_xml/Verification.db
+
+# HIWPP Verification
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch4/BMC/rtfim/rtruns/FIMALT/FIMwfm/rocoto_xml/FIMG8ALT_hiwppdb.xml -d /scratch4/BMC/rtfim/rtruns/FIMALT/FIMwfm/rocoto_xml/HIWPP_Verification.db
+
+
+MAILTO="brian.d.jamison@noaa.gov,judy.k.henderson@noaa.gov"
+# Brian's test runs
+# 0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch4/BMC/rtfim/jamison/FIMALTTEST/FIMALT/FIMwfm/rocoto_xml/FIMG8ALT.xml -d /scratch4/BMC/rtfim/jamison/FIMALTTEST/FIMALT/FIMwfm/log/FIMG8ALT.db
+# 0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch4/BMC/rtfim/jamison/FIMXALTTEST/FIMXALT/FIMwfm/rocoto_xml/FIMXG8ALT.xml -d /scratch4/BMC/rtfim/jamison/FIMXALTTEST/FIMXALT/FIMwfm/log/FIMXG8ALT.db
+
+MAILTO="georg.a.grell@noaa.gov,xue.wei@noaa.gov,judy.k.henderson@noaa.gov"
+# Georg's test GF run
+#0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch3/BMC/fim/gf_theia/FIMwfm/rocoto_xml/gf.xml -d /home/rtfim/retro_dbfiles/gf.db
+##0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch3/BMC/fim/gf_theia/FIMwfm/rocoto_xml/gf_retro.xml -d /home/rtfim/retro_dbfiles/gf_retro.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch3/BMC/fim/gf_theia/FIMwfm/rocoto_xml/gf_verif.xml -d /home/rtfim/retro_dbfiles/gf_verif.db

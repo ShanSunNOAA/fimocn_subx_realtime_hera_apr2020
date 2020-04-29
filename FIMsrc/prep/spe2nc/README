@@ -1,0 +1,25 @@
+The purpose of code in this directory is to read in spectral coefficient
+initial data from NCEP, transform to the underlying gaussian grid, and write
+the results to a netcdf file suitable for plotting with e.g. ferret or
+ncview. In order to run the executable, required input files are:
+
+1) Initial data in the form of spectral coefficients 2) lat/lon information
+(e.g. gfsltln_file)
+
+To build:
+  - Ensure $NETCDF points to a netcdf installation at least 3.6.3
+  - Currently set up to use ifort but other compilers should work
+  - Type "make"
+
+To run:
+  - Edit namelist file nl.spe2nc and set locations of desired spectral IC and
+    gfsltln_file appropriately
+  - setenv OMP_NUM_THREADS to the appropriate number of threads to
+    use. spe2nc threads the spectral transform, though all netcdf output has
+    to be done in a critical section because netcdf3.* does not allow
+    parallel writes.
+  - Run ./spe2nc < nl.spe2nc
+
+Input source files come from various parts of the FIM source tree, so there
+are many soft links to those files. Construction of the main program was done
+to mimic as closely as possible what is done in ss2icos.F90

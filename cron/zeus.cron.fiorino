@@ -1,0 +1,13 @@
+#mf
+#0-59/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/rtfim/FIMRETRO_ISAAC_ZEUS_nojpgf/FIMwfm/xml/FIMRETRO_ISAAC_ZEUS.xml --store=/scratch2/portfolios/BMC/rtfim/FIMRETRO_ISAAC_ZEUS_nojpgf/FIMwfm/log/FIMRETRO_ISAAC_ZEUS.store
+
+# fubar 2915 test
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/rtfim/fubar_2915/FIMwfm/rocoto_xml/FIMfubar.zeus.xml -d  /scratch2/portfolios/BMC/rtfim/fubar_2915/FIMwfm/log/FIMfubar.db  
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/rtfim/fubar_2448/FIMwfm/rocoto_xml/FIMfubar.zeus.xml -d  /scratch2/portfolios/BMC/rtfim/fubar_2448/FIMwfm/log/FIMfubar.db  
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/rtfim/rtfim_r2745/FIMwfm/rocoto_xml/FIMr2745.zeus.xml -d  /scratch2/portfolios/BMC/rtfim/rtfim_r2745/FIMwfm/log/FIMr2745.db  
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/rtfim/rtfim_r2747/FIMwfm/rocoto_xml/FIMr2747.zeus.xml -d  /scratch2/portfolios/BMC/rtfim/rtfim_r2747/FIMwfm/log/FIMr2747.db  
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/rtfim/trunk_2954/FIMwfm/rocoto_xml/FIMr2954.zeus.xml -d  /scratch2/portfolios/BMC/rtfim/trunk_2954/FIMwfm/log/FIMr2954.db  
+# rerun with biharm=.false.
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/rtfim/rtfim_r2747/FIMwfm/rocoto_xml/FIMr2747.zeus.xml -d  /scratch2/portfolios/BMC/rtfim/rtfim_r2747/FIMwfm/log/FIMr2747.db  
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/rtfim/trunk_2959/FIMwfm/rocoto_xml/FIMr2959.zeus.xml -d  /scratch2/portfolios/BMC/rtfim/trunk_2959/FIMwfm/log/FIMr2959.db  
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/rtfim/trunk_2941/FIMwfm/rocoto_xml/FIMr2941.zeus.xml -d  /scratch2/portfolios/BMC/rtfim/trunk_2941/FIMwfm/log/FIMr2941.db  

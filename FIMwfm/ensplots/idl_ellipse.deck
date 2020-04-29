@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# this controls the creation of ellipses.  Assumption is that you have a file named
+# "ensemble-storm-data.txt with a list of the dates (yyyymmddhh), basins, and storm ids.
+# For example
+#
+#IDL> $cat ensemble-storm-data.txt
+#2010083100 AL 07
+#2010090100 AL 07
+#2010090200 AL 07
+#2010090300 AL 07
+#2010083000 WP 08
+#2010082400 EP 09
+
+#/usr/local/bin/idl -rt=/Users/thamill/hfip/ellipse/ellipse_driver2.sav
+#ellipse_driver2.sav | idl
+# /opt/itt/idl/bin/idl /whome/hamill/hurrplots2/ellipse_driver2.pro
+
+cd /pan2/projects/fim-njet/FIMENS_2014/FIMwfm/ensplots
+echo "pwd: "
+#`pwd`
+idl /pan2/projects/fim-njet/FIMENS_2014/FIMwfm/ensplots/ellipse_driver2.pro
+
+exit

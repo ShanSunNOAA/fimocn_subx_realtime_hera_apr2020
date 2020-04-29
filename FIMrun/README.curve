@@ -1,0 +1,16 @@
+An explanation of the FIMnamelist "curve" parameter.
+
+For multiple processors, Square Layout (curve 3) is the best curve. Square
+Layout produces near equal processor footprints and minimizes the halo size by
+making the footprint of each processor as square as possible. Square Layout is
+equivalent to IJ-block order for processor counts where IJ-block produces square
+footprints. For processor counts not divisible by 10, and for 10 processors,
+both Square Layout and IJ-block degenerate to IJ order. For other processor
+counts Square Layout is superior to IJ-block and IJ.
+
+Defined by minimal halo size and near equal footprint size, the best processor
+counts are 10*(2**N)**2 which are 10, 40, 160, 640, 2560, 10240,... For Square
+Layout these optimal processor counts are only somewhat better than 10*N. For
+example, using Square Layout, fim8_64_640 is 3% faster than fim8_64_650. Other
+square processor counts, such as 10*N**2 where N is not a power of 2, are not
+optimal because N would not evenly divide (NIP-2)/10.

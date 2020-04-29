@@ -1,0 +1,7 @@
+ddts_extends: 'jet_lahey_common'
+namelists:
+  writetasknamelist:
+    max_write_tasks_per_node: 8
+    num_write_tasks: 8
+  queuenamelist:
+    maxqueuetime: '00:30:00'

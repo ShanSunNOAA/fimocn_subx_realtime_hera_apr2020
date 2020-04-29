@@ -1,0 +1,5 @@
+ddts_extends: 'theiaintel_omp_5_50_10_1'
+ddts_baseline: 'theiaintel_alt_land_f'
+namelists:
+  prepnamelist:
+    alt_land: !unquoted '.false.'

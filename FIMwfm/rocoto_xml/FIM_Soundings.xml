@@ -1,0 +1,27 @@
+  <task name="soundings#fcst#" maxtries="3">
+    <command>&SCRIPTS;/soundings.ksh</command>
+    <account>&PROJECT;</account>
+    <cores>1</cores>
+    <queue>&SERVICE;</queue>
+    &PARTITION_SERVICE;
+    <walltime>00:30:00</walltime>
+    <jobname><cyclestr>soundings_@H</cyclestr></jobname>
+    <join><cyclestr>&FIM_LOG;/raob/soundings_#fcst#_@Y@m@d@H.log</cyclestr></join>
+    <envar><name>WFM</name><value>1</value></envar>
+    <envar><name>FIM_SOUNDINGS</name><value>&FIM_SOUNDINGS;</value></envar>
+    <envar><name>FIM_HOME</name><value>&FIM_HOME;</value></envar>
+    <envar><name>FIM_RUN</name><value>&FIM_RUN;</value></envar>
+    <envar><name>FILENAME</name><value><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/post_C/fim/NAT/grib2/@y@j@H000#fcst#</cyclestr></value></envar>
+    <envar><name>SCRIPTS_DIR</name><value>&SCRIPTS;</value></envar>
+    <envar><name>yyjjjhh</name><value><cyclestr>@y@j@H</cyclestr></value></envar>
+    <envar><name>WORK_DIR</name><value><cyclestr>&FIM_RUN;/fim_&FIM_VERIF_CYCLE;_@Y@m@d@H00/soundings</cyclestr></value></envar>
+    <envar><name>MODEL</name><value>&SOUNDING_MODEL_NAME;</value></envar>
+    <envar><name>CNVGRIB</name><value>&CNVGRIB;</value></envar>
+    <envar><name>DBI_USER</name><value>&DBI_USER;</value></envar>
+    <envar><name>DBI_PASS</name><value>&DBI_PASS;</value></envar>
+    <envar><name>DBI_DSN_RUC_UA</name><value>&DBI_DSN_RUC_UA;</value></envar>
+    <envar><name>DBI_DSN_SOUNDINGS</name><value>&DBI_DSN_SOUNDINGS;</value></envar>
+    <dependency>
+        <datadep age="1200"><cyclestr>&FIM_RUN;/fim_&FIM_VERIF_CYCLE;_@Y@m@d@H00/post_C/fim/NAT/grib2/@y@j@H000#fcst#</cyclestr> 
+    </datadep></dependency>
+  </task>

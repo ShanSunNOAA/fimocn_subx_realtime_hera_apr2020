@@ -1,0 +1,5 @@
+    integer :: k                   ! layer index
+    integer :: ipn                 ! icos point index
+    integer :: ipx                 ! neighbor across joint edge
+    integer :: edg                 ! icos edge index
+    real    :: factor

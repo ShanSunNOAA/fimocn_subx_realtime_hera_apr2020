@@ -1,0 +1,1827 @@
+errexit.f
+32c32
+<       call exit(jret)
+---
+>       CALL exit_(JRET)
+errmsg.f
+fparsei.f
+fparser.f
+gbytes_char.f
+gbytes.f
+1,4c1,57
+<       SUBROUTINE GBYTE (IN,IOUT,ISKIP,NBYTE)
+<       CALL GBYTES (IN,IOUT,ISKIP,NBYTE,0,1)
+<       RETURN
+<       END
+---
+>       SUBROUTINE GBYTES(IPACKD,IUNPKD,NOFF,NBITS,ISKIP,ITER)
+> C
+> C THIS PROGRAM WRITTEN BY.....
+> C             DR. ROBERT C. GAMMILL, CONSULTANT
+> C             NATIONAL CENTER FOR ATMOSPHERIC RESEARCH
+> C             MAY 1972
+> C
+> C             CHANGES FOR SiliconGraphics IRIS-4D/25
+> C             SiliconGraphics 3.3 FORTRAN 77
+> C             MARCH 1991, RUSSELL E. JONES
+> C             NATIONAL WEATHER SERVICE
+> C
+> C THIS IS THE FORTRAN VERSION OF GBYTES.
+> C
+> C***********************************************************************
+> C
+> C SUBROUTINE GBYTES (IPACKD,IUNPKD,NOFF,NBITS,ISKIP,ITER)
+> C
+> C PURPOSE                TO UNPACK A SERIES OF BYTES INTO A TARGET
+> C                        ARRAY.  EACH UNPACKED BYTE IS RIGHT-JUSTIFIED
+> C                        IN ITS TARGET WORD, AND THE REMAINDER OF THE
+> C                        WORD IS ZERO-FILLED.
+> C
+> C USAGE                  CALL GBYTES (IPACKD,IUNPKD,NOFF,NBITS,NSKIP,
+> C                                     ITER)
+> C
+> C ARGUMENTS
+> C ON INPUT                IPACKD
+> C                           THE WORD OR ARRAY CONTAINING THE PACKED
+> C                           BYTES.
+> C
+> C                         IUNPKD
+> C                           THE ARRAY WHICH WILL CONTAIN THE UNPACKED
+> C                           BYTES.
+> C
+> C                         NOFF
+> C                           THE INITIAL NUMBER OF BITS TO SKIP, LEFT
+> C                           TO RIGHT, IN 'IPACKD' IN ORDER TO LOCATE
+> C                           THE FIRST BYTE TO UNPACK.
+> C
+> C                        NBITS
+> C                          NUMBER OF BITS IN THE BYTE TO BE UNPACKED.
+> C                          MAXIMUM OF 64 BITS ON 64 BIT MACHINE, 32
+> C                          BITS ON 32 BIT MACHINE.
+> C
+> C                         ISKIP
+> C                           THE NUMBER OF BITS TO SKIP BETWEEN EACH BYTE
+> C                           IN 'IPACKD' IN ORDER TO LOCATE THE NEXT BYTE
+> C                           TO BE UNPACKED.
+> C
+> C                         ITER
+> C                           THE NUMBER OF BYTES TO BE UNPACKED.
+> C
+> C ARGUMENTS
+> C ON OUTPUT               IUNPKD
+> C                           CONTAINS THE REQUESTED UNPACKED BYTES.
+> C***********************************************************************
+6,9c59
+<       SUBROUTINE SBYTE (IOUT,IN,ISKIP,NBYTE)
+<       CALL SBYTES (IOUT,IN,ISKIP,NBYTE,0,1)
+<       RETURN
+<       END
+---
+>       INTEGER    IPACKD(*)
+11,33c61,65
+<       SUBROUTINE GBYTES (IN,IOUT,ISKIP,NBYTE,NSKIP,N)
+< C          Get bytes - unpack bits:  Extract arbitrary size values from a
+< C          packed bit string, right justifying each value in the unpacked
+< C          array.
+<       DIMENSION IN(*), IOUT(*)
+< C            IN    = packed array input
+< C            IO    = unpacked array output
+< C            ISKIP = initial number of bits to skip
+< C            NBYTE = number of bits to take
+< C            NSKIP = additional number of bits to skip on each iteration
+< C            N     = number of iterations
+< C************************************** MACHINE SPECIFIC CHANGES START HERE
+< C          Machine dependent information required:
+< C            LMWD   = Number of bits in a word on this machine
+< C            MASKS  = Set of word masks where the first element has only the
+< C                     right most bit set to 1, the second has the two, ...
+< C            LEFTSH = Shift left bits in word M to the by N bits
+< C            RGHTSH = Shift right
+< C            OR     = Logical OR (add) on this machine.
+< C            AND    = Logical AND (multiply) on this machine
+< C          This is for Sun UNIX Fortran, DEC Alpha, and RS6000
+<       PARAMETER (LMWD=32)
+<       DIMENSION MASKS(LMWD)
+---
+>       INTEGER    IUNPKD(*)
+>       INTEGER    MASKS(64)
+> C
+>       SAVE
+> C
+35,57c67,81
+<       SAVE      MASKS, IFIRST
+< 
+<       INTEGER RGHTSH
+< C     INTEGER OR, AND
+<       LEFTSH(M,N) = ISHFT(M,N)
+<       RGHTSH(M,N) = ISHFT(M,-N)
+< C     OR(M,N)  = M.OR.N
+< C     AND(M,N) = M.AND.N
+< C     OR(M,N)  = IOR(M,N)
+< C     AND(M,N) = IAND(M,N)
+< C************************************** MACHINE SPECIFIC CHANGES END HERE
+< C          History:  written by Robert C. Gammill, jul 1972.
+< 
+<       if (IFIRST.eq.1) then
+<          masks(1) = 1
+<          do i = 2, LMWD
+<             masks(i) = 2*masks(i-1) + 1
+<          enddo
+<          IFIRST=0
+<       endif
+< 
+< C          NBYTE must be less than or equal to LMWD
+<       ICON = LMWD-NBYTE
+---
+>       IF(IFIRST.EQ.1) THEN
+>          CALL W3FI01(LW)
+>          NBITSW = 8 * LW
+>          JSHIFT = -1 * NINT(ALOG(FLOAT(NBITSW)) / ALOG(2.0))
+>          MASKS(1) = 1
+>          DO I=2,NBITSW-1
+>             MASKS(I) = 2 * MASKS(I-1) + 1
+>          ENDDO
+>          MASKS(NBITSW) = -1
+>          IFIRST = 0
+>       ENDIF
+> C
+> C NBITS MUST BE LESS THAN OR EQUAL TO NBITSW                                    
+> C
+>       ICON   = NBITSW - NBITS
+59,192c83,143
+<       MASK = MASKS (NBYTE)
+< C          INDEX  = number of words into IN before the next "byte" appears
+< C          II     = number of bits the "byte" is from the left side of the word
+< C          ISTEP  = number of bits from the start of one "byte" to the next
+< C          IWORDS = number of words to skip from one "byte" to the next
+< C          IBITS  = number of bits to skip after skipping IWORDS
+< C          MOVER  = number of bits to the right, a byte must be moved to be
+< C                   right adjusted
+<       INDEX = ISKIP/LMWD
+<       II    = MOD (ISKIP,LMWD)
+<       ISTEP = NBYTE+NSKIP
+<       IWORDS= ISTEP/LMWD
+<       IBITS = MOD (ISTEP,LMWD)
+< 
+<       DO 6 I=1,N
+<       MOVER = ICON-II
+<       IF (MOVER) 2,3,4
+< 
+< C          The "byte" is split across a word break.
+<     2 MOVEL = -MOVER
+<       MOVER = LMWD-MOVEL
+<       NP1 = LEFTSH (IN(INDEX+1),MOVEL)
+<       NP2 = RGHTSH (IN(INDEX+2),MOVER)
+<       IOUT(I) = IAND (IOR (NP1,NP2) , MASK)
+<       GO TO 5
+< 
+< C          The "byte" is already right adjusted.
+<     3 IOUT(I) = IAND (IN (INDEX+1) , MASK)
+<       GO TO 5
+< 
+< C          Right adjust the "byte".
+<     4 IOUT(I) = IAND (RGHTSH (IN (INDEX+1),MOVER) , MASK)
+< 
+<     5 II = II+IBITS
+<       INDEX = INDEX+IWORDS
+<       IF (II .LT. LMWD) GO TO 6
+<       II = II-LMWD
+<       INDEX = INDEX+1
+<     6 CONTINUE
+< 
+<       RETURN
+<       END
+< 
+<       SUBROUTINE SBYTES (IOUT,IN,ISKIP,NBYTE,NSKIP,N)
+< C          Store bytes - pack bits:  Put arbitrary size values into a
+< C          packed bit string, taking the low order bits from each value
+< C          in the unpacked array.
+<       DIMENSION IN(*), IOUT(*)
+< C            IOUT  = packed array output
+< C            IN    = unpacked array input
+< C            ISKIP = initial number of bits to skip
+< C            NBYTE = number of bits to pack
+< C            NSKIP = additional number of bits to skip on each iteration
+< C            N     = number of iterations
+< C************************************** MACHINE SPECIFIC CHANGES START HERE
+< C          Machine dependent information required:
+< C            LMWD   = Number of bits in a word on this machine
+< C            MASKS  = Set of word masks where the first element has only the
+< C                     right most bit set to 1, the second has the two, ...
+< C            LEFTSH = Shift left bits in word M to the by N bits
+< C            RGHTSH = Shift right
+< C            OR     = Logical OR (add) on this machine
+< C            AND    = Logical AND (multiply) on this machine
+< C            NOT    = Logical NOT (negation) on this machine
+< C          This is for Sun UNIX Fortran
+<       PARAMETER (LMWD=32)
+<       DIMENSION MASKS(LMWD)
+<       data IFIRST/1/
+<       SAVE      MASKS, IFIRST
+< 	
+<       INTEGER RGHTSH
+< C     INTEGER OR, AND
+<       LEFTSH(M,N) = ISHFT(M,N)
+<       RGHTSH(M,N) = ISHFT(M,-N)
+< C     OR(M,N)  = M.OR.N
+< C     AND(M,N) = M.AND.N
+< C     OR(M,N)  = IOR(M,N)
+< C     AND(M,N) = IAND(M,N)
+< C     NOT(M)   = .NOT.M
+< C***********************************************************************
+< 
+<       if (IFIRST.eq.1) then
+<          masks(1) = 1
+<          do i = 2, LMWD
+<             masks(i) = 2*masks(i-1) + 1
+<          enddo
+<          IFIRST=0
+<       endif
+< 
+< C          NBYTE must be less than or equal to LMWD
+<       ICON = LMWD-NBYTE
+<       IF (ICON .LT. 0) RETURN
+<       MASK = MASKS(NBYTE)
+< C          INDEX  = number of words into IOUT the next "byte" is to be stored
+< C          II     = number of bits in from the left side of the word to store it
+< C          ISTEP  = number of bits from the start of one "byte" to the next
+< C          IWORDS = number of words to skip from one "byte" to the next
+< C          IBITS  = number of bits to skip after skipping IWORDS
+< C          MOVER  = number of bits to the right, a byte must be moved to be
+< C                   right adjusted
+<       INDEX = ISKIP/LMWD
+<       II    = MOD(ISKIP,LMWD)
+<       ISTEP = NBYTE+NSKIP
+<       IWORDS = ISTEP/LMWD
+<       IBITS = MOD(ISTEP,LMWD)
+< 
+<       DO 6 I=1,N
+<       J = IAND (MASK,IN(I))
+<       MOVEL = ICON-II
+<       IF (MOVEL) 2,3,4
+< 
+< C          The "byte" is to be split across a word break
+<     2 MSK = MASKS (NBYTE+MOVEL)
+<       IOUT(INDEX+1)=IOR (IAND(NOT(MSK),IOUT(INDEX+1)),RGHTSH(J,-MOVEL))
+<       ITEMP = IAND (MASKS(LMWD+MOVEL),IOUT(INDEX+2))
+<       IOUT(INDEX+2) = IOR(ITEMP,LEFTSH(J,LMWD+MOVEL))
+<       GO TO 5
+< 
+< C          The "byte" is to be stored right-adjusted
+<     3 IOUT(INDEX+1) = IOR ( IAND (NOT(MASK),IOUT(INDEX+1)) , J)
+<       GO TO 5
+< 
+< C          The "byte" is to be stored in middle of word, so shift left.
+<     4 MSK = LEFTSH(MASK,MOVEL)
+<       IOUT(INDEX+1)=IOR(IAND(NOT(MSK),IOUT(INDEX+1)),LEFTSH(J,MOVEL))
+< 
+<     5 II = II+IBITS
+<       INDEX = INDEX+IWORDS
+<       IF (II .LT. LMWD) GO TO 6
+<       II = II-LMWD
+<       INDEX = INDEX+1
+<     6 CONTINUE
+< 
+<       RETURN
+---
+>       MASK   = MASKS(NBITS)
+> C
+> C INDEX TELLS HOW MANY WORDS INTO THE ARRAY 'IPACKD' THE NEXT BYTE
+> C APPEARS.         
+> C
+>       INDEX  = ISHFT(NOFF,JSHIFT)
+> C
+> C II TELLS HOW MANY BITS THE BYTE IS FROM THE LEFT SIDE OF THE WORD.
+> C
+>       II     = MOD(NOFF,NBITSW)
+> C
+> C ISTEP IS THE DISTANCE IN BITS FROM THE START OF ONE BYTE TO THE NEXT.
+> C
+>       ISTEP  = NBITS + ISKIP      
+> C
+> C IWORDS TELLS HOW MANY WORDS TO SKIP FROM ONE BYTE TO THE NEXT.                
+> C
+>       IWORDS = ISTEP / NBITSW    
+> C
+> C IBITS TELLS HOW MANY BITS TO SKIP AFTER SKIPPING IWORDS.                      
+> C
+>       IBITS  = MOD(ISTEP,NBITSW) 
+> C
+>       DO 10 I = 1,ITER
+> C
+> C MOVER SPECIFIES HOW FAR TO THE RIGHT A BYTE MUST BE MOVED IN ORDER            
+> C
+> C    TO BE RIGHT ADJUSTED.                                                      
+> C
+>       MOVER = ICON - II
+> C                                                                               
+> C THE BYTE IS SPLIT ACROSS A WORD BREAK.                 
+> C                       
+>       IF (MOVER.LT.0) THEN                                                  
+>         MOVEL   = - MOVER                                                       
+>         MOVER   = NBITSW - MOVEL                                                
+>         IUNPKD(I) = IAND(IOR(ISHFT(IPACKD(INDEX+1),MOVEL),
+>      &            ISHFT(IPACKD(INDEX+2),-MOVER)),MASK)
+> C
+> C RIGHT ADJUST THE BYTE.
+> C
+>       ELSE IF (MOVER.GT.0) THEN
+>         IUNPKD(I) = IAND(ISHFT(IPACKD(INDEX+1),-MOVER),MASK)
+> C                                             
+> C THE BYTE IS ALREADY RIGHT ADJUSTED.
+> C
+>       ELSE
+>         IUNPKD(I) = IAND(IPACKD(INDEX+1),MASK)
+>       ENDIF
+> C                                                                               
+> C INCREMENT II AND INDEX.
+> C
+>         II    = II + IBITS
+>         INDEX = INDEX + IWORDS
+>         IF (II.GE.NBITSW) THEN
+>           II    = II - NBITSW
+>           INDEX = INDEX + 1
+>         ENDIF
+> C
+>    10 CONTINUE
+>         RETURN
+getbit.f
+getgb1r.f
+52,56d51
+<         dimension kprob(2), xprob(2), kclust(16), kmembr(80)
+<         if (lgrib.le.0) then
+<             write(*,*) 'getgb1r prog error lgrib=',lgrib
+<             stop 8
+<         endif
+getgb1s.f
+17,18d16
+< C   05-03-17  EBISUZAKI FIX RETURN CODE
+< C   05-09-08  JOVIC FIX kclust declaration
+53c51
+< C   GBYTEC         UNPACK BYTES
+---
+> C   GBYTE          UNPACK BYTES
+67c65
+<       CHARACTER*1 CPDS(400),CGDS(400)
+---
+>       CHARACTER CPDS(400)*1,CGDS(400)*1
+72,80d69
+< 
+<       integer kprob(2), kclust(16), kmembr(70)
+<       dimension xprob(2)
+< 
+<       if (nlen*nnum.le.0) then
+<         write(*,*) 'getgb1s: prog error bufsiz=',nlen*nnum
+<         stop 7
+<       endif
+< 
+130c119
+<           CALL GBYTEC(CBUF,KPTR(3),(K-1)*NLEN*8+25*8,3*8)
+---
+>           CALL GBYTE(CBUF,KPTR(3),(K-1)*NLEN*8+25*8,3*8)
+132,133c121,122
+<           CALL GBYTEC(CPDS,KPDS(4),7*8,8)
+<           CALL FI632(CPDS,KPTR,KPDS,JRET)
+---
+>           CALL GBYTE(CPDS,KPDS(4),7*8,8)
+>           CALL FI632(CPDS,KPTR,KPDS,IRET)
+146c135
+<           CALL FI633(CGDS,KPTR,KGDS,JRET)
+---
+>           CALL FI633(CGDS,KPTR,KGDS,IRET)
+164,165c153,154
+<           CALL GBYTEC(CBUF,LSKIP,(K-1)*NLEN*8,4*8)
+<           CALL GBYTEC(CBUF,LGRIB,(K-1)*NLEN*8+20*8,4*8)
+---
+>           CALL GBYTE(CBUF,LSKIP,(K-1)*NLEN*8,4*8)
+>           CALL GBYTE(CBUF,LGRIB,(K-1)*NLEN*8+20*8,4*8)
+172c161
+<             CALL GBYTEC(CBUF,KPTR(3),(K-1)*NLEN*8+25*8,3*8)
+---
+>             CALL GBYTE(CBUF,KPTR(3),(K-1)*NLEN*8+25*8,3*8)
+174,175c163,164
+<             CALL GBYTEC(CPDS,KPDS(4),7*8,8)
+<             CALL FI632(CPDS,KPTR,KPDS,JRET)
+---
+>             CALL GBYTE(CPDS,KPDS(4),7*8,8)
+>             CALL FI632(CPDS,KPTR,KPDS,IRET)
+183c172
+<             CALL FI633(CGDS,KPTR,KGDS,JRET)
+---
+>             CALL FI633(CGDS,KPTR,KGDS,IRET)
+getgbem.f
+218,230d217
+< 
+< 	if (mbuf.le.0) then
+< 	    write(*,*) 'getgbem prog error mbuf=',mbuf
+< 	    stop 8
+< 	endif
+< 	if (jf.le.0) then
+< 	    write(*,*) 'getgbem prog error jf=',jf
+< 	    stop 8
+< 	endif
+< 	if (nnum.le.0) then
+< 	    write(*,*) 'getgbem prog error nnum=',nnum
+< 	    stop 8
+< 	endif
+241d227
+< 	write(*,*) 'irgs=',irgs,' irgi=',irgi
+245d230
+< 	write(*,*) 'new irgs=',irgs, ' irgi=',irgi
+253d237
+< 	write(*,*) 'irgs set to 1'
+260d243
+< 	write(*,*) 'next read and search irgs=',irgs
+264d246
+< 	write(*,*) 'pre-loop: irgi irgs lugi',irgi, irgs, lugi
+266d247
+< 	write(*,*) 'loop: irgi irgs lugi',irgi, irgs, lugi
+getgbemh.f
+209,213d208
+<       if (mbuf.le.0) then
+<           write(*,*) 'prog error: getgbemh mbuf=',mbuf
+<           stop 8
+<       endif
+< 
+getgi.f
+64,67d63
+< 	if (mbuf.le.0) then
+< 	    write(*,*) 'getgi: program error mbuf=',mbuf
+< 	    stop 8
+< 	endif
+getgir.f
+59,62d58
+< 	if (mbuf.le.0) then
+< 	    write(*,*) 'getirprogram error mbuf = ',mbuf
+< 	    stop 8
+< 	endif
+instrument.f
+15d14
+< !   2005-04-17  EBISUZAKI (FIXED SEG-FAULTING TEST)
+67d65
+<         logical flag
+99,103c97
+<         flag = .false.
+<         IF(KA.GE.1.AND.KA.LE.KMAX) then
+<            if (KALLS(KA).GT.0) flag = .true.
+<         endif
+<         if (flag) then
+---
+>         IF(KA.GE.1.AND.KA.LE.KMAX.AND.KALLS(KA).GT.0) THEN
+108c102
+<         else
+---
+>         ELSE
+iw3jdn.f
+ixgb.f
+56,57c56
+<       CHARACTER*1 CBREAD(MINDEX),CINDEX(MINDEX)
+< 
+---
+>       CHARACTER CBREAD(MINDEX),CINDEX(MINDEX)
+62,64c61,62
+< 
+<       CALL SBYTEC(CINDEX,LSKIP,8*IXSKP,8*MXSKP)
+<       CALL SBYTEC(CINDEX,LGRIB,8*IXLEN,8*MXLEN)
+---
+>       CALL SBYTE(CINDEX,LSKIP,8*IXSKP,8*MXSKP)
+>       CALL SBYTE(CINDEX,LGRIB,8*IXLEN,8*MXLEN)
+73,76c71,74
+<       CALL SBYTEC(CINDEX,ISKPDS,8*IXSPD,8*MXSPD)
+<       CALL GBYTEC(CBREAD,LENPDS,8*ISKPDS,8*3)
+<       CALL GBYTEC(CBREAD,INCGDS,8*ISKPDS+8*7+0,1)
+<       CALL GBYTEC(CBREAD,INCBMS,8*ISKPDS+8*7+1,1)
+---
+>       CALL SBYTE(CINDEX,ISKPDS,8*IXSPD,8*MXSPD)
+>       CALL GBYTE(CBREAD,LENPDS,8*ISKPDS,8*3)
+>       CALL GBYTE(CBREAD,INCGDS,8*ISKPDS+8*7+0,1)
+>       CALL GBYTE(CBREAD,INCBMS,8*ISKPDS+8*7+1,1)
+107,108c105,106
+<         CALL SBYTEC(CINDEX,ISKGDS,8*IXSGD,8*MXSGD)
+<         CALL GBYTEC(CBREAD,LENGDS,0,8*3)
+---
+>         CALL SBYTE(CINDEX,ISKGDS,8*IXSGD,8*MXSGD)
+>         CALL GBYTE(CBREAD,LENGDS,0,8*3)
+131,132c129,130
+<         CALL SBYTEC(CINDEX,ISKBMS,8*IXSBM,8*MXSBM)
+<         CALL GBYTEC(CBREAD,LENBMS,0,8*3)
+---
+>         CALL SBYTE(CINDEX,ISKBMS,8*IXSBM,8*MXSBM)
+>         CALL GBYTE(CBREAD,LENBMS,0,8*3)
+144,145c142,143
+<       CALL SBYTEC(CINDEX,ISKBDS,8*IXSBD,8*MXSBD)
+<       CALL GBYTEC(CBREAD,LENBDS,0,8*3)
+---
+>       CALL SBYTE(CINDEX,ISKBDS,8*IXSBD,8*MXSBD)
+>       CALL GBYTE(CBREAD,LENBDS,0,8*3)
+lengds.f
+pdsens.f
+51c51
+<             CALL SBYTEC(MSGA, 0, i*8, 8)
+---
+>             CALL SBYTE(MSGA, 0, i*8, 8)
+54c54
+< 	  CALL SBYTEC(MSGA, IL, 0,24)
+---
+> 	  CALL SBYTE(MSGA, IL, 0,24)
+56c56
+<       IF(IL.GE.45) CALL SBYTESC(MSGA,KENS,40*8,8,0,5)
+---
+>       IF(IL.GE.45) CALL SBYTES(MSGA,KENS,40*8,8,0,5)
+59c59
+<           CALL SBYTESC(MSGA,KPROB,45*8,8,0,2)
+---
+>           CALL SBYTES(MSGA,KPROB,45*8,8,0,2)
+62,63c62,63
+< 	  CALL SBYTEC(MSGA,IEXP,47*8,8)
+< 	  CALL SBYTEC(MSGA,IMANT,48*8,24)
+---
+> 	  CALL SBYTE(MSGA,IEXP,47*8,8)
+> 	  CALL SBYTE(MSGA,IMANT,48*8,24)
+65,66c65,66
+< 	  CALL SBYTEC(MSGA,IEXP,51*8,8)
+< 	  CALL SBYTEC(MSGA,IMANT,52*8,24)
+---
+> 	  CALL SBYTE(MSGA,IEXP,51*8,8)
+> 	  CALL SBYTE(MSGA,IMANT,52*8,24)
+69c69
+<       IF(IL.GE.76) CALL SBYTESC(MSGA,KCLUST,60*8,8,0,16)
+---
+>       IF(IL.GE.76) CALL SBYTES(MSGA,KCLUST,60*8,8,0,16)
+71c71
+<       IF(IL.GE.86) CALL SBYTESC(MSGA,KMEMBR,76*8,1,0,80)
+---
+>       IF(IL.GE.86) CALL SBYTES(MSGA,KMEMBR,76*8,1,0,80)
+pdseup.f
+41a42,43
+> 	  CHARACTER*1 CKREF(8)
+> 	  EQUIVALENCE   (CKREF(1),KREF,REFNCE)
+43c45
+< 	  CALL GBYTEC(MSGA, IBYTES, 0,24)
+---
+> 	  CALL GBYTE(MSGA, IBYTES, 0,24)
+52c54
+<       CALL GBYTESC(MSGA,KENS,40*8,8,0,5)
+---
+>       CALL GBYTES(MSGA,KENS,40*8,8,0,5)
+55c57
+<       CALL GBYTESC(MSGA,KPROB,45*8,8,0,2)
+---
+>       CALL GBYTES(MSGA,KPROB,45*8,8,0,2)
+58,61c60,70
+<        call gbytec(MSGA,JSGN, 47*8, 1)
+<        call gbytec(MSGA,JEXP, 47*8+1, 7)
+<        call gbytec(MSGA,IFR, 47*8+8, 24)
+< 
+---
+>       CALL GBYTE (MSGA,KREF,47*8,32)
+>       CALL W3FI01(LW)
+>       IF (LW.EQ.4) THEN
+>         CALL GBYTE (CKREF,JSGN,0,1)
+>         CALL GBYTE (CKREF,JEXP,1,7)
+>         CALL GBYTE (CKREF,IFR,8,24)
+>       ELSE
+>         CALL GBYTE (CKREF,JSGN,32,1)
+>         CALL GBYTE (CKREF,JEXP,33,7)
+>         CALL GBYTE (CKREF,IFR,40,24)
+>       ENDIF
+63a73,74
+>       ELSE IF (JEXP.EQ.0.AND.IFR.EQ.0) THEN
+>           REFNCE  = 0.0
+70,73c81,91
+<        call gbytec(MSGA,JSGN, 51*8, 1)
+<        call gbytec(MSGA,JEXP, 51*8+1, 7)
+<        call gbytec(MSGA,IFR, 51*8+8, 24)
+< 
+---
+>       CALL GBYTE (MSGA,KREF,51*8,32)
+>       CALL W3FI01(LW)
+>       IF (LW.EQ.4) THEN
+>         CALL GBYTE (CKREF,JSGN,0,1)
+>         CALL GBYTE (CKREF,JEXP,1,7)
+>         CALL GBYTE (CKREF,IFR,8,24)
+>       ELSE
+>         CALL GBYTE (CKREF,JSGN,32,1)
+>         CALL GBYTE (CKREF,JEXP,33,7)
+>         CALL GBYTE (CKREF,IFR,40,24)
+>       ENDIF
+75a94,95
+>       ELSE IF (JEXP.EQ.0.AND.IFR.EQ.0) THEN
+>           REFNCE  = 0.0
+84c104
+<       IF(ILAST.GE.61) CALL GBYTESC(MSGA,KCLUST,60*8,8,0,16)
+---
+>       IF(ILAST.GE.61) CALL GBYTES(MSGA,KCLUST,60*8,8,0,16)
+86c106
+<       IF(ILAST.GE.77) CALL GBYTESC(MSGA,KMEMBR,76*8,1,0,80)
+---
+>       IF(ILAST.GE.77) CALL GBYTES(MSGA,KMEMBR,76*8,1,0,80)
+putgben.f
+171,175d170
+< 	dimension kprob(2), xprob(2), kclust(16), kmembr(80)
+< 	if (kf.le.0) then
+< 	    write(*,*) 'putgben: error kf=',kf
+< 	    stop 8
+< 	endif
+r63w72.f
+skgb.f
+54,55c54,55
+<           CALL GBYTEC(Z,I4,(K+0)*8,4*8)
+<           CALL GBYTEC(Z,I1,(K+7)*8,1*8)
+---
+>           CALL GBYTE(Z,I4,(K+0)*8,4*8)
+>           CALL GBYTE(Z,I1,(K+7)*8,1*8)
+58c58
+<             CALL GBYTEC(Z,KG,(K+4)*8,3*8)
+---
+>             CALL GBYTE(Z,KG,(K+4)*8,3*8)
+61c61
+<               CALL GBYTEC(Z4,I4,0,4*8)
+---
+>               CALL GBYTE(Z4,I4,0,4*8)
+w3difdat.f
+w3doxdat.f
+w3fi01.f
+14,15d13
+< C 2001-06-07  Gilbert     Uses f90 standard routine bit_size to
+< C                         find integer word length
+29,31c27,41
+<       INTEGER      LW
+<       LW=BIT_SIZE(LW)
+<       LW=LW/8
+---
+>       CHARACTER*8  CTEST1,CTEST2
+>       CHARACTER*4  CPRINT(2)
+> C
+>       INTEGER      ITEST1,ITEST2
+> C
+>       EQUIVALENCE  (CTEST1,ITEST1),(CTEST2,ITEST2)
+> C
+>       DATA  CTEST1/'12345678'/
+> C
+>       ITEST2 = ITEST1
+>       IF (CTEST1 .EQ. CTEST2) THEN
+>         LW = 8
+>       ELSE
+>         LW = 4
+>       END IF
+w3fi58.f
+60c60
+<       CHARACTER*1  NPFLD(*)
+---
+>       INTEGER  NPFLD(*)
+104c104
+<       CALL SBYTESC(NPFLD,NWORK,0,NBITS,0,NPTS)
+---
+>       CALL SBYTES(NPFLD,NWORK,0,NBITS,0,NPTS)
+110c110
+<       IF(NZERO.GT.0) CALL SBYTEC(NPFLD,KZERO,NOFF,NZERO)
+---
+>       IF(NZERO.GT.0) CALL SBYTE(NPFLD,KZERO,NOFF,NZERO)
+w3fi59.f
+61c61
+<       CHARACTER*1 NPFLD(*)
+---
+>       INTEGER NPFLD(*)
+115c115
+<       CALL SBYTESC(NPFLD,NWORK,KOFF,NBITS,ISKIP,NPTS)
+---
+>       CALL SBYTES(NPFLD,NWORK,KOFF,NBITS,ISKIP,NPTS)
+121c121
+<       CALL SBYTEC(NPFLD,KZERO,NOFF,7)
+---
+>       CALL SBYTE(NPFLD,KZERO,NOFF,7)
+w3fi63.f
+119c119,121
+< C 2005-03-21  VUONG       ADDED AWIPS GRIDS 130
+---
+> C 2005-03-21  VUONG       ADDED AWIPS GRID 130
+> C 2005-10-11  VUONG       ADDED AWIPS GRID 163
+> C 2006-12-12  VUONG       ADDED AWIPS GRID 120
+594c596,597
+<       INTEGER       JSGN,JEXP,IFR,NPTS
+---
+>       INTEGER       KKK,JSGN,JEXP,IFR,NPTS
+>       CHARACTER     KK(8)
+595a599
+>       EQUIVALENCE   (KK(1),KKK)
+612d615
+<       SAVE
+619c622,624
+<       IF(KRET.NE.0) RETURN
+---
+>       IF(KRET.NE.0) THEN
+>           GO TO 900
+>       END IF
+625c630,632
+<       IF(KRET.NE.0) RETURN
+---
+>       IF(KRET.NE.0) THEN
+>           GO TO 900
+>       END IF
+632c639,641
+<           IF(KRET.NE.0) RETURN
+---
+>           IF(KRET.NE.0) THEN
+>               GO TO 900
+>           END IF
+639c648,652
+<       IF (KRET.NE.0.AND.KRET.NE.9) RETURN
+---
+>       IF (KRET.NE.0) THEN
+>         IF (KRET.NE.9) THEN
+>           GO TO 900
+>         END IF
+>       END IF
+672c685
+< C             CALL GBYTEC(MSGA,FVAL1,KPTR(9)+384,32)
+---
+> C             CALL GBYTE  (MSGA,FVAL1,KPTR(9)+384,32)
+678c691
+< C          CALL GBYTEC(MSGA,KKK,KPTR(9)+384,32)
+---
+>           CALL GBYTE (MSGA,KKK,KPTR(9)+384,32)
+680,683c693,708
+<         call gbytec(MSGA,JSGN,KPTR(9)+384,1)
+<         call gbytec(MSGA,JEXP,KPTR(9)+385,7)
+<         call gbytec(MSGA,IFR,KPTR(9)+392,24)
+< 
+---
+> C       THE NEXT CODE WILL CONVERT THE IBM370 FOATING POINT
+> C       TO THE FLOATING POINT USED ON YOUR MACHINE.
+> C
+> C       1ST TEST TO SEE IN ON 32 OR 64 BIT WORD MACHINE
+> C       LW = 4 OR 8; IF 8 MAY BE A CRAY
+> C
+>               CALL W3FI01(LW)
+>               IF (LW.EQ.4) THEN
+>                   CALL GBYTE (KK,JSGN,0,1)
+>                   CALL GBYTE (KK,JEXP,1,7)
+>                   CALL GBYTE (KK,IFR,8,24)
+>               ELSE
+>                   CALL GBYTE (KK,JSGN,32,1)
+>                   CALL GBYTE (KK,JEXP,33,7)
+>                   CALL GBYTE (KK,IFR,40,24)
+>               ENDIF
+694a720,724
+> C             CALL GBYTE  (MSGA,FDIFF1,KPTR(9)+416,32)
+> C          (REPLACED BY FOLLOWING EXTRACTION)
+> C
+>               CALL GBYTE (MSGA,KKK,KPTR(9)+416,32)
+> C
+698,700c728,740
+<         call gbytec(MSGA,JSGN,KPTR(9)+416,1)
+<         call gbytec(MSGA,JEXP,KPTR(9)+417,7)
+<         call gbytec(MSGA,IFR,KPTR(9)+424,24)
+---
+> C       1ST TEST TO SEE IN ON 32 OR 64 BIT WORD MACHINE
+> C       LW = 4 OR 8; IF 8 MAY BE A CRAY
+> C
+>               CALL W3FI01(LW)
+>               IF (LW.EQ.4) THEN
+>                   CALL GBYTE (KK,JSGN,0,1)
+>                   CALL GBYTE (KK,JEXP,1,7)
+>                   CALL GBYTE (KK,IFR,8,24)
+>               ELSE
+>                   CALL GBYTE (KK,JSGN,32,1)
+>                   CALL GBYTE (KK,JEXP,33,7)
+>                   CALL GBYTE (KK,IFR,40,24)
+>               ENDIF
+712,713c752,753
+<               CALL GBYTEC(MSGA,ISIGN,KPTR(9)+448,1)
+<               CALL GBYTEC(MSGA,ISCAL2,KPTR(9)+449,15)
+---
+>               CALL GBYTE  (MSGA,ISIGN,KPTR(9)+448,1)
+>               CALL GBYTE  (MSGA,ISCAL2,KPTR(9)+449,15)
+736c776
+<       RETURN
+---
+>   900 RETURN
+821c861
+<           CALL GBYTEC(MSGA,MGRIB,I,32)
+---
+>           CALL GBYTE (MSGA,MGRIB,I,32)
+834c874
+<       CALL GBYTEC(MSGA,ITOTAL,KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,ITOTAL,KPTR(8),24)
+837c877
+<       CALL GBYTEC(MSGA,I7777,IPOINT,32)
+---
+>       CALL GBYTE (MSGA,I7777,IPOINT,32)
+845c885
+<           CALL GBYTEC(MSGA,KPDS(18),KPTR(8),8)
+---
+>           CALL GBYTE (MSGA,KPDS(18),KPTR(8),8)
+855c895
+<       CALL GBYTEC(MSGA,KPTR(3),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KPTR(3),KPTR(8),24)
+858c898
+<       CALL GBYTEC(MSGA,KPDS(4),LOOK,8)
+---
+>       CALL GBYTE (MSGA,KPDS(4),LOOK,8)
+863c903
+<           CALL GBYTEC(MSGA,KPTR(4),KPTR(8),24)
+---
+>           CALL GBYTE (MSGA,KPTR(4),KPTR(8),24)
+871c911
+<           CALL GBYTEC(MSGA,KPTR(5),KPTR(8),24)
+---
+>           CALL GBYTE (MSGA,KPTR(5),KPTR(8),24)
+878c918
+<       CALL GBYTEC(MSGA,KPTR(6),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KPTR(6),KPTR(8),24)
+884c924
+<       CALL GBYTEC(MSGA,K7777,KPTR(8),32)
+---
+>       CALL GBYTE (MSGA,K7777,KPTR(8),32)
+989c1029
+<           CALL GBYTEC(MSGA,KPDS(19),KPTR(8),8)
+---
+>           CALL GBYTE (MSGA,KPDS(19),KPTR(8),8)
+992c1032
+<       CALL GBYTEC(MSGA,KPDS(1),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KPDS(1),KPTR(8),8)
+996c1036
+<       CALL GBYTEC(MSGA,KPDS(2),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KPDS(2),KPTR(8),8)
+1000c1040
+<       CALL GBYTEC(MSGA,KPDS(3),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KPDS(3),KPTR(8),8)
+1004c1044
+< C     CALL GBYTEC(MSGA,KPDS(4),KPTR(8),8)
+---
+> C     CALL GBYTE (MSGA,KPDS(4),KPTR(8),8)
+1008c1048
+<       CALL GBYTEC(MSGA,KPDS(5),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KPDS(5),KPTR(8),8)
+1012c1052
+<       CALL GBYTEC(MSGA,KPDS(6),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KPDS(6),KPTR(8),8)
+1016c1056
+<       CALL GBYTEC(MSGA,KPDS(7),KPTR(8),16)
+---
+>       CALL GBYTE (MSGA,KPDS(7),KPTR(8),16)
+1020c1060
+<       CALL GBYTEC(MSGA,KPDS(8),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KPDS(8),KPTR(8),8)
+1024c1064
+<       CALL GBYTEC(MSGA,KPDS(9),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KPDS(9),KPTR(8),8)
+1028c1068
+<       CALL GBYTEC(MSGA,KPDS(10),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KPDS(10),KPTR(8),8)
+1032c1072
+<       CALL GBYTEC(MSGA,KPDS(11),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KPDS(11),KPTR(8),8)
+1036c1076
+<       CALL GBYTEC(MSGA,KPDS(12),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KPDS(12),KPTR(8),8)
+1040c1080
+<       CALL GBYTEC(MSGA,KPDS(13),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KPDS(13),KPTR(8),8)
+1044c1084
+<       CALL GBYTEC(MSGA,KPDS(14),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KPDS(14),KPTR(8),8)
+1048c1088
+<       CALL GBYTEC(MSGA,KPDS(15),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KPDS(15),KPTR(8),8)
+1052c1092
+<       CALL GBYTEC(MSGA,KPDS(16),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KPDS(16),KPTR(8),8)
+1064c1104
+<       CALL GBYTEC(MSGA,KPDS(17),KPTR(8),16)
+---
+>       CALL GBYTE (MSGA,KPDS(17),KPTR(8),16)
+1068c1108
+<       CALL GBYTEC(MSGA,KPDS(20),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KPDS(20),KPTR(8),8)
+1072c1112
+<       CALL GBYTEC(MSGA,KPDS(21),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KPDS(21),KPTR(8),8)
+1076c1116
+<           CALL GBYTEC(MSGA,KPDS(23),KPTR(8),8)
+---
+>           CALL GBYTE (MSGA,KPDS(23),KPTR(8),8)
+1081c1121
+<               CALL GBYTEC(MSGA,ISIGN,KPTR(8),1)
+---
+>               CALL GBYTE (MSGA,ISIGN,KPTR(8),1)
+1083c1123
+<               CALL GBYTEC(MSGA,IDEC,KPTR(8),15)
+---
+>               CALL GBYTE (MSGA,IDEC,KPTR(8),15)
+1093c1133
+<                   CALL GBYTEC(MSGA,KPDS(24),KPTR(8)+8,8)
+---
+>                   CALL GBYTE (MSGA,KPDS(24),KPTR(8)+8,8)
+1095c1135
+<                   CALL GBYTEC(MSGA,KPDS(25),KPTR(8)+16,8)
+---
+>                   CALL GBYTE (MSGA,KPDS(25),KPTR(8)+16,8)
+1100c1140
+<                   CALL GBYTEC(MSGA,KPDS(24),KPTR(8)+8,8)
+---
+>                   CALL GBYTE (MSGA,KPDS(24),KPTR(8)+8,8)
+1102c1142
+<                   CALL GBYTEC(MSGA,KPDS(25),KPTR(8)+16,8)
+---
+>                   CALL GBYTE (MSGA,KPDS(25),KPTR(8)+16,8)
+1111c1151
+<                   CALL GBYTESC(MSGA,KPDS(36),KPTR(8),MWDBIT,0,ITER)
+---
+>                   CALL GBYTES (MSGA,KPDS(36),KPTR(8),MWDBIT,0,ITER)
+1332c1372
+<       CALL GBYTEC(MSGA,KGDS(19),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KGDS(19),KPTR(8),8)
+1336c1376
+<       CALL GBYTEC(MSGA,KGDS(20),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KGDS(20),KPTR(8),8)
+1340c1380
+<       CALL GBYTEC(MSGA,KGDS(1),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KGDS(1),KPTR(8),8)
+1390c1430
+<       CALL GBYTEC(MSGA,KGDS(2),KPTR(8),16)
+---
+>       CALL GBYTE (MSGA,KGDS(2),KPTR(8),16)
+1393c1433
+<       CALL GBYTEC(MSGA,KGDS(3),KPTR(8),16)
+---
+>       CALL GBYTE (MSGA,KGDS(3),KPTR(8),16)
+1396c1436
+<       CALL GBYTEC(MSGA,KGDS(4),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(4),KPTR(8),24)
+1402c1442
+<       CALL GBYTEC(MSGA,KGDS(5),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(5),KPTR(8),24)
+1408c1448
+<       CALL GBYTEC(MSGA,KGDS(6),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KGDS(6),KPTR(8),8)
+1411c1451
+<       CALL GBYTEC(MSGA,KGDS(7),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(7),KPTR(8),24)
+1417c1457
+<       CALL GBYTEC(MSGA,KGDS(8),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(8),KPTR(8),24)
+1423c1463
+<       CALL GBYTEC(MSGA,KGDS(9),KPTR(8),16)
+---
+>       CALL GBYTE (MSGA,KGDS(9),KPTR(8),16)
+1430c1470
+<       CALL GBYTEC(MSGA,KGDS(10),KPTR(8),16)
+---
+>       CALL GBYTE (MSGA,KGDS(10),KPTR(8),16)
+1433c1473
+<       CALL GBYTEC(MSGA,KGDS(11),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KGDS(11),KPTR(8),8)
+1437c1477
+<       CALL GBYTEC(MSGA,KGDS(12),KPTR(8),32)
+---
+>       CALL GBYTE (MSGA,KGDS(12),KPTR(8),32)
+1446c1486
+<       CALL GBYTEC(MSGA,KGDS(2),KPTR(8),16)
+---
+>       CALL GBYTE (MSGA,KGDS(2),KPTR(8),16)
+1449c1489
+<       CALL GBYTEC(MSGA,KGDS(3),KPTR(8),16)
+---
+>       CALL GBYTE (MSGA,KGDS(3),KPTR(8),16)
+1452c1492
+<       CALL GBYTEC(MSGA,KGDS(4),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(4),KPTR(8),24)
+1458c1498
+<       CALL GBYTEC(MSGA,KGDS(5),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(5),KPTR(8),24)
+1464c1504
+<       CALL GBYTEC(MSGA,KGDS(6),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KGDS(6),KPTR(8),8)
+1467c1507
+<       CALL GBYTEC(MSGA,KGDS(7),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(7),KPTR(8),24)
+1473c1513
+<       CALL GBYTEC(MSGA,KGDS(8),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(8),KPTR(8),24)
+1479c1519
+<       CALL GBYTEC(MSGA,KGDS(9),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(9),KPTR(8),24)
+1485c1525
+<       CALL GBYTEC(MSGA,KGDS(10),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KGDS(10),KPTR(8),8)
+1488c1528
+<       CALL GBYTEC(MSGA,KGDS(11),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KGDS(11),KPTR(8),8)
+1492c1532
+<       CALL GBYTEC(MSGA,KGDS(12),KPTR(8),32)
+---
+>       CALL GBYTE (MSGA,KGDS(12),KPTR(8),32)
+1503c1543
+<       CALL GBYTEC(MSGA,KGDS(2),KPTR(8),16)
+---
+>       CALL GBYTE (MSGA,KGDS(2),KPTR(8),16)
+1506c1546
+<       CALL GBYTEC(MSGA,KGDS(3),KPTR(8),16)
+---
+>       CALL GBYTE (MSGA,KGDS(3),KPTR(8),16)
+1509c1549
+<       CALL GBYTEC(MSGA,KGDS(4),KPTR(8),16)
+---
+>       CALL GBYTE (MSGA,KGDS(4),KPTR(8),16)
+1512c1552
+<       CALL GBYTEC(MSGA,KGDS(5),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KGDS(5),KPTR(8),8)
+1515c1555
+<       CALL GBYTEC(MSGA,KGDS(6),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KGDS(6),KPTR(8),8)
+1526c1566
+<       CALL GBYTEC(MSGA,KGDS(2),KPTR(8),16)
+---
+>       CALL GBYTE (MSGA,KGDS(2),KPTR(8),16)
+1529c1569
+<       CALL GBYTEC(MSGA,KGDS(3),KPTR(8),16)
+---
+>       CALL GBYTE (MSGA,KGDS(3),KPTR(8),16)
+1532c1572
+<       CALL GBYTEC(MSGA,KGDS(4),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(4),KPTR(8),24)
+1538c1578
+<       CALL GBYTEC(MSGA,KGDS(5),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(5),KPTR(8),24)
+1544c1584
+<       CALL GBYTEC(MSGA,KGDS(6),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KGDS(6),KPTR(8),8)
+1547c1587
+<       CALL GBYTEC(MSGA,KGDS(7),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(7),KPTR(8),24)
+1553c1593
+<       CALL GBYTEC(MSGA,KGDS(8),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(8),KPTR(8),24)
+1559c1599
+<       CALL GBYTEC(MSGA,KGDS(9),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(9),KPTR(8),24)
+1565c1605
+<       CALL GBYTEC(MSGA,KGDS(10),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KGDS(10),KPTR(8),8)
+1568c1608
+<       CALL GBYTEC(MSGA,KGDS(11),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KGDS(11),KPTR(8),8)
+1571c1611
+<       CALL GBYTEC(MSGA,KGDS(12),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(12),KPTR(8),24)
+1577c1617
+<       CALL GBYTEC(MSGA,KGDS(13),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(13),KPTR(8),24)
+1592c1632
+<       CALL GBYTEC(MSGA,KGDS(2),KPTR(8),16)
+---
+>       CALL GBYTE (MSGA,KGDS(2),KPTR(8),16)
+1595c1635
+<       CALL GBYTEC(MSGA,KGDS(3),KPTR(8),16)
+---
+>       CALL GBYTE (MSGA,KGDS(3),KPTR(8),16)
+1598c1638
+<       CALL GBYTEC(MSGA,KGDS(4),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(4),KPTR(8),24)
+1604c1644
+<       CALL GBYTEC(MSGA,KGDS(5),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(5),KPTR(8),24)
+1610c1650
+<       CALL GBYTEC(MSGA,KGDS(6),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KGDS(6),KPTR(8),8)
+1613c1653
+<       CALL GBYTEC(MSGA,KGDS(7),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(7),KPTR(8),24)
+1619c1659
+<       CALL GBYTEC(MSGA,KGDS(8),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(8),KPTR(8),24)
+1622c1662
+<       CALL GBYTEC(MSGA,KGDS(9),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(9),KPTR(8),24)
+1625c1665
+<       CALL GBYTEC(MSGA,KGDS(10),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KGDS(10),KPTR(8),8)
+1628c1668
+<       CALL GBYTEC(MSGA,KGDS(11),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KGDS(11),KPTR(8),8)
+1631c1671
+<       CALL GBYTEC(MSGA,KGDS(12),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(12),KPTR(8),24)
+1637c1677
+<       CALL GBYTEC(MSGA,KGDS(13),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(13),KPTR(8),24)
+1643c1683
+<       CALL GBYTEC(MSGA,KGDS(14),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(14),KPTR(8),24)
+1649c1689
+<       CALL GBYTEC(MSGA,KGDS(15),KPTR(8),24)
+---
+>       CALL GBYTE (MSGA,KGDS(15),KPTR(8),24)
+1655c1695
+<       CALL GBYTEC(MSGA,KGDS(16),KPTR(8),16)
+---
+>       CALL GBYTE (MSGA,KGDS(16),KPTR(8),16)
+1666c1706
+<           CALL GBYTESC(MSGA,KGDS(22),KPTR(8),16,0,KGDS(3))
+---
+>           CALL GBYTES (MSGA,KGDS(22),KPTR(8),16,0,KGDS(3))
+1697a1738
+> C 2006-12-12  VUONG       ADDED AWIPS GRIDS 120
+1829c1870
+<       CALL GBYTEC(MSGA,KPTR(11),KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KPTR(11),KPTR(8),8)
+1834c1875
+<       CALL GBYTEC(MSGA,KPTR(12),KPTR(8),16)
+---
+>       CALL GBYTE (MSGA,KPTR(12),KPTR(8),16)
+2165a2207,2210
+>               ELSE IF (KPDS(3).EQ.120) THEN
+> C                 ----- U.S. GRID 120 - MAP SIZE 2020800
+>                   J     = 2020800
+>                   GO TO 800
+2201a2247,2251
+>               ELSE IF (KPDS(3).EQ.163) THEN
+> C                 ----- U.S. GRID 163 - MAP SIZE 727776
+>                   J     = 727776
+>                   GO TO 800
+> 
+2594c2644
+<       CALL GBYTESC(MSGA,ICHK,NSKP,1,0,NPTS)
+---
+>       CALL GBYTES(MSGA,ICHK,NSKP,1,0,NPTS)
+2691a2742,2743
+>       CHARACTER*1   KK(8)
+>       CHARACTER*1   CKREF(8)
+2699a2752,2753
+>       INTEGER       KREF
+>       INTEGER       KKK
+2707a2762,2764
+>       EQUIVALENCE   (CKREF(1),KREF,REFNCE)
+>       EQUIVALENCE   (KK(1),KKK,REALKK)
+> C
+2718c2775
+<       CALL GBYTEC(MSGA,KPTR(14),KPTR(8),4)
+---
+>       CALL GBYTE(MSGA,KPTR(14),KPTR(8),4)
+2721c2778
+<       CALL GBYTEC(MSGA,KPTR(15),KPTR(8),4)
+---
+>       CALL GBYTE(MSGA,KPTR(15),KPTR(8),4)
+2728c2785
+<       CALL GBYTEC(MSGA,KSIGN,KPTR(8),1)
+---
+>       CALL GBYTE (MSGA,KSIGN,KPTR(8),1)
+2731c2788
+<       CALL GBYTEC(MSGA,KSCALE,KPTR(8),15)
+---
+>       CALL GBYTE (MSGA,KSCALE,KPTR(8),15)
+2740,2743c2797
+< 
+<       call gbytec(MSGA,JSGN,KPTR(8),1)
+<       call gbytec(MSGA,JEXP,KPTR(8)+1,7)
+<       call gbytec(MSGA,IFR,KPTR(8)+8,24)
+---
+>       CALL GBYTE (MSGA,KREF,KPTR(8),32)
+2748a2803,2817
+> C     1ST TEST TO SEE IN ON 32 OR 64 BIT WORD MACHINE
+> C     LW = 4 OR 8;  IF 8 MAY BE A CRAY
+> C
+>       CALL W3FI01(LW)
+>       IF (LW.EQ.4) THEN
+>         CALL GBYTE (CKREF,JSGN,0,1)
+>         CALL GBYTE (CKREF,JEXP,1,7)
+>         CALL GBYTE (CKREF,IFR,8,24)
+>       ELSE
+>         CALL GBYTE (CKREF,JSGN,32,1)
+>         CALL GBYTE (CKREF,JEXP,33,7)
+>         CALL GBYTE (CKREF,IFR,40,24)
+>       ENDIF
+> C     PRINT *,109,JSGN,JEXP,IFR
+> C 109 FORMAT (' JSGN,JEXP,IFR = ',3(1X,Z8))
+2750a2820,2821
+>       ELSE IF (JEXP.EQ.0.AND.IFR.EQ.0) THEN
+>           REFNCE  = 0.0
+2754a2826
+> C     PRINT *,'SCALE ',SCALE,' REF VAL ',KREF,REFNCE
+2757c2829
+<       CALL GBYTEC(MSGA,KBITS,KPTR(8),8)
+---
+>       CALL GBYTE (MSGA,KBITS,KPTR(8),8)
+2772c2844
+<           CALL GBYTEC(MSGA,KOCTET,KPTR(8),16)
+---
+>           CALL GBYTE (MSGA,KOCTET,KPTR(8),16)
+2776c2848
+<           CALL GBYTEC(MSGA,KXFLAG,KPTR(8),8)
+---
+>           CALL GBYTE (MSGA,KXFLAG,KPTR(8),8)
+2802c2874
+<           CALL GBYTEC(MSGA,NR,KPTR(8),16)
+---
+>           CALL GBYTE (MSGA,NR,KPTR(8),16)
+2806c2878
+<           CALL GBYTEC(MSGA,NC,KPTR(8),16)
+---
+>           CALL GBYTE (MSGA,NC,KPTR(8),16)
+2810c2882
+<           CALL GBYTEC(MSGA,NRV,KPTR(8),8)
+---
+>           CALL GBYTE (MSGA,NRV,KPTR(8),8)
+2814c2886
+<           CALL GBYTEC(MSGA,NC1,KPTR(8),8)
+---
+>           CALL GBYTE (MSGA,NC1,KPTR(8),8)
+2818c2890
+<           CALL GBYTEC(MSGA,NCV,KPTR(8),8)
+---
+>           CALL GBYTE (MSGA,NCV,KPTR(8),8)
+2822c2894
+<           CALL GBYTEC(MSGA,NC2,KPTR(8),8)
+---
+>           CALL GBYTE (MSGA,NC2,KPTR(8),8)
+2826c2898
+<           CALL GBYTEC(MSGA,KPHYS1,KPTR(8),8)
+---
+>           CALL GBYTE (MSGA,KPHYS1,KPTR(8),8)
+2830c2902
+<           CALL GBYTEC(MSGA,KPHYS2,KPTR(8),8)
+---
+>           CALL GBYTE (MSGA,KPHYS2,KPTR(8),8)
+3107c3179
+<           CALL GBYTESC(MSGA,KSAVE,KPTR(8),KBITS,0,KNR)
+---
+>           CALL GBYTES (MSGA,KSAVE,KPTR(8),KBITS,0,KNR)
+3124c3196
+<           CALL GBYTESC(MSGA,KSAVE,KPTR(8),KBITS,0,KNR)
+---
+>           CALL GBYTES (MSGA,KSAVE,KPTR(8),KBITS,0,KNR)
+3147c3219
+<           CALL GBYTESC(MSGA,KSAVE,KPTR(8),KBITS,0,KNR)
+---
+>           CALL GBYTES (MSGA,KSAVE,KPTR(8),KBITS,0,KNR)
+3165,3168c3237
+< 
+<       call gbytec(MSGA,JSGN,KPTR(8),1)
+<       call gbytec(MSGA,JEXP,KPTR(8)+1,7)
+<       call gbytec(MSGA,IFR,KPTR(8)+8,24)
+---
+>       CALL GBYTE (MSGA,KKK,KPTR(8),32)
+3173a3243,3255
+> C     1ST TEST TO SEE IN ON 32 OR 64 BIT WORD MACHINE
+> C     LW = 4 OR 8;  IF 8 MAY BE A CRAY
+> C
+>       CALL W3FI01(LW)
+>       IF (LW.EQ.4) THEN
+>         CALL GBYTE (KK,JSGN,0,1)
+>         CALL GBYTE (KK,JEXP,1,7)
+>         CALL GBYTE (KK,IFR,8,24)
+>       ELSE
+>         CALL GBYTE (KK,JSGN,32,1)
+>         CALL GBYTE (KK,JEXP,33,7)
+>         CALL GBYTE (KK,IFR,40,24)
+>       ENDIF
+3184c3266
+<       CALL GBYTESC(MSGA,KSAVE,KPTR(8),KBITS,0,KNR)
+---
+>       CALL GBYTES (MSGA,KSAVE,KPTR(8),KBITS,0,KNR)
+3284,3285c3366,3367
+<       CALL GBYTEC(MSGA,ISIGN,JPTR+32,1)
+<       CALL GBYTEC(MSGA,KBDS(11),JPTR+33,15)
+---
+>       CALL GBYTE (MSGA,ISIGN,JPTR+32,1)
+>       CALL GBYTE (MSGA,KBDS(11),JPTR+33,15)
+3291c3373
+<       CALL GBYTEC(MSGA,JREF,JPTR+48,32)
+---
+>       CALL GBYTE(MSGA,JREF,JPTR+48,32)
+3294c3376
+<       CALL GBYTEC(MSGA,KBDS(13),JPTR+80,8)
+---
+>       CALL GBYTE(MSGA,KBDS(13),JPTR+80,8)
+3298c3380
+<       CALL GBYTEC(MSGA,KBDS(1),JPTR,16)
+---
+>       CALL GBYTE (MSGA,KBDS(1),JPTR,16)
+3302c3384
+<       CALL GBYTEC(MSGA,KFLAG,JPTR,8)
+---
+>       CALL GBYTE (MSGA,KFLAG,JPTR,8)
+3321c3403
+<       CALL GBYTEC(MSGA,KBDS(2),JPTR,16)
+---
+>       CALL GBYTE (MSGA,KBDS(2),JPTR,16)
+3325c3407
+<       CALL GBYTEC(MSGA,KBDS(3),JPTR,16)
+---
+>       CALL GBYTE (MSGA,KBDS(3),JPTR,16)
+3329c3411
+<       CALL GBYTEC(MSGA,KBDS(4),JPTR,16)
+---
+>       CALL GBYTE (MSGA,KBDS(4),JPTR,16)
+3384c3466
+<                       CALL GBYTEC(MSGA,NUMBER,LP,16)
+---
+>                       CALL GBYTE (MSGA,NUMBER,LP,16)
+3439c3521
+<                   CALL GBYTEC(MSGA,KBIT,KBDS(6),1)
+---
+>                   CALL GBYTE (MSGA,KBIT,KBDS(6),1)
+3448c3530
+<                   CALL GBYTEC(MSGA,IFOVAL,KBDS(7),KBDS(13))
+---
+>                   CALL GBYTE (MSGA,IFOVAL,KBDS(7),KBDS(13))
+3452c3534
+<                   CALL GBYTEC(MSGA,KBDS(15),KBDS(5),8)
+---
+>                   CALL GBYTE (MSGA,KBDS(15),KBDS(5),8)
+3466c3548
+<                   CALL GBYTEC(MSGA,ISOVAL,KBDS(8),KBDS(15))
+---
+>                   CALL GBYTE (MSGA,ISOVAL,KBDS(8),KBDS(15))
+3677a3760,3763
+>           ELSE IF (KPDS(3).EQ.120) THEN
+>               IF (I.NE.J) THEN
+>                   RETURN
+>               END IF
+3693a3780,3783
+>           ELSE IF (KPDS(3).EQ.163) THEN
+>               IF (I.NE.J) THEN
+>                   RETURN
+>               END IF
+w3fi68.f
+34,36d33
+< C   98-06-30  EBISUZAKI   LINUX PORT
+< C 2001-06-05  GILBERT     Changed fortran intrinsic function OR() to
+< C                         f90 standard intrinsic IOR().
+58c55
+< C              235,237,238
+---
+> C              235,237,238 
+109,113c106,107
+< 	i = 0
+< 	if (ID(6).ne.0) i = i + 128
+< 	if (ID(7).ne.0) i = i + 64
+< 	PDS(8) = char(i)
+< 
+---
+>         PDS(8)  = CHAR(IOR(ISHFT(ID(6),7),
+>      &                      ISHFT(ID(7),6)))
+179c173
+<             PDS(I) = CHAR(0)
+---
+>             PDS(I) = CHAR(00)
+w3fi71.f
+81a82
+> C 2006-12-27  VUONG        CORRECTED THE LAT/LON DIRECTION INCREMENT FOR GRID 160
+589c590
+<      &   47500,  47500, 0, 64, 0, 0, 0, 0, 0/
+---
+>      &   47625,  47625, 0, 64, 0, 0, 0, 0, 0/
+w3fi72.f
+43d42
+< C   05-09-08  Jovic        Found error in ALLOCATE BMS
+280,285c279
+<           IF (MOD(NPTS,16).EQ.0) THEN
+<               ALLOCATE(BMS(NPTS/8+6))
+<           ELSE
+<               ALLOCATE(BMS(NPTS/8+8))
+<           ENDIF
+< 
+---
+>           ALLOCATE(BMS(NPTS/8+6))
+330c324
+<         if (ALLOCATED(IPFLD)) DEALLOCATE(IPFLD)
+---
+>         DEALLOCATE(IPFLD)
+w3fi73.f
+61c61
+<       CALL SBYTESC(BMS,IBMAP,48,1,0,IBLEN)
+---
+>       CALL SBYTES (BMS,IBMAP,48,1,0,IBLEN)
+75c75
+<       CALL SBYTEC(BMS,NUM,0,24)
+---
+>       CALL SBYTE (BMS,NUM,0,24)
+77c77
+<       CALL SBYTEC(BMS,NLEFT,24,8)
+---
+>       CALL SBYTE (BMS,NLEFT,24,8)
+79c79
+<       CALL SBYTEC(BMS,IBFLAG,32,16)
+---
+>       CALL SBYTE (BMS,IBFLAG,32,16)
+90c90
+<           CALL SBYTEC(BMS,0,IBLEN+48,NLEFT)
+---
+>           CALL SBYTE (BMS,0,IBLEN+48,NLEFT)
+w3fi74.f
+353c353,354
+<       GDS(17) = CHAR(IOR(IGDS(8),ISHFT(ICOMP,3)))
+---
+>       ICOMP   = ISHFT(ICOMP,3)
+>       GDS(17) = CHAR(IOR(IGDS(8),ICOMP))
+w3fi75.f
+95c95
+<       character         IPFLD(*)*1
+---
+>       INTEGER         IPFLD(*)
+108a109,113
+>       CHARACTER * 1   CIEXP(8)
+>       CHARACTER * 1   CIMANT(8)
+> C
+>       EQUIVALENCE     (IEXP,CIEXP(1))
+>       EQUIVALENCE     (IMANT,CIMANT(1))
+278c283
+<           CALL GBYTEC(PDS,IPDSIZ,0,24)
+---
+>           CALL GBYTE (PDS,IPDSIZ,0,24)
+323,324c328,329
+<               CALL SBYTEC(PDS,IEXP,320,8)
+<               CALL SBYTEC(PDS,IMANT,328,24)
+---
+>               CALL SBYTE (PDS,IEXP,320,8)
+>               CALL SBYTE (PDS,IMANT,328,24)
+331,332c336,337
+<               CALL SBYTEC(PDS,IEXP,352,8)
+<               CALL SBYTEC(PDS,IMANT,360,24)
+---
+>               CALL SBYTE (PDS,IEXP,352,8)
+>               CALL SBYTE (PDS,IMANT,360,24)
+338c343
+<                 CALL SBYTEC(PDS,ISCAL2,384,16)
+---
+>                 CALL SBYTE (PDS,ISCAL2,384,16)
+340c345
+<                 CALL SBYTEC(PDS,1,384,1)
+---
+>                 CALL SBYTE (PDS,1,384,1)
+342c347
+<                 CALL SBYTEC( PDS,ISCAL2,385,15)
+---
+>                 CALL SBYTE( PDS,ISCAL2,385,15)
+455c460
+<           CALL SBYTEC(BDS11,LENBDS,0,24)
+---
+>           CALL SBYTE (BDS11,LENBDS,0,24)
+459,462c464,467
+<           CALL SBYTEC(BDS11,IBDSFL(1),24,1)
+<           CALL SBYTEC(BDS11,IBDSFL(2),25,1)
+<           CALL SBYTEC(BDS11,IBDSFL(3),26,1)
+<           CALL SBYTEC(BDS11,IBDSFL(4),27,1)
+---
+>           CALL SBYTE (BDS11,IBDSFL(1),24,1)
+>           CALL SBYTE (BDS11,IBDSFL(2),25,1)
+>           CALL SBYTE (BDS11,IBDSFL(3),26,1)
+>           CALL SBYTE (BDS11,IBDSFL(4),27,1)
+464c469
+<           CALL SBYTEC(BDS11,NFILL,28,4)
+---
+>           CALL SBYTE (BDS11,NFILL,28,4)
+470c475
+<               CALL SBYTEC(BDS11,1,32,1)
+---
+>               CALL SBYTE (BDS11,1,32,1)
+472c477
+<               CALL SBYTEC(BDS11,ISCALE,33,15)
+---
+>               CALL SBYTE (BDS11,ISCALE,33,15)
+474c479
+<               CALL SBYTEC(BDS11,ISCALE,32,16)
+---
+>               CALL SBYTE (BDS11,ISCALE,32,16)
+491,492c496,497
+<           CALL SBYTEC(BDS11,IEXP,48,8)
+<           CALL SBYTEC(BDS11,IMANT,56,24)
+---
+>           CALL SBYTE (BDS11,IEXP,48,8)
+>           CALL SBYTE (BDS11,IMANT,56,24)
+498c503
+<           CALL SBYTEC(BDS11,NBITS,80,8)
+---
+>           CALL SBYTE (BDS11,NBITS,80,8)
+547c552
+<       character       IPFLD(*)*1
+---
+>       INTEGER         IPFLD(*)
+666c671
+<           CALL SBYTE(IFOVAL,NMIN,IFOPTR,KBDS(11))
+---
+>           CALL SBYTE (IFOVAL,NMIN,IFOPTR,KBDS(11))
+668c673
+<           CALL SBYTE(IFOVAL,IWORK(ISTART),IFOPTR,KBDS(11))
+---
+>           CALL SBYTE (IFOVAL,IWORK(ISTART),IFOPTR,KBDS(11))
+682c687
+<       CALL SBYTE(ISOWID,KWIDE,IWDPTR,8)
+---
+>       CALL SBYTE (ISOWID,KWIDE,IWDPTR,8)
+687c692
+<           CALL SBYTES(ISOVAL,IWORK(ISTART),ISOPTR,KWIDE,0,KPTS)
+---
+>           CALL SBYTES (ISOVAL,IWORK(ISTART),ISOPTR,KWIDE,0,KPTS)
+712c717
+<       CALL SBYTEC(IPFLD,IBDSFL(5),IPTR,1)
+---
+>       CALL SBYTE (IPFLD,IBDSFL(5),IPTR,1)
+714c719
+<       CALL SBYTEC(IPFLD,IBDSFL(6),IPTR,1)
+---
+>       CALL SBYTE (IPFLD,IBDSFL(6),IPTR,1)
+716c721
+<       CALL SBYTEC(IPFLD,IBDSFL(7),IPTR,1)
+---
+>       CALL SBYTE (IPFLD,IBDSFL(7),IPTR,1)
+718c723
+<       CALL SBYTEC(IPFLD,IBDSFL(8),IPTR,1)
+---
+>       CALL SBYTE (IPFLD,IBDSFL(8),IPTR,1)
+720c725
+<       CALL SBYTEC(IPFLD,IBDSFL(9),IPTR,1)
+---
+>       CALL SBYTE (IPFLD,IBDSFL(9),IPTR,1)
+722c727
+<       CALL SBYTEC(IPFLD,IBDSFL(10),IPTR,1)
+---
+>       CALL SBYTE (IPFLD,IBDSFL(10),IPTR,1)
+724c729
+<       CALL SBYTEC(IPFLD,IBDSFL(11),IPTR,1)
+---
+>       CALL SBYTE (IPFLD,IBDSFL(11),IPTR,1)
+726c731
+<       CALL SBYTEC(IPFLD,IBDSFL(12),IPTR,1)
+---
+>       CALL SBYTE (IPFLD,IBDSFL(12),IPTR,1)
+733c738
+<       CALL SBYTEC(IPFLD,KBDS(17),IPTR,16)
+---
+>       CALL SBYTE (IPFLD,KBDS(17),IPTR,16)
+737c742
+<       CALL SBYTEC(IPFLD,KBDS(19),IPTR,16)
+---
+>       CALL SBYTE (IPFLD,KBDS(19),IPTR,16)
+740c745
+<       CALL SBYTEC(IPFLD,0,IPTR,8)
+---
+>       CALL SBYTE (IPFLD,0,IPTR,8)
+745c750
+<       CALL SBYTESC(IPFLD,ISOWID,IPTR,32,0,IX)
+---
+>       CALL SBYTES (IPFLD,ISOWID,IPTR,32,0,IX)
+749c754
+<       CALL SBYTESC(IPFLD,ISOBMP,IPTR,32,0,IJ)
+---
+>       CALL SBYTES (IPFLD,ISOBMP,IPTR,32,0,IJ)
+758c763
+<       CALL SBYTEC(IPFLD,KBDS(12),0,16)
+---
+>       CALL SBYTE (IPFLD,KBDS(12),0,16)
+761c766
+<       CALL SBYTESC(IPFLD,IFOVAL,IPTR,32,0,IPASS)
+---
+>       CALL SBYTES (IPFLD,IFOVAL,IPTR,32,0,IPASS)
+771c776
+<       CALL SBYTEC(IPFLD,KBDS(15),24,16)
+---
+>       CALL SBYTE (IPFLD,KBDS(15),24,16)
+774c779
+<       CALL SBYTESC(IPFLD,ISOVAL,IPTR,32,0,IX)
+---
+>       CALL SBYTES (IPFLD,ISOVAL,IPTR,32,0,IX)
+789c794
+<       CALL SBYTEC(BDS11,LENBDS,0,24)
+---
+>       CALL SBYTE (BDS11,LENBDS,0,24)
+791,794c796,799
+<       CALL SBYTEC(BDS11,IBDSFL(1),24,1)
+<       CALL SBYTEC(BDS11,IBDSFL(2),25,1)
+<       CALL SBYTEC(BDS11,IBDSFL(3),26,1)
+<       CALL SBYTEC(BDS11,IBDSFL(4),27,1)
+---
+>       CALL SBYTE (BDS11,IBDSFL(1),24,1)
+>       CALL SBYTE (BDS11,IBDSFL(2),25,1)
+>       CALL SBYTE (BDS11,IBDSFL(3),26,1)
+>       CALL SBYTE (BDS11,IBDSFL(4),27,1)
+796c801
+<       CALL SBYTEC(BDS11,NLEFT,28,4)
+---
+>       CALL SBYTE (BDS11,NLEFT,28,4)
+799c804
+<           CALL SBYTEC(BDS11,1,32,1)
+---
+>           CALL SBYTE (BDS11,1,32,1)
+802c807
+<           CALL SBYTEC(BDS11,0,32,1)
+---
+>           CALL SBYTE (BDS11,0,32,1)
+804c809
+<       CALL SBYTEC(BDS11,ISCAL2,33,15)
+---
+>       CALL SBYTE (BDS11,ISCAL2,33,15)
+818,819c823,824
+<           CALL SBYTEC(BDS11,IEXP,48,8)
+<           CALL SBYTEC(BDS11,IMANT,56,24)
+---
+>           CALL SBYTE (BDS11,IEXP,48,8)
+>           CALL SBYTE (BDS11,IMANT,56,24)
+823c828
+<       CALL SBYTEC(BDS11,KBDS(11),80,8)
+---
+>       CALL SBYTE (BDS11,KBDS(11),80,8)
+905c910
+<       CHARACTER*1     BDS11(*),PDS(*),IPFLD(*)
+---
+>       CHARACTER*1     BDS11(*),PDS(*)
+911c916
+<       INTEGER         IGDS(*)
+---
+>       INTEGER         IPFLD(*),IGDS(*)
+1061c1066
+<       CALL SBYTEC(IPFLD,IBDSFL(5),IPTR,1)
+---
+>       CALL SBYTE (IPFLD,IBDSFL(5),IPTR,1)
+1063c1068
+<       CALL SBYTEC(IPFLD,IBDSFL(6),IPTR,1)
+---
+>       CALL SBYTE (IPFLD,IBDSFL(6),IPTR,1)
+1065c1070
+<       CALL SBYTEC(IPFLD,IBDSFL(7),IPTR,1)
+---
+>       CALL SBYTE (IPFLD,IBDSFL(7),IPTR,1)
+1067c1072
+<       CALL SBYTEC(IPFLD,IBDSFL(8),IPTR,1)
+---
+>       CALL SBYTE (IPFLD,IBDSFL(8),IPTR,1)
+1069c1074
+<       CALL SBYTEC(IPFLD,IBDSFL(9),IPTR,1)
+---
+>       CALL SBYTE (IPFLD,IBDSFL(9),IPTR,1)
+1071c1076
+<       CALL SBYTEC(IPFLD,IBDSFL(10),IPTR,1)
+---
+>       CALL SBYTE (IPFLD,IBDSFL(10),IPTR,1)
+1073c1078
+<       CALL SBYTEC(IPFLD,IBDSFL(11),IPTR,1)
+---
+>       CALL SBYTE (IPFLD,IBDSFL(11),IPTR,1)
+1075c1080
+<       CALL SBYTEC(IPFLD,IBDSFL(12),IPTR,1)
+---
+>       CALL SBYTE (IPFLD,IBDSFL(12),IPTR,1)
+1082c1087
+<       CALL SBYTEC(IPFLD,KBDS(17),IPTR,16)
+---
+>       CALL SBYTE (IPFLD,KBDS(17),IPTR,16)
+1086c1091
+<       CALL SBYTEC(IPFLD,KBDS(19),IPTR,16)
+---
+>       CALL SBYTE (IPFLD,KBDS(19),IPTR,16)
+1089c1094
+<       CALL SBYTEC(IPFLD,0,IPTR,8)
+---
+>       CALL SBYTE (IPFLD,0,IPTR,8)
+1094c1099
+<       CALL SBYTESC(IPFLD,ISOWID,IPTR,32,0,IX)
+---
+>       CALL SBYTES (IPFLD,ISOWID,IPTR,32,0,IX)
+1105c1110
+<       CALL SBYTEC(IPFLD,KBDS(12),0,16)
+---
+>       CALL SBYTE (IPFLD,KBDS(12),0,16)
+1108c1113
+<       CALL SBYTESC(IPFLD,IFOVAL,IPTR,32,0,IPASS)
+---
+>       CALL SBYTES (IPFLD,IFOVAL,IPTR,32,0,IPASS)
+1120c1125
+<       CALL SBYTEC(IPFLD,KBDS(15),24,16)
+---
+>       CALL SBYTE (IPFLD,KBDS(15),24,16)
+1123c1128
+<       CALL SBYTESC(IPFLD,ISOVAL,IPTR,32,0,IX)
+---
+>       CALL SBYTES (IPFLD,ISOVAL,IPTR,32,0,IX)
+1140c1145
+<       CALL SBYTEC(BDS11,LENBDS,0,24)
+---
+>       CALL SBYTE (BDS11,LENBDS,0,24)
+1142,1145c1147,1150
+<       CALL SBYTEC(BDS11,IBDSFL(1),24,1)
+<       CALL SBYTEC(BDS11,IBDSFL(2),25,1)
+<       CALL SBYTEC(BDS11,IBDSFL(3),26,1)
+<       CALL SBYTEC(BDS11,IBDSFL(4),27,1)
+---
+>       CALL SBYTE (BDS11,IBDSFL(1),24,1)
+>       CALL SBYTE (BDS11,IBDSFL(2),25,1)
+>       CALL SBYTE (BDS11,IBDSFL(3),26,1)
+>       CALL SBYTE (BDS11,IBDSFL(4),27,1)
+1147c1152
+<       CALL SBYTEC(BDS11,NLEFT,28,4)
+---
+>       CALL SBYTE (BDS11,NLEFT,28,4)
+1150c1155
+<           CALL SBYTEC(BDS11,1,32,1)
+---
+>           CALL SBYTE (BDS11,1,32,1)
+1153c1158
+<           CALL SBYTEC(BDS11,0,32,1)
+---
+>           CALL SBYTE (BDS11,0,32,1)
+1155c1160
+<       CALL SBYTEC(BDS11,ISCAL2,33,15)
+---
+>       CALL SBYTE (BDS11,ISCAL2,33,15)
+1169,1170c1174,1175
+<       CALL SBYTEC(BDS11,IEXP,48,8)
+<       CALL SBYTEC(BDS11,IMANT,56,24)
+---
+>       CALL SBYTE (BDS11,IEXP,48,8)
+>       CALL SBYTE (BDS11,IMANT,56,24)
+1174c1179
+<       CALL SBYTEC(BDS11,KBDS(11),80,8)
+---
+>       CALL SBYTE (BDS11,KBDS(11),80,8)
+w3fi76.f
+w3fi82.f
+w3fi83.f
+w3fs26.f
+w3locdat.f
+w3reddat.f
+100,105c100,101
+<      &    itm=(/86400000,3600000,60000,1000,1/)
+< !     &                                 itm=itd(5)/itd
+< !      integer,dimension(4),parameter:: itn=itd(2:5)/itd(1:4)
+<       integer,dimension(4),parameter:: itn=(/24,60,60,1000/)
+< 
+< 
+---
+>      &                                 itm=itd(5)/itd
+>       integer,dimension(4),parameter:: itn=itd(2:5)/itd(1:4)
+109d104
+< 
+w3tagb.f
+79c79
+< c         CALL START()
+---
+>          CALL START()
+116c116
+< c         CALL SUMMARY()
+---
+>          CALL SUMMARY()
+w3utcdat.f
+xmovex.f

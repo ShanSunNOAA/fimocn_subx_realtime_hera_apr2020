@@ -1,0 +1,135 @@
+MAILTO="xue.wei@noaa.gov,judy.k.henderson@noaa.gov"
+
+# Realtime FIM run
+0-57/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIM/FIMwfm/rocoto_xml/FIMG8SJET.xml -d /home/rtfim/rt_dbfiles/FIMG8SJET.db
+
+# Retro FIM run
+#0-57/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIM/FIMwfm/rocoto_xml/FIMG8SJET_retro.xml -d /home/rtfim/rt_dbfiles/FIMG8SJET_retro.db
+#0-57/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIM/FIMwfm/rocoto_xml/FIMG8SJET_retro_postTracker.xml -d /home/rtfim/rt_dbfiles/FIMG8SJET_retro_postTracker.db
+
+# Realtime FIMX run
+0-57/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIMX/FIMwfm/rocoto_xml/FIMXG7UJET.xml -d /home/rtfim/rt_dbfiles/FIMXG7UJET.db
+
+# Realtime FIMX test Volcano run
+#   commented out until switch to T1534 input
+#JKH0-57/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIMXVolc/FIMX/FIMwfm/rocoto_xml/FIMXG7UJET.xml -d /pan2/projects/fim-njet/FIMXVolc/FIMX/FIMwfm/log/FIMXG7UJET.db
+
+# Retro FIMX run
+#0-57/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIMX/FIMwfm/rocoto_xml/FIMXG7UJET_retro.xml -d /home/rtfim/rt_dbfiles/FIMXG7UJET_retro.db
+#JKH0-57/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIMX/FIMwfm/rocoto_xml/FIMXG7UJET_tracker_retro.xml -d /home/rtfim/rt_dbfiles/FIMXG7UJET_tracker_retro.db
+
+# Realtime FIM7 run
+0-57/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIM7/FIMwfm/rocoto_xml/FIMG7UJET.xml -d /home/rtfim/rt_dbfiles/FIMG7UJET.db
+
+# Retro FIM7 run
+0-57/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIM7/FIMwfm/rocoto_xml/FIMG7UJET_retro.xml -d /home/rtfim/rt_dbfiles/FIMG7UJET_retro.db
+#0-57/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIM7/FIMwfm/rocoto_xml/FIMG7UJET_retro_ncl.xml -d /home/rtfim/rt_dbfiles/FIMG7UJET_retro_ncl.db
+0-57/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIM7/FIMwfm/rocoto_xml/FIMG7UJET_retro_verif.xml -d /home/rtfim/rt_dbfiles/FIMG7UJET_retro_verif.db
+
+# HFIP FIM9 (not under reservation)
+1-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIM9/FIMwfm/rocoto_xml/FIMG9_HFIP_hourly.xml -d /home/rtfim/rt_dbfiles/FIMG9_HFIP.db
+1-59/3 * * * *  /apps/rocoto/default/bin/rocotorun  -w /pan2/projects/fim-njet/FIM9/FIMwfm/rocoto_xml/FIM9hfipPlots_sjet.xml -d /home/rtfim/rt_dbfiles/FIM9_hfipPlots_sjet.db 
+# ncl task (not under reservation)
+1-59/3 * * * *  /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIM9/FIMwfm/rocoto_xml/FIMG9SJET_HFIP_ncl_nores.xml -d /home/rtfim/rt_dbfiles/FIM9_ncl_nores.db 
+1-59/3 * * * *  /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIM9/FIMwfm/rocoto_xml/FIMG9SJET_HFIP_ncl_retro_nores.xml -d /home/rtfim/rt_dbfiles/FIM9_ncl_retro_nores.db
+1-50/3 * * * *  /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIM9/FIMwfm/rocoto_xml/FIMG9SJET_HFIP_nclzip_retro_nores.xml -d /home/rtfim/rt_dbfiles/FIM9_nclzip_retro.db
+#1-59/3 * * * *  /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIM9/FIMwfm/rocoto_xml/FIMG9SJET_HFIP_hourly_retro_post_nores.xml -d /home/rtfim/rt_dbfiles/FIMG9SJET_HFIP_retro_hourly_post_nores.db
+
+# HFIP retro run (no reservation)
+#1-57/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIM9/FIMwfm/rocoto_xml/FIMG9_HFIP_hourly_retro_nores.xml -d /home/rtfim/rt_dbfiles/FIMG9_HFIP_retro_nores.db
+#1-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIM9/FIMwfm/rocoto_xml/FIMG9SJET_HFIP_retro_nores.xml -d /home/rtfim/rt_dbfiles/FIMG9SJET_HFIP_retro_nores.db
+#0-57/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIM9/FIMwfm/rocoto_xml/FIMG9SJET_HFIP_hourly_retro_postTracker_nores.xml -d /home/rtfim/rt_dbfiles/FIMG9SJET_HFIP_hourly_retro_postTracker_nores.db
+1-59/3 * * * * /apps/rocoto/default/bin/rocotorun  -w /pan2/projects/fim-njet/FIM9/FIMwfm/rocoto_xml/FIM9hfipPlots_sjet_retro.xml -d /home/rtfim/rt_dbfiles/FIM9_hfipPlots_sjet_retro.db 
+#1-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIM9/FIMwfm/rocoto_xml/FIMG9SJET_HFIP_retro_pop174.xml -d /home/rtfim/rt_dbfiles/FIMG9SJET_HFIP_retro_pop174.db
+#1-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIM9/FIMwfm/rocoto_xml/FIMG9SJET_HFIP_sync_retro.xml -d /home/rtfim/rt_dbfiles/FIM9_sync_retro.db
+#1-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIM9/FIMwfm/rocoto_xml/FIMG9ujet_HFIP_hourly_retro.xml -d /home/rtfim/rt_dbfiles/FIMG9ujet_hourly_retro.db
+
+#xue for baojianwen
+#1-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w //mnt/lfs3/projects/fim-njet/xue_rerun_bao/test_fim_r5207/FIMwfm/rocoto_xml/test_fim8_r5207.xml -d /mnt/lfs3/projects/fim-njet/xue_rerun_bao/test_fim_r5207/xue_rerun_bao.db
+
+# retro for testing new Physics settings
+1-57/3 * * * * /apps/rocoto/default/bin/rocotorun -w /lfs3/projects/fim-njet/FIMRETRO_r5633_physics/FIMwfm/rocoto_xml/FIMRETRO.xml -d /home/rtfim/retro_dbfiles/FIMRETRO_r5633_pys.db
+
+# 3-yr Retro HFIP run
+#0-57/3 * * * * /apps/rocoto/default/bin/rocotorun -w /lfs2/projects/fim-njet/FIM9RETRO_HFIP_2014/FIMwfm/rocoto_xml/FIMRETRO2011.xml -d /lfs2/projects/fim-njet/FIM9RETRO_HFIP_2014/FIMwfm/log/RETRO2011.db
+#JKH02MAY0-57/3 * * * * /apps/rocoto/default/bin/rocotorun -w /lfs2/projects/fim-njet/FIM9RETRO_HFIP_2014/FIMwfm/rocoto_xml/FIMRETRO2011_2.xml -d /lfs2/projects/fim-njet/FIM9RETRO_HFIP_2014/FIMwfm/log/RETRO2011_2.db
+#JKH02MAY0-57/3 * * * * /apps/rocoto/default/bin/rocotorun -w /lfs2/projects/fim-njet/FIM9RETRO_HFIP_2014/FIMwfm/rocoto_xml/FIMRETRO2011_post.xml -d /lfs2/projects/fim-njet/FIM9RETRO_HFIP_2014/FIMwfm/log/RETRO2011_post.db
+#JKH02MAY0-57/3 * * * * /apps/rocoto/default/bin/rocotorun -w /lfs2/projects/fim-njet/FIM9RETRO_HFIP_2014/FIMwfm/rocoto_xml/FIMRETRO2011_sounding.xml -d /lfs2/projects/fim-njet/FIM9RETRO_HFIP_2014/FIMwfm/log/sounding.db
+
+## Realtime FIM Ensemble run
+1-59/2 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIMENS/FIMwfm/rocoto_xml/FIMENS_tjet.xml -d /home/rtfim/rt_dbfiles/FIMENS_tjet.db
+
+## Retro FIM Ensemble run
+1-59/2 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIMENS/FIMwfm/rocoto_xml/FIMENS_retro_tjet_nores.xml -d /home/rtfim/rt_dbfiles/FIMENS_retro_tjet_nores.db 
+1-59/2 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIMENS/FIMwfm/rocoto_xml/FIMENS_plots_SJET_retro_nores.xml -d /home/rtfim/rt_dbfiles/FIMENS_plots_SJET_retro_nores.db
+#1-59/2 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIMENS/FIMwfm/rocoto_xml/FIMENS_retro_tjet_postGrib_nores.xml -d /home/rtfim/rt_dbfiles/FIMENS_retro_tjet_postGrib_nores.db 
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIMENS/FIMwfm/rocoto_xml/FIMENS_sjet_retro_postTracker_nores.xml -d /home/rtfim/rt_dbfiles/FIMENS_sjet_retro_postTracker_nores.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIMENS/FIMwfm/rocoto_xml/FIMENS_retro_spectral.xml -d /home/rtfim/rt_dbfiles/FIMENS_retro_spectral.db 
+
+## Hamilton Retro
+MAILTO="Jeffrey.A.Hamilton@noaa.gov"
+#0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /lfs3/projects/fim-njet/FIMRETRO_r4582_T1534_574mv/FIMwfm/rocoto_xml/FIMRETRO.xml -d /lfs3/projects/fim-njet/FIMRETRO_r4582_T1534_574mv/FIMwfm/log/FIMRETRO.db
+#0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /lfs3/projects/fim-njet/FIMRETRO_r4582_T1534_574mv/FIMwfm/rocoto_xml/FIMRETRO2.xml -d /lfs3/projects/fim-njet/FIMRETRO_r4582_T1534_574mv/FIMwfm/log/FIMRETRO2.db
+#0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /lfs3/projects/fim-njet/FIMRETRO_r4582_T1534_574mv/FIMwfm/rocoto_xml/FIMRETRO_verif.xml -d /lfs3/projects/fim-njet/FIMRETRO_r4582_T1534_574mv/FIMwfm/log/FIMRETRO_verif.db
+#0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /lfs3/projects/fim-njet/FIMRETRO_moninq_r4306/FIMwfm/rocoto_xml/get_files_rct.xml -d /lfs3/projects/fim-njet/FIMRETRO_moninq_r4306/FIMwfm/log/rocoto.db
+#JKH0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /lfs2/projects/fim/HIWPP/FIM_r4780/FIMwfm/rocoto_xml/newretro.xml -d /lfs2/projects/fim/HIWPP/FIM_r4780/FIMwfm/log/newretro.db
+#0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /lfs2/projects/fim/HIWPP/FIM_r4780/FIMwfm/rocoto_xml/newretro_post.xml -d /lfs2/projects/fim/HIWPP/FIM_r4780/FIMwfm/log/newretro_post.db
+#JKH0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /lfs2/projects/fim/HIWPP/FIM_r4780/FIMwfm/rocoto_xml/newretro_verif.xml -d /lfs2/projects/fim/HIWPP/FIM_r4780/FIMwfm/log/newretro_verif.db
+#0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /lfs2/projects/fim/HIWPP/FIM_r4780/FIMwfm/rocoto_xml/newretro_raob.xml -d /lfs2/projects/fim/HIWPP/FIM_r4780/FIMwfm/log/newretro_raob.db
+#0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /lfs2/projects/fim/HIWPP/FIM_r4780/FIMwfm/rocoto_xml/newretro_raob_hiwpp.xml -d /lfs2/projects/fim/HIWPP/FIM_r4780/FIMwfm/log/newretro_verif_hiwpp.db
+
+## Hamilton Realtime Ensemble Mean Verification
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/SPPVerification/FIMwfm/rocoto_xml/GEFSVerification.xml -d /pan2/projects/fim-njet/SPPVerification/FIMwfm/log/GEFSarith_verif.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/SPPVerification/FIMwfm/rocoto_xml/CombinedEnsembleVerification.xml -d /pan2/projects/fim-njet/SPPVerification/FIMwfm/log/CombinedEnsemble_verif.db
+
+## Retro FIMRETRO_moninq_r4306_v3
+#0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /lfs2/projects/fim-njet/FIMRETRO_moninq_r4306_v3/FIMwfm/rocoto_xml/FIMRETRO.xml -d /lfs2/projects/fim-njet/FIMRETRO_moninq_r4306_v3/FIMwfm/log/FIMRETRO.db
+
+MAILTO="xue.wei@noaa.gov,judy.k.henderson@noaa.gov"
+
+# GFS/TACC Verification
+# xue 
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/GFSVerification/FIMwfm/rocoto_xml/GFSVerification_backfill.xml -d /pan2/projects/fim-njet/GFSVerification/FIMwfm/log/GFSVerification_backfill.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/GFSVerification/FIMwfm/rocoto_xml/GFSVerification.xml -d /pan2/projects/fim-njet/GFSVerification/FIMwfm/log/GFSVerification.db
+# GFS initial condition
+#0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /lfs2/projects/fim-njet/GFS_RETRO_FILES_2014/FIMwfm/rocoto_xml/get_files_rct.xml -d /lfs2/projects/fim-njet/GFS_RETRO_FILES_2014/FIMwfm/log/get_files.db
+# Purge GFS files than 7 days
+0 */6 * * * /usr/bin/find /pan2/projects/fim-njet/GFSVerification/FIMrun -name 'fim_8_*_*_*' -type d -mtime +7 -exec /bin/rm -rf {} \; > /pan2/projects/fim-njet/logs/rmlogGFSVerif.log 2>&1
+
+# Brian's test runs
+# 0-57/3 * * * * /apps/rocoto/default/bin/rocotorun -w /lfs2/projects/fim/jamison/FIM8TEST/FIM/FIMwfm/rocoto_xml/FIMG8SJET.xml -d /lfs2/projects/fim/jamison/FIM8TEST/FIM/FIMwfm/log/FIMG8SJET.db
+# 0-57/3 * * * * /apps/rocoto/default/bin/rocotorun -w /lfs2/projects/fim/jamison/FIMXTEST/FIMX/FIMwfm/rocoto_xml/FIMXG7UJET.xml -d /lfs2/projects/fim/jamison/FIMXTEST/FIMX/FIMwfm/log/FIMXG7UJET.db
+# 0-57/3 * * * * /apps/rocoto/default/bin/rocotorun -w /lfs2/projects/fim/jamison/FIM7TEST/FIM7.20150203/FIMwfm/rocoto_xml/FIMG7UJET.xml -d /lfs2/projects/fim/jamison/FIM7TEST/FIM7.20150203/FIMwfm/log/FIMG7UJET.db
+
+# FIM - FIMZEUS
+# 33 18 * * * /whome/rtfim/qsubnclfimfimzeusdiff nclfimfimzeusdiff.ksh >> /lfs2/projects/rtfim/logs/nclfimfimzeusdiff/nclfimfimzeusdiff.log 2>&1
+
+# Rsync realtime FIM results to /rt to get transferred to /public
+*/30 * * * * /whome/rtfim/FIM/FIMwfm/rocoto_scripts/fimrsync.rb > /pan2/projects/fim-njet/logs/fimrsync.log.$$ 2>&1
+#JKH*/50 * * * * /whome/rtfim/FIM9/FIMwfm/rocoto_scripts/fim9rsync.rb > /pan2/projects/fim-njet/logs/fim9rsync.log.$$ 2>&1
+30 11,23 * * * /whome/rtfim/FIM/FIMwfm/rocoto_scripts/fimimagesrsync.rb > /pan2/projects/fim-njet/logs/fimimagesrsync.log.$$ 2>&1
+
+# Remove old lock files (older than 90 minutes)
+00 * * * * /usr/bin/find /whome/rtfim/FIM/FIMrun -name '*.lock' -and -mmin +90 -exec rm -f {} \;
+
+# Purge realtime FIM runs older than 10 days &  all except fim, post/fim, ncl, ncldiff files older than 5 days
+# and log files > 5 days
+40 0-23/3 * * * /whome/rtfim/purgeFiles.pl > /pan2/projects/fim-njet/logs/purgeFiles.log.$$ 2>&1
+#0 1,13 * * * /whome/rtfim/bin/purgeFIMENSFiles.sh > /pan2/projects/fim-njet/logs/purgeFIMENS.log.$$ 2>&1
+45 0-23/6 * * * /home/rtfim/bin/purgeFIMFiles.sh > /pan2/projects/fim-njet/logs/purgeFIMall.log.$$ 2>&1
+
+# create FIM status page
+*/15 * * * * /whome/rtfim/bin/runcron /whome/rtfim/statFIM.pl 6 > /pan2/projects/fim-njet/logs/statFIM.log 2>&1
+
+# Copy this crontab file every hour
+00 * * * * /usr/local/bin/crontab -l > cron_ujet.save
+
+#
+# Jeff's HIWPP verification runs
+MAILTO="Jeffrey.A.Hamilton@noaa.gov"
+1-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIM9/FIMwfm/rocoto_xml/FIMG9SJET_hiwppdb_retro.xml -d /home/rtfim/rt_dbfiles/FIMG9SJET_hiwppdb_retro.db
+1-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIM9/FIMwfm/rocoto_xml/FIMG9SJET_hiwppdb.xml -d /home/rtfim/rt_dbfiles/FIMG9SJET_hiwppdb.db
+0-57/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/FIM/FIMwfm/rocoto_xml/FIMG8UJET_hiwppdb.xml -d /home/rtfim/rt_dbfiles/FIMG8UJET_hiwppdb.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /pan2/projects/fim-njet/GFSVerification/FIMwfm/rocoto_xml/GFSVerification_hiwppdb.xml -d /pan2/projects/fim-njet/GFSVerification/FIMwfm/log/GFSVerification_hiwppdb.db
+# Jeff's FIM ENsemble tranfers
+00 19 13 * * /lfs3/projects/fim-njet/isidora/transfer > /lfs3/projects/fim-njet/isidora/jeff_transfer.log 2>&1

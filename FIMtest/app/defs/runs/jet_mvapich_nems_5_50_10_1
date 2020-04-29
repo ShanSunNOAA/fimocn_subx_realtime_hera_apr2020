@@ -1,0 +1,2 @@
+ddts_extends: 'jet_openmpi_5_50_10_1'
+ddts_build: 'jet_nems_parallel'

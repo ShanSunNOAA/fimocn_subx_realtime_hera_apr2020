@@ -1,0 +1,23 @@
+  <task name="purge_fimout_#t2#" maxtries="5">
+    <command>&SCRIPTS;/purge_fimout.ksh</command>
+    <account>&PROJECT;</account>
+    <cores>1</cores>
+    &PARTITION_JET;
+    <walltime>00:05:00</walltime>
+    <jobname>purge_fimout_#t2#</jobname>
+    <join><cyclestr>&FIM_LOG;/post/purge_fimout_#t2#_@Y@m@d@H.log</cyclestr></join>
+    <envar><name>FIMRUN</name><value>&FIM_RUN;</value></envar>
+    <envar><name>yyyymmddhh</name><value><cyclestr>@Y@m@d@H</cyclestr></value></envar>
+    <envar><name>PES</name><value>&PES;</value></envar>
+    <envar><name>GLVL</name><value>&GLVL;</value></envar>
+    <envar><name>NVL</name><value>&NVL;</value></envar>
+    <envar><name>T</name><value>#t2#</value></envar>
+    <dependency>
+      <datadep minsize="1b"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/post_&MEMBER_ID;/fim/NAT/grib2/@y@j@H000#t2#</cyclestr></datadep>
+      <!--
+      <and>
+        <datadep minsize="1b"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/post_&MEMBER_ID;/130/NAT/grib2/@y@j@H000#t2#</cyclestr></datadep>
+      </and>
+      -->
+    </dependency>
+  </task>

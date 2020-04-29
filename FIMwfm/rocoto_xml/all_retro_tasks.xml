@@ -1,0 +1,28 @@
+  <!ENTITY spectral_archive_task    SYSTEM  "FIM_SpectralFileArchive.xml">
+  <!ENTITY spectral_task            SYSTEM  "FIM_SpectralFileRetro.xml">
+  <!ENTITY prep_task                SYSTEM  "FIM_Prep.xml"> 
+  <!ENTITY fim_task                 SYSTEM  "FIM_FIM.xml">
+  <!ENTITY fim_omp_task             SYSTEM  "FIM_FIM_OMP.xml">
+  <!ENTITY post_task                SYSTEM  "FIM_PostGriboutTrue.xml">
+  <!ENTITY post_task_fimout         SYSTEM  "FIM_PostFimoutTrue_retro.xml">
+  <!ENTITY postncl_task             SYSTEM  "FIM_PostNCL.xml">
+  <!ENTITY popfim_task              SYSTEM  "FIM_PopFIMRetro.xml">
+  <!ENTITY pop174_task              SYSTEM  "FIM_Pop174.xml">
+  <!ENTITY pop_task                 SYSTEM  "FIM_Pop.xml">
+  <!ENTITY grib12_task              SYSTEM  "FIM_PostGrib12.xml">
+  <!ENTITY gribsplit_task           SYSTEM  "FIM_GribSplit.xml">
+  <!ENTITY fimoutPurge_task         SYSTEM  "FIM_PurgeRetro.xml">
+  <!ENTITY verif_file_task          SYSTEM  "FIM_GFSVerifFileRetro.xml">
+  <!ENTITY verif_task               SYSTEM  "FIM_VerifRetro.xml">
+  <!ENTITY sounding_task            SYSTEM  "FIM_Soundings.xml">
+  <!ENTITY ncldiff_task             SYSTEM  "FIM_NCLdiff.xml">
+  <!ENTITY surface_task             SYSTEM  "FIM_Surface.xml">
+  <!ENTITY spectral_subx_rt_task    SYSTEM  "spectral_subx_rt.xml">
+  <!ENTITY spectral_subx_retro_task SYSTEM  "spectral_subx_retro.xml">
+  <!ENTITY prep_subx_task           SYSTEM  "prep_subx.xml">
+  <!ENTITY fim_subx_task            SYSTEM  "fim_subx.xml">
+  <!ENTITY fim2nc_subx_task         SYSTEM  "fim2nc_subx.xml">
+  <!ENTITY zip_subx_task            SYSTEM  "zip_subx.xml">
+  <!ENTITY anomaly_subx_task        SYSTEM  "anomaly_subx.xml">
+
+

@@ -1,0 +1,10 @@
+This is a linux port of the operational version of copygb (6/2004).
+To compile, you need g95 (www.g95.org).
+
+Differences from operational version:
+   (1) some source code changes (number of underscores for C/f95)
+   (2) one minor, yet to be fixed, unsupported f95 syntax.
+   (3) conversion of w3lib to endian independent
+   (4) no spectral conversion
+
+

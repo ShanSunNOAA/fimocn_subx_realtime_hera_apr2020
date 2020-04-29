@@ -1,0 +1,356 @@
+MAILTO="xue.wei@noaa.gov,judy.k.henderson@noaa.gov"
+#
+#
+# # 00 08,20 * * * /home/rtfim/mv_rap_cold.py > /home/rtfim/mv_rap_cold.log 2>&1
+# # 10 00,06,12,18 * * * /home/rtfim/mv_hrrr_chem.py > /home/rtfim/mv_hrrr_chem.log 2>&1
+# # 00 00,12 * * * /home/rtfim/mv_fimgfsdiff.py > /home/rtfim/mv_fimgfsdiff.log 2>&1
+
+# PURGER script
+0 1,13 * * * /scratch1/portfolios/BMC/fim/purgeFiles_rtfim.pl >  /scratch1/portfolios/BMC/fim/logs/purgeFiles_rtfim.log.$$ 2>&1
+50   * * * * /scratch1/portfolios/BMC/fim/purgeGrib1.pl >  /scratch1/portfolios/BMC/fim/logs/purgeGrib1.log.$$ 2>&1
+
+# status script  (pass parameter of 8 since FIMYZEUS runs in delayed mode)
+*/15 * * * * /home/rtfim/statFIM_zeus.pl 8 > /scratch1/portfolios/BMC/fim/logs/statFIM_zeus.log 2>&1
+
+# push the output file from the status script to /w3/rapb/fim/from_jet
+5,20,35,50 * * * * /home/rtfim/mv_statusAll_zeus.py > /scratch1/portfolios/BMC/fim/logs/mv_statusAll_zeus.log 2>&1
+
+# Copy this crontab file every hour
+00 * * * * /bin/crontab -l > cron_zeus.save
+
+# =========== Syncer scripts ============
+
+# FIMZEUS graphics transfers
+01,31 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZEUS/FIMrun" "fim_zeus" "201" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZEUS_201.log 2>&1
+02,32 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZEUS/FIMrun" "fim_zeus" "236" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZEUS_236.log 2>&1
+03,33 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZEUS/FIMrun" "fim_zeus" "244" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZEUS_244.log 2>&1
+04,34 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZEUS/FIMrun" "fim_zeus" "83" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZEUS_83.log 2>&1
+05,35 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZEUS/FIMrun" "fim_zeus" "africa" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZEUS_africa.log 2>&1
+06,36 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZEUS/FIMrun" "fim_zeus" "e_pacific" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZEUS_e_pacific.log 2>&1
+07,37 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZEUS/FIMrun" "fim_zeus" "europe" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZEUS_europe.log 2>&1
+*/30 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZEUS/FIMrun" "fim_zeus" "fim" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZEUS_fim.log 2>&1
+08,38 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZEUS/FIMrun" "fim_zeus" "floating" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZEUS_floating.log 2>&1
+09,39 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZEUS/FIMrun" "fim_zeus" "w_pacific" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZEUS_w_pacific.log 2>&1
+10,40 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZEUS/FIMrun" "fim_zeus" "130" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZEUS_130.log 2>&1
+11,41 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZEUS/FIMrun" "fim_zeus" "t1" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZEUS_t1.log 2>&1
+12,42 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZEUS/FIMrun" "fim_zeus" "t2" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZEUS_t2.log 2>&1
+13,43 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZEUS/FIMrun" "fim_zeus" "t3" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZEUS_t3.log 2>&1
+14,44 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZEUS/FIMrun" "fim_zeus" "t4" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZEUS_t4.log 2>&1
+15,45 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZEUS/FIMrun" "fim_zeus" "t5" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZEUS_t5.log 2>&1
+16,46 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZEUS/FIMrun" "fim_zeus" "t6" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZEUS_t6.log 2>&1
+17,47 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZEUS/FIMrun" "fim_zeus" "t7" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZEUS_t7.log 2>&1
+18,48 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZEUS/FIMrun" "fim_zeus" "cambodia" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZEUS_cambodia.log 2>&1
+19,49 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZEUS/FIMrun" "fim_zeus" "129" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZEUS_129.log 2>&1
+
+# FIM7ZEUS graphics transfers
+01,31 * * * * cd /home/rtfim/FIM7ZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM7ZEUS/FIMrun" "fim7_zeus" "201" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM7ZEUS_201.log 2>&1
+02,32 * * * * cd /home/rtfim/FIM7ZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM7ZEUS/FIMrun" "fim7_zeus" "236" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM7ZEUS_236.log 2>&1
+03,33 * * * * cd /home/rtfim/FIM7ZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM7ZEUS/FIMrun" "fim7_zeus" "244" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM7ZEUS_244.log 2>&1
+04,34 * * * * cd /home/rtfim/FIM7ZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM7ZEUS/FIMrun" "fim7_zeus" "83" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM7ZEUS_83.log 2>&1
+05,35 * * * * cd /home/rtfim/FIM7ZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM7ZEUS/FIMrun" "fim7_zeus" "africa" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM7ZEUS_africa.log 2>&1
+06,36 * * * * cd /home/rtfim/FIM7ZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM7ZEUS/FIMrun" "fim7_zeus" "e_pacific" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM7ZEUS_e_pacific.log 2>&1
+07,37 * * * * cd /home/rtfim/FIM7ZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM7ZEUS/FIMrun" "fim7_zeus" "europe" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM7ZEUS_europe.log 2>&1
+*/30 * * * * cd /home/rtfim/FIM7ZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM7ZEUS/FIMrun" "fim7_zeus" "fim" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM7ZEUS_fim.log 2>&1
+08,38 * * * * cd /home/rtfim/FIM7ZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM7ZEUS/FIMrun" "fim7_zeus" "floating" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM7ZEUS_floating.log 2>&1
+09,39 * * * * cd /home/rtfim/FIM7ZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM7ZEUS/FIMrun" "fim7_zeus" "w_pacific" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM7ZEUS_w_pacific.log 2>&1
+10,40 * * * * cd /home/rtfim/FIM7ZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM7ZEUS/FIMrun" "fim7_zeus" "130" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM7ZEUS_130.log 2>&1
+11,41 * * * * cd /home/rtfim/FIM7ZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM7ZEUS/FIMrun" "fim7_zeus" "t1" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM7ZEUS_t1.log 2>&1
+12,42 * * * * cd /home/rtfim/FIM7ZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM7ZEUS/FIMrun" "fim7_zeus" "t2" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM7ZEUS_t2.log 2>&1
+13,43 * * * * cd /home/rtfim/FIM7ZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM7ZEUS/FIMrun" "fim7_zeus" "t3" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM7ZEUS_t3.log 2>&1
+14,44 * * * * cd /home/rtfim/FIM7ZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM7ZEUS/FIMrun" "fim7_zeus" "t4" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM7ZEUS_t4.log 2>&1
+15,45 * * * * cd /home/rtfim/FIM7ZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM7ZEUS/FIMrun" "fim7_zeus" "t5" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM7ZEUS_t5.log 2>&1
+16,46 * * * * cd /home/rtfim/FIM7ZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM7ZEUS/FIMrun" "fim7_zeus" "t6" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM7ZEUS_t6.log 2>&1
+17,47 * * * * cd /home/rtfim/FIM7ZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM7ZEUS/FIMrun" "fim7_zeus" "t7" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM7ZEUS_t7.log 2>&1
+18,48 * * * * cd /home/rtfim/FIM7ZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM7ZEUS/FIMrun" "fim7_zeus" "cambodia" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM7ZEUS_cambodia.log 2>&1
+19,49 * * * * cd /home/rtfim/FIM7ZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM7ZEUS/FIMrun" "fim7_zeus" "129" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM7ZEUS_129.log 2>&1
+
+# FIM9ZEUS graphics transfers
+01,31 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM9ZEUS/FIMrun" "fim9_zeus" "201" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM9ZEUS_201.log 2>&1
+02,32 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM9ZEUS/FIMrun" "fim9_zeus" "236" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM9ZEUS_236.log 2>&1
+03,33 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM9ZEUS/FIMrun" "fim9_zeus" "244" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM9ZEUS_244.log 2>&1
+04,34 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM9ZEUS/FIMrun" "fim9_zeus" "83" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM9ZEUS_83.log 2>&1
+05,35 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM9ZEUS/FIMrun" "fim9_zeus" "africa" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM9ZEUS_africa.log 2>&1
+06,36 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM9ZEUS/FIMrun" "fim9_zeus" "e_pacific" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM9ZEUS_e_pacific.log 2>&1
+07,37 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM9ZEUS/FIMrun" "fim9_zeus" "europe" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM9ZEUS_europe.log 2>&1
+*/30 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM9ZEUS/FIMrun" "fim9_zeus" "fim" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM9ZEUS_fim.log 2>&1
+08,38 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM9ZEUS/FIMrun" "fim9_zeus" "floating" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM9ZEUS_floating.log 2>&1
+09,39 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM9ZEUS/FIMrun" "fim9_zeus" "w_pacific" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM9ZEUS_w_pacific.log 2>&1
+10,40 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM9ZEUS/FIMrun" "fim9_zeus" "130" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM9ZEUS_130.log 2>&1
+11,41 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM9ZEUS/FIMrun" "fim9_zeus" "t1" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM9ZEUS_t1.log 2>&1
+12,42 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM9ZEUS/FIMrun" "fim9_zeus" "t2" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM9ZEUS_t2.log 2>&1
+13,43 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM9ZEUS/FIMrun" "fim9_zeus" "t3" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM9ZEUS_t3.log 2>&1
+14,44 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM9ZEUS/FIMrun" "fim9_zeus" "t4" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM9ZEUS_t4.log 2>&1
+15,45 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM9ZEUS/FIMrun" "fim9_zeus" "t5" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM9ZEUS_t5.log 2>&1
+16,46 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM9ZEUS/FIMrun" "fim9_zeus" "t6" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM9ZEUS_t6.log 2>&1
+17,47 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM9ZEUS/FIMrun" "fim9_zeus" "t7" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM9ZEUS_t7.log 2>&1
+18,48 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM9ZEUS/FIMrun" "fim9_zeus" "cambodia" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM9ZEUS_cambodia.log 2>&1
+19,49 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIM9ZEUS/FIMrun" "fim9_zeus" "129" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIM9ZEUS_129.log 2>&1
+
+# FIMXZEUS graphics transfers
+01,31 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fimx_zeus" "201" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_201.log 2>&1
+02,32 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fimx_zeus" "236" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_236.log 2>&1
+03,33 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fimx_zeus" "244" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_244.log 2>&1
+04,34 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fimx_zeus" "28" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_28.log 2>&1
+05,35 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fimx_zeus" "africa" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_africa.log 2>&1
+06,36 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fimx_zeus" "e_pacific" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_e_pacific.log 2>&1
+07,37 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fimx_zeus" "europe" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_europe.log 2>&1
+*/30 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fimx_zeus" "fim" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_fim.log 2>&1
+08,38 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fimx_zeus" "floating" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_floating.log 2>&1
+09,39 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fimx_zeus" "w_pacific" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_w_pacific.log 2>&1
+10,40 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fimx_zeus" "130" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_130.log 2>&1
+11,41 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fimx_zeus" "t1" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_t1.log 2>&1
+12,42 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fimx_zeus" "t2" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_t2.log 2>&1
+13,43 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fimx_zeus" "t3" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_t3.log 2>&1
+14,44 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fimx_zeus" "t4" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_t4.log 2>&1
+15,45 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fimx_zeus" "t5" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_t5.log 2>&1
+16,46 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fimx_zeus" "t6" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_t6.log 2>&1
+17,47 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fimx_zeus" "t7" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_t7.log 2>&1
+
+# FIMYZEUS graphics transfers
+01,31 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fimy_zeus" "201" "ratchet.fsl.noaa.gov" "12" "12" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUS_201.log 2>&1
+02,32 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fimy_zeus" "236" "ratchet.fsl.noaa.gov" "12" "12" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUS_236.log 2>&1
+03,33 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fimy_zeus" "244" "ratchet.fsl.noaa.gov" "12" "12" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUS_244.log 2>&1
+04,34 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fimy_zeus" "28" "ratchet.fsl.noaa.gov" "12" "12" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUS_28.log 2>&1
+05,35 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fimy_zeus" "africa" "ratchet.fsl.noaa.gov" "12" "12" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUS_africa.log 2>&1
+06,36 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fimy_zeus" "e_pacific" "ratchet.fsl.noaa.gov" "12" "12" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUS_e_pacific.log 2>&1
+07,37 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fimy_zeus" "europe" "ratchet.fsl.noaa.gov" "12" "12" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUS_europe.log 2>&1
+*/30 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fimy_zeus" "fim" "ratchet.fsl.noaa.gov" "12" "12" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUS_fim.log 2>&1
+08,38 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fimy_zeus" "floating" "ratchet.fsl.noaa.gov" "12" "12" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUS_floating.log 2>&1
+09,39 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fimy_zeus" "w_pacific" "ratchet.fsl.noaa.gov" "12" "12" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUS_w_pacific.log 2>&1
+10,40 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fimy_zeus" "130" "ratchet.fsl.noaa.gov" "12" "12" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUS_130.log 2>&1
+11,41 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fimy_zeus" "t1" "ratchet.fsl.noaa.gov" "12" "12" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUS_t1.log 2>&1
+12,42 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fimy_zeus" "t2" "ratchet.fsl.noaa.gov" "12" "12" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUS_t2.log 2>&1
+13,43 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fimy_zeus" "t3" "ratchet.fsl.noaa.gov" "12" "12" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUS_t3.log 2>&1
+14,44 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fimy_zeus" "t4" "ratchet.fsl.noaa.gov" "12" "12" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUS_t4.log 2>&1
+15,45 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fimy_zeus" "t5" "ratchet.fsl.noaa.gov" "12" "12" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUS_t5.log 2>&1
+16,46 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fimy_zeus" "t6" "ratchet.fsl.noaa.gov" "12" "12" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUS_t6.log 2>&1
+17,47 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fimy_zeus" "t7" "ratchet.fsl.noaa.gov" "12" "12" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUS_t7.log 2>&1
+
+# FIMZZEUS graphics transfers
+01,31 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fimz_zeus" "201" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUS_201.log 2>&1
+02,32 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fimz_zeus" "236" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUS_236.log 2>&1
+03,33 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fimz_zeus" "244" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUS_244.log 2>&1
+04,34 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fimz_zeus" "28" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUS_28.log 2>&1
+05,35 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fimz_zeus" "africa" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUS_africa.log 2>&1
+06,36 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fimz_zeus" "e_pacific" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUS_e_pacific.log 2>&1
+07,37 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fimz_zeus" "europe" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUS_europe.log 2>&1
+*/30 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fimz_zeus" "fim" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUS_fim.log 2>&1
+08,38 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fimz_zeus" "floating" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUS_floating.log 2>&1
+09,39 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fimz_zeus" "w_pacific" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUS_w_pacific.log 2>&1
+10,40 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fimz_zeus" "130" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUS_130.log 2>&1
+11,41 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fimz_zeus" "t1" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUS_t1.log 2>&1
+12,42 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fimz_zeus" "t2" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUS_t2.log 2>&1
+13,43 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fimz_zeus" "t3" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUS_t3.log 2>&1
+14,44 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fimz_zeus" "t4" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUS_t4.log 2>&1
+15,45 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fimz_zeus" "t5" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUS_t5.log 2>&1
+16,46 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fimz_zeus" "t6" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUS_t6.log 2>&1
+17,47 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fimz_zeus" "t7" "ratchet.fsl.noaa.gov" "12" "2" "ncl_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUS_t7.log 2>&1
+
+# FIMZEUS - FIMYZEUS graphics transfers
+01,31 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fim_fimydiff_zeus" "201" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUSdiff_201.log 2>&1
+02,32 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fim_fimydiff_zeus" "236" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUSdiff_236.log 2>&1
+03,33 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fim_fimydiff_zeus" "244" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUSdiff_244.log 2>&1
+04,34 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fim_fimydiff_zeus" "28" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUSdiff_28.log 2>&1
+05,35 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fim_fimydiff_zeus" "africa" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUSdiff_africa.log 2>&1
+06,36 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fim_fimydiff_zeus" "e_pacific" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUSdiff_e_pacific.log 2>&1
+07,37 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fim_fimydiff_zeus" "europe" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUSdiff_europe.log 2>&1
+*/30 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fim_fimydiff_zeus" "fim" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUSdiff_fim.log 2>&1
+08,38 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fim_fimydiff_zeus" "floating" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUSdiff_floating.log 2>&1
+09,39 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fim_fimydiff_zeus" "w_pacific" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUSdiff_w_pacific.log 2>&1
+10,40 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fim_fimydiff_zeus" "130" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUSdiff_130.log 2>&1
+11,41 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fim_fimydiff_zeus" "t1" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUSdiff_t1.log 2>&1
+12,42 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fim_fimydiff_zeus" "t2" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUSdiff_t2.log 2>&1
+13,43 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fim_fimydiff_zeus" "t3" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUSdiff_t3.log 2>&1
+14,44 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fim_fimydiff_zeus" "t4" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUSdiff_t4.log 2>&1
+15,45 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fim_fimydiff_zeus" "t5" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUSdiff_t5.log 2>&1
+16,46 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fim_fimydiff_zeus" "t6" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUSdiff_t6.log 2>&1
+17,47 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMYZEUS/FIMrun" "fim_fimydiff_zeus" "t7" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMYZEUSdiff_t7.log 2>&1
+
+# FIMZEUS - FIMXZEUS graphics transfers
+01,31 * * * * cd /home/rtfim/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fim_fimxdiff_zeus" "201" "ratchet.fsl.noaa.gov" "12" "2" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_201.log 2>&1
+02,32 * * * * cd /home/rtfim/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fim_fimxdiff_zeus" "236" "ratchet.fsl.noaa.gov" "12" "2" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_236.log 2>&1
+03,33 * * * * cd /home/rtfim/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fim_fimxdiff_zeus" "244" "ratchet.fsl.noaa.gov" "12" "2" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_244.log 2>&1
+04,34 * * * * cd /home/rtfim/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fim_fimxdiff_zeus" "28" "ratchet.fsl.noaa.gov" "12" "2" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_28.log 2>&1
+05,35 * * * * cd /home/rtfim/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fim_fimxdiff_zeus" "africa" "ratchet.fsl.noaa.gov" "12" "2" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_africa.log 2>&1
+06,36 * * * * cd /home/rtfim/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fim_fimxdiff_zeus" "e_pacific" "ratchet.fsl.noaa.gov" "12" "2" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_e_pacific.log 2>&1
+07,37 * * * * cd /home/rtfim/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fim_fimxdiff_zeus" "europe" "ratchet.fsl.noaa.gov" "12" "2" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_europe.log 2>&1
+*/30 * * * * cd /home/rtfim/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fim_fimxdiff_zeus" "fim" "ratchet.fsl.noaa.gov" "12" "2" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_fim.log 2>&1
+08,38 * * * * cd /home/rtfim/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fim_fimxdiff_zeus" "floating" "ratchet.fsl.noaa.gov" "12" "2" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_floating.log 2>&1
+09,39 * * * * cd /home/rtfim/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fim_fimxdiff_zeus" "w_pacific" "ratchet.fsl.noaa.gov" "12" "2" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_w_pacific.log 2>&1
+10,40 * * * * cd /home/rtfim/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fim_fimxdiff_zeus" "130" "ratchet.fsl.noaa.gov" "12" "2" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_130.log 2>&1
+11,41 * * * * cd /home/rtfim/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fim_fimxdiff_zeus" "t1" "ratchet.fsl.noaa.gov" "12" "2" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_t1.log 2>&1
+12,42 * * * * cd /home/rtfim/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fim_fimxdiff_zeus" "t2" "ratchet.fsl.noaa.gov" "12" "2" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_t2.log 2>&1
+13,43 * * * * cd /home/rtfim/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fim_fimxdiff_zeus" "t3" "ratchet.fsl.noaa.gov" "12" "2" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_t3.log 2>&1
+14,44 * * * * cd /home/rtfim/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fim_fimxdiff_zeus" "t4" "ratchet.fsl.noaa.gov" "12" "2" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_t4.log 2>&1
+15,45 * * * * cd /home/rtfim/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fim_fimxdiff_zeus" "t5" "ratchet.fsl.noaa.gov" "12" "2" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_t5.log 2>&1
+16,46 * * * * cd /home/rtfim/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fim_fimxdiff_zeus" "t6" "ratchet.fsl.noaa.gov" "12" "2" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_t6.log 2>&1
+17,47 * * * * cd /home/rtfim/;ruby fimziprsync.rb "/home/rtfim/FIMXZEUS/FIMrun" "fim_fimxdiff_zeus" "t7" "ratchet.fsl.noaa.gov" "12" "2" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMXZEUS_t7.log 2>&1
+
+# FIMZEUS - FIMZZEUS graphics transfers
+01,31 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fim_fimzdiff_zeus" "201" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUSdiff_201.log 2>&1
+02,32 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fim_fimzdiff_zeus" "236" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUSdiff_236.log 2>&1
+03,33 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fim_fimzdiff_zeus" "244" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUSdiff_244.log 2>&1
+04,34 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fim_fimzdiff_zeus" "28" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUSdiff_28.log 2>&1
+05,35 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fim_fimzdiff_zeus" "africa" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUSdiff_africa.log 2>&1
+06,36 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fim_fimzdiff_zeus" "e_pacific" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUSdiff_e_pacific.log 2>&1
+07,37 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fim_fimzdiff_zeus" "europe" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUSdiff_europe.log 2>&1
+*/30 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fim_fimzdiff_zeus" "fim" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUSdiff_fim.log 2>&1
+08,38 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fim_fimzdiff_zeus" "floating" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUSdiff_floating.log 2>&1
+09,39 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fim_fimzdiff_zeus" "w_pacific" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUSdiff_w_pacific.log 2>&1
+10,40 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fim_fimzdiff_zeus" "130" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUSdiff_130.log 2>&1
+11,41 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fim_fimzdiff_zeus" "t1" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUSdiff_t1.log 2>&1
+12,42 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fim_fimzdiff_zeus" "t2" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUSdiff_t2.log 2>&1
+13,43 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fim_fimzdiff_zeus" "t3" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUSdiff_t3.log 2>&1
+14,44 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fim_fimzdiff_zeus" "t4" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUSdiff_t4.log 2>&1
+15,45 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fim_fimzdiff_zeus" "t5" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUSdiff_t5.log 2>&1
+16,46 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fim_fimzdiff_zeus" "t6" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUSdiff_t6.log 2>&1
+17,47 * * * * cd /home/rtfim/FIMZEUS/FIMwfm/scripts/;ruby fimziprsync.rb "/home/rtfim/FIMZZEUS/FIMrun" "fim_fimzdiff_zeus" "t7" "ratchet.fsl.noaa.gov" "12" "12" "ncldiff_C" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_FIMZZEUSdiff_t7.log 2>&1
+
+# MPAS
+00 00,12 * * * /home/rtfim/qsubnclmpas nclmpas.ksh >> /home/rtfim/log/nclmpas.log 2>&1
+00 01,13 * * * cd /home/rtfim/;ruby mpasziprsync.rb "/scratch2/portfolios/BMC/wrfruc/jamison/ncl_graphics/mpasimages" "mpas_zeus" "fim" "ratchet.fsl.noaa.gov" "12" "2" > /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/sync/sync_MPAS_fim.log 2>&1
+
+# FIM-GFS DIFF graphics transfers
+50 10,22 * * * /home/rtfim/mv_fimgfsdiff_jet_zip.py 'fimgfsdiff_jet' 'fim' '22' 'ratchet.fsl.noaa.gov' > /home/rtfim/mv_fimgfsdiff_jet_zip.log 2>&1
+
+# 0-59/20 * * * * /scratch1/portfolios/BMC/fim//FIM_SIGMA/FIMwfm/scripts/fim_sigma_rsync.rb > /scratch1/portfolios/BMC/fim/FIM_SIGMA/FIMwfm/log/rsync.log 2>&1
+
+#0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch1/portfolios/BMC/fim/FIM/FIMwfm/rocoto_xml/FIM8_rerun.xml -d /scratch1/portfolios/BMC/fim/FIM/FIMwfm/log/FIM8_rerun.db
+# =========== Realtime Runs ============
+0-59/3 * * * * /home/Christopher.W.Harrop/opt/rocoto-1.2-pre/bin/rocotorun -w /scratch1/portfolios/BMC/fim/FIM7ZEUS/FIMwfm/rocoto_xml/FIMG7ZEUS.xml -d /scratch1/portfolios/BMC/fim/FIM7ZEUS/FIMwfm/log/FIMG7ZEUS.db
+#### testing out Chris' new version of rocoto
+#0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch1/portfolios/BMC/fim/FIM7ZEUS/FIMwfm/rocoto_xml/FIMG7ZEUS.xml -d /scratch1/portfolios/BMC/fim/FIM7ZEUS/FIMwfm/log/FIMG7ZEUS.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/rocoto_xml/FIMG8ZEUS.xml -d /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/FIMG8ZEUS.db
+1-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch1/portfolios/BMC/fim/FIM9ZEUS/FIMwfm/rocoto_xml/FIMG9ZEUS.xml -d /scratch1/portfolios/BMC/fim/FIM9ZEUS/FIMwfm/log/FIMG9ZEUS.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch1/portfolios/BMC/fim/FIMXZEUS/FIMwfm/rocoto_xml/FIMXG8ZEUS.xml -d /scratch1/portfolios/BMC/fim/FIMXZEUS/FIMwfm/log/FIMXG8ZEUS.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch1/portfolios/BMC/fim/FIMYZEUS/FIMwfm/rocoto_xml/FIMYG8ZEUS.xml -d /scratch1/portfolios/BMC/fim/FIMYZEUS/FIMwfm/log/FIMYG8ZEUS.db
+0-59/3 * * * *   /apps/rocoto/default/bin/rocotorun -w /scratch1/portfolios/BMC/fim/FIMZZEUS/FIMwfm/rocoto_xml/FIMZG8ZEUS.xml -d /scratch1/portfolios/BMC/fim/FIMZZEUS/FIMwfm/log/FIMZG8ZEUS.db
+
+# =========== Run for Mel Shapiro's Aug2014 Talk ============
+#0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch1/portfolios/BMC/fim/FIM8_2014Mar23/FIMwfm/rocoto_xml/FIMRETRO_23Mar.xml -d /scratch1/portfolios/BMC/fim/FIM8_2014Mar23/FIMwfm/log/FIMRETRO_23Mar.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun  -w /scratch1/portfolios/BMC/fim/FIM8_2014Mar23/FIMwfm/rocoto_xml/FIMRETRO_21Mar_G95.xml -d /scratch1/portfolios/BMC/fim/FIM8_2014Mar23/FIMwfm/log/FIMRETRO_21Mar.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun  -w /scratch1/portfolios/BMC/fim/FIM8_2014Mar23/FIMwfm/rocoto_xml/FIMRETRO_21Mar_G95_post.xml -d /scratch1/portfolios/BMC/fim/FIM8_2014Mar23/FIMwfm/log/FIMRETRO_21Mar_post.db
+
+# =========== Run for Nov 03 2014 (Don Murray) ============
+0-59/3 * * * * /apps/rocoto/default/bin//rocotorun -w /scratch1/portfolios/BMC/fim/RETRO_03Nov2014/FIMwfm/rocoto_xml/RETRO_03Nov2014.xml -d /scratch1/portfolios/BMC/fim/RETRO_03Nov2014/FIMwfm/log/RETRO_03Nov2014.db
+
+# =========== FIM9 HIWPP RETRO ============
+MAILTO="xue.wei@noaa.gov,judy.k.henderson@noaa.gov,jeffrey.a.hamilton@noaa.gov"
+1-59/3 * * * * /apps/rocoto/default/bin//rocotorun -w /scratch2/portfolios/BMC/rtfim/FIM9RETRO_HIWPP/FIMwfm/rocoto_xml/FIM9RETRO_HIWPP.xml -d /scratch2/portfolios/BMC/rtfim/FIM9RETRO_HIWPP/FIMwfm/log/FIM9RETRO_HIWPP.db
+1-59/2 * * * * /apps/rocoto/default/bin//rocotorun -w /scratch2/portfolios/BMC/rtfim/FIM9RETRO_HIWPP/FIMwfm/rocoto_xml/FIM9RETRO_HIWPP_soundings.xml -d /scratch2/portfolios/BMC/rtfim/FIM9RETRO_HIWPP/FIMwfm/log/FIM9RETRO_HIWPP_soundings.db
+1-59/2 * * * * /apps/rocoto/default/bin//rocotorun -w /scratch2/portfolios/BMC/rtfim/FIM9RETRO_HIWPP/FIMwfm/rocoto_xml/FIM9RETRO_HIWPP_verif.xml -d /scratch2/portfolios/BMC/rtfim/FIM9RETRO_HIWPP/FIMwfm/log/FIM9RETRO_HIWPP_verif.db
+
+# =========== Realtime Reruns ============
+MAILTO="xue.wei@noaa.gov,judy.k.henderson@noaa.gov"
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch1/portfolios/BMC/fim/FIM7ZEUS/FIMwfm/rocoto_xml/FIMG7ZEUS_retro.xml -d /scratch1/portfolios/BMC/fim/FIM7ZEUS/FIMwfm/log/FIMG7ZEUS_retro.db
+#0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch1/portfolios/BMC/fim/FIMXZEUS/FIMwfm/rocoto_xml/FIMXG8ZEUS_retro.xml -d /scratch1/portfolios/BMC/fim/FIMXZEUS/FIMwfm/log/FIMXG8ZEUS_retro.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/rocoto_xml/FIMG8ZEUS_retro.xml -d /scratch1/portfolios/BMC/fim/FIMZEUS/FIMwfm/log/FIMG8ZEUS_retro.db
+#1-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch1/portfolios/BMC/fim/FIM9ZEUS/FIMwfm/rocoto_xml/FIMG9ZEUS_retro.xml -d /scratch1/portfolios/BMC/fim/FIM9ZEUS/FIMwfm/log/FIMG9ZEUS_retro.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch1/portfolios/BMC/fim/FIMYZEUS/FIMwfm/rocoto_xml/FIMYG8ZEUS_retro.xml -d /scratch1/portfolios/BMC/fim/FIMYZEUS/FIMwfm/log/FIMYG8ZEUS_retro.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch1/portfolios/BMC/fim/FIMZZEUS/FIMwfm/rocoto_xml/FIMZG8ZEUS_retro.xml -d /scratch1/portfolios/BMC/fim/FIMZZEUS/FIMwfm/log/FIMZG8ZEUS_retro.db
+
+# =========== GFS Files ============
+MAILTO="xue.wei@noaa.gov,judy.k.henderson@noaa.gov,jeffrey.a.hamilton@noaa.gov"
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch1/portfolios/BMC/fim/GFS_RETRO_FILES/FIMwfm/rocoto_xml/get_files_rct.xml -d /scratch1/portfolios/BMC/fim/GFS_RETRO_FILES/FIMwfm//log/rocoto.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch1/portfolios/BMC/fim/GFS_RETRO_FILES/FIMwfm/rocoto_xml/get_files_rct3.xml -d /scratch1/portfolios/BMC/fim/GFS_RETRO_FILES/FIMwfm//log/rocoto3.db
+#0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch1/portfolios/BMC/fim/GFS_RETRO_VERIF_FILES/FIMwfm/rocoto_xml/get_files_rct.xml -d /scratch1/portfolios/BMC/fim/GFS_RETRO_VERIF_FILES/FIMwfm//log/rocoto.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch1/portfolios/BMC/fim/GFS_RETRO_VERIF_FILES/FIMwfm/rocoto_xml/get_files_rct2.xml -d /scratch1/portfolios/BMC/fim/GFS_RETRO_VERIF_FILES/FIMwfm//log/rocoto2.db
+
+# =========== Realtime tests ============
+MAILTO="georg.a.grell@noaa.gov,judy.k.henderson@noaa.gov,jeffrey.a.hamilton@noaa.gov"
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/rtfim/gf/FIMZEUS/FIMwfm/rocoto_xml/gf.xml -d /scratch2/portfolios/BMC/rtfim/gf/FIMZEUS/FIMwfm/log/gf.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/rtfim/gf/FIMZEUS/FIMwfm/rocoto_xml/gf_verif.xml -d /scratch2/portfolios/BMC/rtfim/gf/FIMZEUS/FIMwfm/log/gf_verif.db
+
+MAILTO="Jeffrey.A.Hamilton@noaa.gov"
+#0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/rtfim/gf/FIMZEUS/FIMwfm/rocoto_xml/gf_post.xml -d /scratch2/portfolios/BMC/rtfim/gf/FIMZEUS/FIMwfm/log/gf_post.db
+
+MAILTO="brian.d.jamison@noaa.gov,judy.k.henderson@noaa.gov"
+# 0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/rtfim/FIM9ZEUSTEST/FIM9ZEUS.20140609/FIMwfm/rocoto_xml/FIMG9ZEUS.xml -d /scratch2/portfolios/BMC/rtfim/FIM9ZEUSTEST/FIM9ZEUS.20140609/FIMwfm/log/FIMG9ZEUS.db
+# 0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/rtfim/FIMXZEUSTEST/FIMXZEUS.20140807/FIMwfm/rocoto_xml/FIMXG8ZEUS.xml -d /scratch2/portfolios/BMC/rtfim/FIMXZEUSTEST/FIMXZEUS.20140807/FIMwfm/log/FIMXG8ZEUS.db
+# 0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/rtfim/FIMYZEUSTEST/FIMYZEUS.20140715/FIMwfm/rocoto_xml/FIMYG8ZEUS.xml -d /scratch2/portfolios/BMC/rtfim/FIMYZEUSTEST/FIMYZEUS.20140715/FIMwfm/log/FIMYG8ZEUS.db
+# 0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/rtfim/FIMZEUSTEST/FIMZEUS.20140610/FIMwfm/rocoto_xml/FIMG8ZEUS.xml -d /scratch2/portfolios/BMC/rtfim/FIMZEUSTEST/FIMZEUS.20140610/FIMwfm/log/FIMG8ZEUS.db
+# 0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/rtfim/FIM7ZEUSTEST/FIM7ZEUS.20140808/FIMwfm/rocoto_xml/FIMG7ZEUS.xml -d /scratch2/portfolios/BMC/rtfim/FIM7ZEUSTEST/FIM7ZEUS.20140808/FIMwfm/log/FIMG7ZEUS.db
+
+# =========== RETRO RUNS ============
+MAILTO="xue.wei@noaa.gov"
+# == FIMXVOLC ==
+# 0-59/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/rtfim/FIMXVOLC/FIMwfm/xml/FIMXVOLC_1.xml --store=/scratch2/portfolios/BMC/rtfim/FIMXVOLC/FIMwfm/log/FIMXVOLC_1.store
+# 0-59/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/rtfim/FIMXVOLC/FIMwfm/xml/test_ra.xml --store=/scratch2/portfolios/BMC/rtfim/FIMXVOLC/FIMwfm/log/test_ra.store
+# == FIMRETRO2261_G8_CUGD ==
+#0-59/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/fim/FIMRETRO2261_G8_CUGD/FIMwfm/xml/FIMRETRO_1.xml --store=/scratch2/portfolios/BMC/fim/FIMRETRO2261_G8_CUGD/FIMwfm/log/FIMRETRO_1.store
+# 0-59/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/rtfim/FIMRETRO2261_G8_CUGD/FIMwfm/xml/FIMverif.xml --store=/scratch2/portfolios/BMC/rtfim/FIMRETRO2261_G8_CUGD/FIMwfm/log/FIMverif.store
+# 0-59/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/rtfim/FIMRETRO2261_G8_CUGD/FIMwfm/xml/FIMpost.xml --store=/scratch2/portfolios/BMC/rtfim/FIMRETRO2261_G8_CUGD/FIMwfm/log/FIMpost.store
+# == ENKF_HYBRID_IC ==
+# 0-59/30 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch1/portfolios/BMC/fim/ENKF_HYBRID_IC/FIMwfm/xml/ENKF_HYBRID_IC_RT.xml --store=/scratch1/portfolios/BMC/fim/ENKF_HYBRID_IC/FIMwfm/log/ENKF_HYBRID_IC_RT.store
+# == FIM_HYB ==
+# 0-59/20 * * * * /scratch1/portfolios/BMC/fim//FIM_HYB/FIMwfm/scripts/fim_hyb_rsync.rb > /scratch1/portfolios/BMC/fim/FIM_HYB/FIMwfm/log/rsync.log 2>&1
+
+# == FIMRETRO2009_gfs_init ==
+#1-57/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/rtfim/FIMRETRO2009_gfs_init/FIMwfm/xml/FIMRETRO2009_gfs_init_45day.xml --store=/scratch2/portfolios/BMC/rtfim/FIMRETRO2009_gfs_init/FIMwfm/log/FIMRETRO2009_45day.store
+
+# == FIMRETRO_r2972 ==
+#1-57/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/rtfim/FIMRETRO_r3162_slak01/FIMwfm/xml/t.xml --store=/scratch2/portfolios/BMC/rtfim/FIMRETRO_r3162_slak01/FIMwfm/log/t.store
+#1-57/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/fim/FIMRETRO_r3162_g9/FIMwfm/xml/t2.xml --store=/scratch2/portfolios/BMC/fim/FIMRETRO_r3162_g9/FIMwfm/log/t2.store
+#1-57/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/fim/FIMRETRO_r3162_g9/FIMwfm/xml/t2010.xml --store=/scratch2/portfolios/BMC/fim/FIMRETRO_r3162_g9/FIMwfm/log/t2011.store
+#1-57/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/fim/FIMRETRO_r3162_g9/FIMwfm/xml/t2011_oct.xml --store=/scratch2/portfolios/BMC/fim/FIMRETRO_r3162_g9/FIMwfm/log/t2011_oct.store
+#1-57/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/fim/FIMRETRO_r3162_g9_V/FIMwfm/xml/t2010.xml --store=/scratch2/portfolios/BMC/fim/FIMRETRO_r3162_g9_V/FIMwfm/log/t2010.store
+#1-57/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/fim/FIMRETRO_r3162_g9_V/FIMwfm/xml/t2010_10.xml --store=/scratch2/portfolios/BMC/fim/FIMRETRO_r3162_g9_V/FIMwfm/log/t2010_10.store
+#1-57/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/fim/FIMRETRO_r3162_g9_V/FIMwfm/xml/t2010_8.xml --store=/scratch2/portfolios/BMC/fim/FIMRETRO_r3162_g9_V/FIMwfm/log/t2010_8.store
+##1-57/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/fim/FIMRETRO_r3162_g9_V/FIMwfm/xml/t2011.xml --store=/scratch2/portfolios/BMC/fim/FIMRETRO_r3162_g9_V/FIMwfm/log/t2011_8910.store
+#1-57/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/rtfim/FIMRETRO_r2972_0uv/FIMwfm/xml/test_anom_verif.xml --store=/scratch2/portfolios/BMC/rtfim/FIMRETRO_r2972_0uv/FIMwfm/log/ac.store
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/rtfim/FIMRETRO_r2972_jan0_rct/FIMwfm/rocoto_xml/FIMRETRO_r2972.xml -d /scratch2/portfolios/BMC/rtfim/FIMRETRO_r2972_jan0_rct/FIMwfm/log/FIMRETRO_r2972.db
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/rtfim/FIMRETRO_mariusz2//FIMwfm/rocoto_xml/FIMRETRO_r2972.xml -d /scratch2/portfolios/BMC/rtfim/FIMRETRO_mariusz2//FIMwfm/log/FIMRETRO_r2972.db
+0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_r3162_mariusz/FIMwfm/rocoto_xml/FIMRETRO_r3162_marz.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_r3162_mariusz/FIMwfm/log/FIMRETRO_r3162_marz.db
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_r3162_pop/FIMwfm/rocoto_xml/FIMRETRO_r3162_pop_201304.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_r3162_pop/FIMwfm/log/FIMRETRO_r3162_pop_201304.db
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_3527_May12-phys2/FIMwfm/rocoto_xml/FIMRETRO.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_3527_May12-phys2/FIMwfm/log/FIMretro.db
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_3527_May12-phys2/FIMwfm/rocoto_xml/FIMRETRO_ac.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_3527_May12-phys2/FIMwfm/log/FIMretro_ac.db
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_r4031_grad_int_t/FIMwfm/rocoto_xml/FIMRETRO.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_r4031_grad_int_t/FIMwfm/log/FIMRETRO.db
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIM9RETRO_r4198_xkzmu10/FIMwfm/rocoto_xml/FIMRETRO.xml -d /scratch2/portfolios/BMC/fim/FIM9RETRO_r4198_xkzmu10/FIMwfm/log/FIMRETRO_new.db
+0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_alt_hybgen/FIMwfm/rocoto_xml/FIMRETRO.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_alt_hybgen/FIMwfm/log/FIMRETRO.db
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_new_interp/FIMwfm/rocoto_xml/FIMRETRO2.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_new_interp/FIMwfm/log/FIMRETRO2.db
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_new_interp/FIMwfm/rocoto_xml/FIMRETRO_ac.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_new_interp/FIMwfm/log/FIMRETRO_ac.db
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_new_interp/FIMwfm/rocoto_xml/FIMRETRO_post.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_new_interp/FIMwfm/log/FIMRETRO_post.db
+0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_new_interp/FIMwfm/rocoto_xml/FIMRETRO_post2.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_new_interp/FIMwfm/log/FIMRETRO_post2.db
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIM9RETRO_HFIP_2014/FIMwfm/rocoto_xml/FIMRETRO2013_post.xml -d /scratch2/portfolios/BMC/fim/FIM9RETRO_HFIP_2014/FIMwfm/log/FIMRETRO2013_post.db
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIM9RETRO_HFIP_2014/FIMwfm/rocoto_xml/FIMRETRO2013_sounding.xml -d /scratch2/portfoTRO_HFIP_2014/FIMwfm/log/sounding.db
+#0-59/2  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIM9RETRO_HFIP_2014/FIMwfm/rocoto_xml/FIMRETRO2013_tracker.xml -d /scratch2/portfolios/BMC/fim/FIM9RETRO_HFIP_2014/FIMwfm/log/RETRO_tracker.db
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIM9RETRO_HFIP_2014/FIMwfm/rocoto_xml/FIMRETRO_2012.xml -d /scratch2/portfolios/BMC/fim/FIM9RETRO_HFIP_2014/FIMwfm/log/FIMretro2012.db
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_r4031_grad_int_f2/FIMwfm/rocoto_xml/FIMRETRO_post.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_r4031_grad_int_f2/FIMwfm/log/FIMRETRO_post.db
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_r3585_v2_digifilt/FIMwfm/rocoto_xml/FIMRETRO.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_r3585_v2_digifilt/FIMwfm/log/FIMRETRO.db
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_r3585_v2_puresig/FIMwfm/rocoto_xml/FIMRETRO2.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_r3585_v2_puresig/FIMwfm/log/FIMRETRO_puresig2.db
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_r3585_v4/FIMwfm/rocoto_xml/FIMRETRO3_post.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_r3585_v4/FIMwfm/log/FIMRETRO3_post.db
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_r3431_v2/FIMwfm/rocoto_xml/FIMRETRO_r3431_v2_verif.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_r3431_v2/FIMwfm/log/FIM_r3431_verif.db
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_r3162_pop/FIMwfm/rocoto_xml/FIMRETRO_r3162_pop_jun_verif.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_r3162_pop/FIMwfm/log/FIMRETRO_r3162_pop_jun_verif.db
+#0-59/3  * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_r3162_modis2/FIMwfm/rocoto_xml/verif.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_r3162_modis2/FIMwfm/log/verif.db
+#1-57/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/rtfim/FIMRETRO_r2972_jan1/FIMwfm/xml/run_sd.xml --store=/scratch2/portfolios/BMC/rtfim/FIMRETRO_r2972_jan1/FIMwfm/log/run_sd.store
+#1-57/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/rtfim/FIMRETRO_r2972_jan2/FIMwfm/xml/run_sd.xml --store=/scratch2/portfolios/BMC/rtfim/FIMRETRO_r2972_jan2/FIMwfm/log/run_sd.store
+#1-57/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/rtfim/FIMRETRO_r2972_jan1_RED_DIFF3/FIMwfm/xml/t.xml --store=/scratch2/portfolios/BMC/rtfim/FIMRETRO_r2972_jan1_RED_DIFF3/FIMwfm/log/t.store
+#1-57/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/rtfim/FIMRETRO_r2972_jan2_RED_DIFF3/FIMwfm/xml/t.xml --store=/scratch2/portfolios/BMC/rtfim/FIMRETRO_r2972_jan2_RED_DIFF3/FIMwfm/log/t.store
+##1-57/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/rtfim/FIMRETRO_r2972_Georg/FIMwfm/xml/t.xml --store=/scratch2/portfolios/BMC/rtfim/FIMRETRO_r2972_Georg/FIMwfm/log/t.store
+##1-57/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/rtfim/FIMRETRO_r2972_Georg_useexcess/FIMwfm/xml/t.xml --store=/scratch2/portfolios/BMC/rtfim/FIMRETRO_r2972_Georg_useexcess/FIMwfm/log/t.store
+##1-57/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/rtfim/FIMRETRO_r2972_Georg_exp2/FIMwfm/xml/t.xml --store=/scratch2/portfolios/BMC/rtfim/FIMRETRO_r2972_Georg_exp2/FIMwfm/log/t.store
+
+# == FIMRETRO_ISAAC ==
+# 0-59/3 * * * * /apps/workflowmgr/0.99.152/workflowmgr.rb --xml=/scratch2/portfolios/BMC/fim/FIMRETRO_ISAAC_ZEUS/FIMwfm/xml/FIMRETRO_ISAAC_ZEUS-2012081700-24h.xml --store=/scratch2/portfolios/BMC/fim/FIMRETRO_ISAAC_ZEUS/FIMwfm/log/FIMRETRO_ISAAC_ZEUS-2012081700-24h.store
+
+# =========== Hamilton FIMRETRO runs =============
+MAILTO="Jeffrey.A.Hamilton@noaa.gov"
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_r4582_T1534_574mv/FIMwfm/rocoto_xml/FIMRETRO_verif.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_r4582_T1534_574mv/FIMwfm/log/FIMRETRO_verif.db
+#0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_r4582_T1534_1534mv/FIMwfm/rocoto_xml/FIMRETRO.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_r4582_T1534_1534mv/FIMwfm/log/FIMRETRO.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_r4645_2014physics/FIMwfm/rocoto_xml/FIMRETRO.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_r4645_2014physics/FIMwfm/log/FIMRETRO.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_r4582_GWD_moninq/FIMwfm/rocoto_xml/FIMRETRO.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_r4582_GWD_moninq/FIMwfm/log/FIMRETRO.db
+0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_r4582_GWD_moninq/FIMwfm/rocoto_xml/FIMRETRO_verif.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_r4582_GWD_moninq/FIMwfm/log/FIMRETRO_verif.db
+# HIWPP Database testing
+#0-59/3 * * * * /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_r4567_GWD/FIMwfm/rocoto_xml/FIMRETRO_HIWPP.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_r4567_GWD/FIMwfm/log/FIMRETRO_HIWPP.db
+#
+# =========== END RETRO RUNS ============
+
+
+# =========== RETRO GWD RUNS ============
+MAILTO="Johnathan.Metz@noaa.gov"
+0-59/3  * * * *  /apps/rocoto/default/bin/rocotorun  -w /scratch2/portfolios/BMC/fim/FIMRETRO_2012gwd/FIMwfm/rocoto_xml/FIMRETRO_2012gwd.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_2012gwd/FIMwfm/log/FIMRETRO_2012gwd.db
+0-59/3  * * * *  /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_2012gwd/FIMwfm/rocoto_xml/FIMRETRO_2012gwd_ac.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_2012gwd/FIMwfm/log/FIMRETRO_2012gwd_ac.db 
+0-59/3  * * * *  /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_r4370_2012gwd_JJA_2013/FIMwfm/rocoto_xml/FIMRETRO_2012gwd_JJA_2013.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_r4370_2012gwd_JJA_2013/FIMwfm/log/FIMRETRO_2012gwd_JJA_2013.db
+0-59/3  * * * *  /apps/rocoto/default/bin/rocotorun -w /scratch2/portfolios/BMC/fim/FIMRETRO_r4370_2012gwd_JJA_2013/FIMwfm/rocoto_xml/FIMRETRO_2012gwd_JJA_2013_ac.xml -d /scratch2/portfolios/BMC/fim/FIMRETRO_r4370_2012gwd_JJA_2013/FIMwfm/log/FIMRETRO_2012gwd_JJA_2013_ac.db
+
+# =============

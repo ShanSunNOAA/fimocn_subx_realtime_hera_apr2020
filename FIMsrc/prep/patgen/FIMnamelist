@@ -1,0 +1,170 @@
+&chemwrf
+  aer_bc_opt=0
+  aer_ic_opt=0
+  bio_emiss_opt=0
+  biomass_burn_opt=1
+  chem_opt=0
+  chemdt=30.
+  dmsemis_opt=1
+  dust_opt=1
+  emiss_inpt_opt=1
+  gas_bc_opt=0
+  gas_ic_opt=0
+  kemit=1
+  plumerisefire_frq=30
+  seas_opt=0
+/
+&cntlnamelist
+  glvl=7
+  nvl=64
+  subdivnum=2,2,2,2,2,2,3,2,2,2,2,2,2,2,2,2,2,2,2,2
+/
+&diagnamelist
+  printdiagnoise=1
+  printdiagprogvars=24
+  printdiags=f
+  printipndiag=-1
+/
+&gfsphys
+  fhlwr=3600.
+  fhswr=3600.
+  iaer=111
+  iaer_mdl=0
+  ialb=0
+  ico2=2
+  ictm=1
+  iems=1
+  iovr_lw=1
+  iovr_sw=1
+  isol=0
+  isubc_lw=2
+  isubc_sw=2
+  n2dcldpdf=0
+  n2dzhaocld=2
+  n3dcldpdf=0
+  n3dflxtvd=3
+  n3dzhaocld=4
+/
+&isobaricnamelist
+  isobaric_levels_file="output_isobaric_levs.txt"
+/
+&landnamelist
+  landdatdir='/scratch4/BMC/fim/fimdata/'
+  landdatfile='geo_em.d01.nc'
+  landglvldir='./'
+  niland=4001
+  njland=2000
+/
+&modelnamelist
+  addtend=f
+  biharm_frst=0
+  biharm_last=0
+  digifilt=f
+  flux_conserv_schm=2
+  hiorderfluxcomp=t
+  hiorderuvcomp=f
+  intfc_smooth=50.
+  miglim=1
+  nts=0
+  pure_sig=f
+  remap_optn=2
+  rleigh=2.0
+  rltaper=0.4
+  rlthresh=90.
+  slak=0.5
+  smoothtend=f
+  tfiltwin=5400
+  thktop=20.
+  updatesst=f
+  veldff_bkgnd=1.0
+  veldff_boost=3.
+  wts_type=3
+/
+&outputnamelist
+  archvintvl=6
+  archvtimeunit='hr'
+  fixedgridorder=f
+  printmaxmintimes=t
+  readrestart=f
+  restart_freq=480
+  timingbarriers=f
+  totaltime=168
+/
+&physicsnamelist
+  ideep_cnv=1
+  ishal_cnv=1
+  num_p3d=4
+  physicsinterval=180
+  radiationinterval=3600
+  sstinterval=86400
+/
+&postnamelist
+  delta_t=6
+  fimout=t
+  gribout=f
+  gribtable="fim_gribtable"
+  grid_id=4
+  input=""
+  is=1
+  latlonfld=t
+  mode="linear"
+  multihrtu=t
+  multiple_output_files=t
+  mx=720
+  my=360
+  nsmooth_var=4,1,1,1,1,0,1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+  only_write_var_list_entries=t
+  output=""
+  output_fmt="grib"
+  outputdir="."
+  post_datadir="../fim_C"
+  t1=0
+  t2=168
+  var_list='hgtP','tmpP','rp3P','up3P','vp3P','pr3D','td3D','ws3D','rn2D','rc2D','r12D','r22D','rg2D','pq2D','pw2D','ts2D','w080','us2D','hfss','hfls','rsds','rlds','ms2D','sn2D','cb2D','ct2D','u12D','v12D','rp2D','q22D','t22D','rlut','oz3D','vv3P','prpv','thpv','uspv','vspv','rsus','rlus'
+  vres=111
+/
+&prepnamelist
+  aerosol_file='climaeropac_global.txt'
+  alt_land=t
+  alt_topo=t
+  curve=3
+  gfsltln_file='gfsltln_t1534.dat'
+  gtype=2
+  mtnvar_file='global_mtnvar.t574'
+  numcacheblocksperpe=1
+  numpostgrids=1
+  postgridids=4
+/
+&queuenamelist
+  chem_datadir='/scratch4/BMC/fim/fimdata_chem'
+  computetasks='20'
+  datadir='/scratch4/BMC/fim/fimdata'
+  datadr2='/scratch4/BMC/public/data/grids/gfs/spectral_t1534'
+  fimdir='nodir'
+  maxqueuetime='08:00:00'
+  prepdir='nodir'
+/
+&systemnamelist
+  mpiruncmd='mpirun -n'
+/
+&timenamelist
+  yyyymmddhhmm='201602010000'
+/
+&toponamelist
+  topodatfile='/scratch4/BMC/fim/fimdata/wrf5mintopo.dat'
+/
+&wrfphysics
+  cu_physics=0
+  mp_physics=0
+/
+&writetasknamelist
+  abort_on_bad_task_distrib=t
+  check_omp_consistency=t
+  cpn=48
+  debugmsg_on=f
+  max_write_tasks_per_node=2
+  mpipn=2
+  nthreads=24
+  num_write_tasks=0
+  root_own_node=f
+/

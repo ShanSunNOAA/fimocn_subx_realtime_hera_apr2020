@@ -1,0 +1,264 @@
+ &QUEUEnamelist
+   ComputeTasks = '10'                         ! Number of compute tasks for FIM (1 for serial)
+   MaxQueueTime = '00:15:00'                   ! Run time for complete job (HH:MM:SS) [ Ignored by WFM ]
+   PREPDIR = 'nodir'				! If exists, use for prep otherwise calculate prep
+   FIMDIR  = 'nodir'				! If exists, use for FIM otherwise calculate FIM
+   DATADIR = '/lfs2/projects/fim/fimdata'	! Location of gfsltln and global_mtnvar files
+   DATADR2 = '/lfs2/projects/fim/fimdata'	! Location of the sanl file and the sfcanl file
+   chem_datadir = '/lfs2/projects/fim/fimdata'	! Location of chemistry data files
+/
+ &TOPOnamelist
+   topodatfile = '/whome/rtfim/fimdata/wrf5mintopo.dat'
+/
+ &LANDnamelist
+!!   landsmoothfact=0.75
+   landdatdir='/lfs2/projects/fim/fimdata/'	! Need ending / in path name!!
+   landdatfile='geo_em.d01.nc'
+   landglvldir='./'
+   niland=4001
+   njland=2000
+/
+ &CNTLnamelist
+   glvl                = 5			! Grid level
+   SubdivNum           = 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 ! Subdivision numbers for each recursive refinement(2: bisection, 3: trisection, etc.)
+   nvl                 = 64			! Number of atmospheric layers 
+/
+ &PREPnamelist
+   NumPostGrids        = 1                      ! Number of post-processing grids
+   PostGridIds         = 228                        ! Post-processing grid ids
+   curve               = 3                      ! 0: ij order, 1: Hilbert curve order (only for all-bisection refinement), 2:ij block order, 3: Square Layout
+   gtype               = 2                      ! grid type: 0-standard recursive,2-modified recursive,3-modified nonrecursive
+   NumCacheBlocksPerPE = 1                      ! Number of cache blocks per processor. Only applies to ij block order
+   alt_topo            = .true.                 ! if true, use alternate srf.height field
+   alt_land            = .true.			! if true, use MODIS data
+   atm_ic              = 2			! 1: GFS;         2: CFSR
+   ocn_ic              = 2			! 1: climatology; 2: CFSR
+   aerosol_file      = 'climaeropac_global.txt' ! filename relative to DATADIR
+   gfsltln_file      = 'no_such_file'		! Correct value will be set by run automation
+   mtnvar_file       = 'no_such_file'		! Correct value will be set by run automation
+/
+ &DIAGnamelist
+   PrintIpnDiag      = -1		! ipn at which to print diagnostics (-1 means no print)
+   PrintDiagProgVars = 12		! Hourly increment to print diagnostic prognosis variables (-1=>none, 0=>every step)
+   PrintDiagNoise    =  1		! Hourly increment to print diagnostic gravity wave noise  (-1=>none, 0=>every step)
+   PrintDiags        = .false.		! True means print diagnostic messages
+/
+ &MODELnamelist
+   nts               =  0		! number of time steps
+   UpdateSST         = .false.		! True => update daily sst/sea ice by reading in a file during integration
+   dt_reducer_numerator = 9.            ! dt = dt*dt_reducer_numerator/dt_reducer_denominator
+   ptop=50.
+   thktop=50.
+   atm_trnsecdir     = '/lfs2/projects/fim/fimdata/ihycomproc/bsncrop/' ! atm.transects
+/
+ &PHYSICSnamelist
+   PhysicsInterval   =  180		! Interval in seconds to call non-radiation physics (0=every step)
+   RadiationInterval =  3600		! Interval in seconds to call radiation physics (0=every step)
+   SSTInterval       =  86400		! Interval in seconds to call update_sst (0=every step)
+   num_p3d           =  4		! 4 means call Zhao/Carr/Sundqvist Microphysics
+   ishal_cnv         =  2               ! shallow conv: 0=none; 1=SAS; 2=GF; 3=SAS&GF
+   ideep_cnv         =  2               ! deep    conv: 0=none; 1=SAS; 2=GF;
+/
+ &gfsphys
+   ictm = 1
+! jbao new gfs 2014 physics intialize radiation
+!!      isol=2   !
+   isol = 0   !
+   ico2 = 2
+   iaer = 111
+   iaer_mdl = 0
+   ialb = 0
+!        iems=0
+!  gfs parallel runs Eveyln made has iems=1
+   iems = 1
+!  iovr_sw = 1  ! sw: max-random overlap clouds
+!  iovr_lw = 1  ! lw: max-random overlap clouds
+   iovr_sw = 0  ! sw: random overlap clouds
+   iovr_lw = 0  ! lw: random overlap clouds
+   isubc_sw = 2
+   isubc_lw = 2
+   n3dflxtvd  = 3
+   n2dzhaocld = 2
+   n3dzhaocld = 4
+   n2dcldpdf=   0
+   n3dcldpdf=   0   ! from gfs 2014 input
+   fhswr = 3600.  ! jbao 
+   fhlwr = 3600.  ! jbao 
+/
+
+ &TIMEnamelist
+  yyyymmddhhmm = "200707170000"		! date of the model run
+/
+ &OCEANnamelist
+   ocnonly      = .false.		! if T, use CORE forcings & no FIM output
+   atmonly      = .false.		! if T, run FIM with prescribed SST
+   coupled      = .true.		! if T, run coupled atm and ocn
+   do_radcor    = .false.       	! correct radiation to keep ocean temp const
+   do_pcpcor    = .false.       	! correct precip to keep ocean saln const
+   kdm          =  32			! vertical grid dimension of ocean model
+   smagcf       =  0.3			! nonlin.viscosity coeff. (nondim)
+   veldff       =  0.1			! diffusion vel for u,v mixing (m/s)
+   temdff       =  0.02			! diffusion vel for T,S mixing (m/s)
+   thkdff       =  0.1			! diffusion vel for intfc smoothing (GM)
+   biharm       =  0.875		! Lapl/bihar bolusflx blending coeff (0=La,1=bi)
+   diapyc       =  2.e-5		! const. diapycnic diffusivity (m^2/s)
+   diapyn       =  2.e-7		! diapyc dffsvity x buoycy freq (m^2/s^2)
+   ocnmx_factor_s = 0.1			! factor to reduce kpp difs
+   ocnmx_factor_t = 0.1			! factor to reduce kpp dift
+!  num_mthly_fields = 12		! climatology monthly forcings in core1
+!  num_daily_fields = 365		! climatology daily forcings in core1
+!  num_6hrly_fields = 1460		! climatology 6hrly forcings in core1
+   num_mthly_fields = 720		! 60yr monthly forcings in core2
+   num_daily_fields = 21900		! 60yr daily forcings in core2
+   num_6hrly_fields = 87600		! 60yr 6hrly forcings in core2
+!  diag_intvl   = 9600			! time step interval for ocn diagnostics
+!  diag_intvl   = 3650			! 1mon time step for g4
+   diag_intvl   = 1825			! 1mon time step for g5
+!  test_start   = 600			! starting time for itest-related diagnostics
+!  itest        = 8457			! Irminger Sea (G5)
+!  itest        = 8420			! Greenland Sea (G5)
+!  itest        = 8239			! Labrador Sea (G5)
+!  itest        = 6126			! 50S, 100W (G5)
+!  itest        = 9221			! sample upland point draining to ocean
+!  itest        = 9230			! sample coastal outflow point (G5)
+!  itest        = 6839			! near Hawaii (G5)
+!  itest        = 3744			! Antactic coast S.of Australia (G5)
+!  itest        = 2211			! Arctic (G5)
+!  itest        = 5953			! Ross Sea (G5)
+!  itest        = 7000			! west of Galapagos I. (G5)
+!  itest        = 8121			! Weddell Sea (G5)
+!  itest        = 8203			! Davis Strait (G5)
+!  itest        = 37555			! Central S.Atlantic (G6)
+!  itest        = 31600			! Drake Passage (G6)
+!  itest        = 1313			! Black Sea (G6)
+!  itest	= 27595			! off Cape Hatteras (G6)
+!  itest        = 157500		! Agulhas retroflection (G7)
+!  itest        = 190000		! central Indian Ocean (G7)
+!  itest        = 720000		! central N.Pacific (G7)
+!  itest        = 133200		! Grand Banks (G7)
+!  itest        = 135300		! Norwegian Sea (G7)
+!  itest        = 112342		! Galapagos I. (G7)
+!  itest        = 111018		! Key West (G7)
+!  itest        = 7587			! Amazon outflow (G5)
+!  itest        = 3574			! Tasmania - Bass Strait (G5)
+!  itest	= 6950			! off Cape Hatteras (G5)
+!  itest        = 8455			! Iceland (G5)
+   itest        = -1			! ocn.testpt, distinct from PrintIpnDiag
+
+   ann_core	= .false.		! if true, use annually averaged CORE forcing
+   ocn_trnsecdir= '/pan2/projects/fim-njet/sun/ocnproc/bsncrop/'
+   inicondir    = '/pan2/projects/fim-njet/sun/'
+/
+ &OUTPUTnamelist
+   ArchvTimeUnit     =  'hr'		! ts:timestep; mi:minute; hr:hour; dy:day; mo:month
+   TotalTime         =  6		! Total integration time in ArchvTimeUnit
+   ArchvIntvl        =  6		! Archive interval in ArchvTimeUnit
+   readrestart       = .false.		! True means start by reading restart file (rpointer)
+   restart_freq      =  9999		! Restart interval in ArchvTimeUnit
+   PrintMAXMINtimes  = .true.		! True means print MAX MIN routine times, false means print for each PE
+   TimingBarriers    = .false.		! True means turn on timed barriers to measure task skew, set to .false. for production runs
+   FixedGridOrder    = .false.		! True: always output in the same order(IJ), False: order determined by curve. Does not apply to IJorder
+/
+ &ISOBARICnamelist
+   isobaric_levels_file = "output_isobaric_levs.txt" ! file containing pressure levels, in FIMrun directory
+ /
+
+!
+! WRITETASKnamelist is used to optionally create a separate group of
+! FIM-specific write tasks to speed up FIM model output by overlapping disk
+! writes with computation. By default this feature is turned off. When enabled,
+! write tasks intercept FIM output and write to disk while the main compute
+! tasks continue with model computation. In NEMS lingo, write tasks are called
+! "quilt" tasks.
+!
+! WRITETASKnamelist is ignored for a serial run.
+!
+ &WRITETASKnamelist
+   check_omp_consistency = .true.     ! FIM checks for consistency of OpenMP settings
+   abort_on_bad_task_distrib = .true. ! Abort FIM when node names are not as expected
+   cpn = 8                            ! Number of cores per node
+   mpipn = 8                          ! Number of MPI tasks per node
+   nthreads = 1                       ! Number of threads per task if OMP threading enabled in macros.make.*
+   debugmsg_on = .false.              ! Print verbose debug messages
+   max_write_tasks_per_node = 1       ! Maximum number of write tasks to place on a single node
+   num_write_tasks = 0                ! Use: 0 = no write tasks, 1 = one
+   root_own_node = .true.             ! whether root process has node to himself
+/
+!
+  &POSTnamelist
+!
+! input and output specifications:
+!
+  post_datadir = "../fim"
+  outputdir = "."
+!  input = "/tg2/projects/fim/jlee/PREP/mdrag5h.dat"
+  input = ""
+!  if input has content, it overwrites the datadir
+!  output = "/p72/fim/wang/nc_files/mdrag5h.nc"
+  output = ""
+!  if output has content, it overwrites the outputdir
+  output_fmt = "grib"         ! "nc" --netCDF file, "grib" --GRIB file
+  multiple_output_files = .true. !  -- multiple grib outputfiles (assumed true when post in fim)
+!
+! grid specifications:
+!
+  gribtable = "fim_gribtable" ! only used by grib output file(s)
+  grid_id = 228               ! 228(144, 73), 45(288, 145), 3(360, 181), 4(720, 361),
+                              ! 174(2880, 1440), etc.; only for grib output file
+  mx = 720                    ! only used by netcdf output file
+  my = 360                    ! only used by netcdf output file
+  latlonfld = .true.          ! true -- create lat lon field in grib output file
+!
+! post processing specifications:
+!
+  is = 1                      ! interpolation scheme:
+                              ! 0 -- no interpolation: native grid;
+                              ! 1 -- horizontal interpo. on native vertical coord.;
+                              ! 2 -- horizontal interpo. + vertical interpo. on std. pressure levels;
+                              ! 3 -- horizontal interpo. + vertical interpo. on 10mb inc. pressure levels;
+  vres = 111                  ! only used in vertical interpolation
+  mode = "linear"             ! step or linear interpolation for vertical column
+!
+! variable specifications:
+!
+  var_list = 'us3D','vs3D','pr3D','th3D','ph3D','pv3D','td3D','rh3D','up3P','vp3P','hgtP','tmpP','rsds','rlds','rsus','rlus','rlut','hfss','hfls','r12D','r22D','rn2D','s12D','thpv','cltt','ts2D','t22D','q22D','td2D','sm2D','runo','ms2D','w080','ustr','vstr','u12D','v12D','tmax','tmin',
+
+  nsmooth_var = 1,      1,      1,      2,      2,      0,      0,      1,      0,     0,      0,       0
+
+  fimout = .true.    ! whether to write FIM binary output files
+  gribout = .false.  ! whether to write GRIB output files from FIM
+  only_write_var_list_entries = .false.
+  t1          = 0
+  t2          = 24
+  delta_t     = 6
+  multiHrTu   = .true.
+/
+
+&chemwrf
+  chem_opt  = 0 ! chem option, 0=off, 300=on
+  chemdt    = 30.
+  kemit     = 1
+  DUST_OPT        =           1,
+  DMSEMIS_OPT     =           1,
+  SEAS_OPT        =           0,
+  BIO_EMISS_OPT   =           0,
+  BIOMASS_BURN_OPT        =   1,
+  PLUMERISEFIRE_FRQ       =   30,
+  EMISS_INPT_OPT  =           1,
+  GAS_BC_OPT      =           0,
+  GAS_IC_OPT      =           0,
+  AER_BC_OPT      =           0,
+  AER_IC_OPT      =           0,
+/
+
+&wrfphysics
+  mp_physics                = 0,    ! 0=off, 2=on
+  cu_physics                = 0,    ! 0=off, 3=on
+/
+
+!
+! System specific parameters for MPI, task geometry, etc.
+!
+ &SYSTEMnamelist
+  MPIRUNCMD='mpiexec -np'
+/

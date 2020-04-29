@@ -1,0 +1,17 @@
+OBJS_TOP =                      \
+  ENS_CplComp_ESMFMod_STUB.o    \
+  fim_grid_comp.o               \
+  fim_internal_state.o          \
+  MAIN_NEMS.o                   \
+  module_ATM_GRID_COMP.o        \
+  module_ATM_INTERNAL_STATE.o   \
+  module_EARTH_GRID_COMP.o      \
+  module_EARTH_INTERNAL_STATE.o \
+  module_ERR_MSG.o              \
+  module_FIM_INTEGRATE.o        \
+  module_NEMS_GRID_COMP.o       \
+  module_NEMS_INTERNAL_STATE.o
+
+$(OBJS_TOP):
+	$(CPP) $(GPTL_CPPFLAGS) $(CPPFLAGS) $< > $*.f
+	$(FC) -c $(OMPFLAG) $(GPTL_FFLAGS) $(LOCFLAGS) $(OPTFLAGS) $*.f

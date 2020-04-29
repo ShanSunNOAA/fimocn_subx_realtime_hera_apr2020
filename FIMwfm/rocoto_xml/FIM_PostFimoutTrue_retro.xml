@@ -1,0 +1,45 @@
+  <task name="post_NAT_&MEMBER_ID;_#t1#_#t2#" maxtries="1">
+    <command>&FIM_RUN;/batchTemplate-post</command>
+    <account>&PROJECT;</account>
+    <cores>12</cores>
+    &PARTITION_JET;
+    <walltime>&POST_WALLTIME;</walltime>
+    <jobname><cyclestr>post_NAT_C_#t1#_#t2#_@H_&GLVL;_&NVL;</cyclestr></jobname>
+    <join><cyclestr>&FIM_LOG;/post/post_NAT_C_#t1#_#t2#_@Y@m@d@H.log</cyclestr></join>
+    <envar><name>WFM</name><value>1</value></envar>
+    <envar><name>GETJOBID</name><value>&FIM_RUN;/qsubGetJobID</value></envar>
+    <envar><name>COPYGB</name><value>&COPYGB;</value></envar>
+    <envar><name>CNVGRIB</name><value>&CNVGRIB;</value></envar>
+    <envar><name>TRACKER</name><value>&TRACKER;</value></envar>
+    <envar><name>TCVITALS</name><value>&TCVITALS;</value></envar>
+    <envar><name>ATCFNAME</name><value>&ATCFNAME;</value></envar>
+    <envar><name>GRID_NAMES</name><value>&GRID_NAMES;</value></envar>
+    <envar><name>GRID_SPECS</name><value>&GRID_SPECS;</value></envar>
+    <envar><name>FIM_HOME</name><value>&FIM_HOME;</value></envar>
+    <envar><name>FIM_RUN</name><value>&FIM_RUN;</value></envar>
+    <envar><name>NCL_HOME</name><value>&NCL_HOME;</value></envar>
+    <envar><name>MODL</name><value>&MODL;_&MEMBER_ID;</value></envar>
+    <envar><name>DATADIR</name><value>&DATADIR;</value></envar>
+    <envar><name>DATADR2</name><value>&DATADR2;</value></envar>
+    <envar><name>yyyymmddhhmm</name><value><cyclestr>@Y@m@d@H@M</cyclestr></value></envar>
+    <envar><name>FCST_LENGTH</name><value>&FCST_LENGTH;</value></envar>
+    <envar><name>FCST_INTERVAL</name><value>&FCST_INTERVAL;</value></envar>
+    <envar><name>PES</name><value>&PES;</value></envar>
+    <envar><name>GLVL</name><value>&GLVL;</value></envar>
+    <envar><name>NVL</name><value>&NVL;</value></envar>
+    <envar><name>T1</name><value>#t1#</value></envar>
+    <envar><name>T2</name><value>#t2#</value></envar>
+    <envar><name>MEMBER_ID</name><value>&MEMBER_ID;</value></envar>
+    <envar><name>NLFILE</name><value>&NLFILE;</value></envar>
+    <envar><name>RUN_POP</name><value>&RUN_POP;</value></envar>
+    <envar><name>RUN_INTERP</name><value>&RUN_INTERP;</value></envar>
+    <envar><name>RUN_GRIB12</name><value>&RUN_GRIB12;</value></envar>
+    <envar><name>RUN_TRACKER</name><value>&RUN_TRACKER;</value></envar>
+    <envar><name>RUN_NCL</name><value>&RUN_NCL;</value></envar>
+    <dependency>
+      <and>
+        <datadep age="120"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/fim_C/fim_out_2D__000#t2#hr</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/fim_C/fim_out_hgtP000#t2#hr</cyclestr></datadep>
+      </and>
+    </dependency>
+  </task>

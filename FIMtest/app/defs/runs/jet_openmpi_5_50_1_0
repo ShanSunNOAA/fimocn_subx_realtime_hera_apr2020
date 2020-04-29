@@ -1,0 +1,7 @@
+ddts_extends: 'jet_openmpi_parallel'
+namelists:
+  queuenamelist:
+    computetasks: '1'
+    maxqueuetime: '00:25:00'
+  writetasknamelist:
+    num_write_tasks: 0

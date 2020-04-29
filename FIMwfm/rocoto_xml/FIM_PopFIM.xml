@@ -1,0 +1,52 @@
+  <task name="popfim_#t2#" maxtries="3">
+    <command>&SCRIPTS;/popfim_driver.ksh</command>
+    <account>&PROJECT;</account>
+    <memory>5G</memory>
+    <cores>1</cores>
+    &PARTITION_JET;
+    <walltime>00:06:00</walltime>
+    <jobname>pop_&MEMBER_ID;_#fcst#</jobname>
+    <join><cyclestr>&FIM_LOG;/pop/pop_NAT_&MEMBER_ID;_#t2#_@Y@m@d@H00_fim.log</cyclestr></join>
+    <envar><name>WFM</name><value>1</value></envar>
+    <envar><name>GRIBOUT</name><value>FALSE</value></envar>
+    <envar><name>MEMBER_ID</name><value>&MEMBER_ID;</value></envar>
+    <envar><name>fimnamelist</name><value>FIMnamelist</value></envar>
+    <envar><name>NLFILE</name><value>&NLFILE;</value></envar>
+    <envar><name>FIM_HOME</name><value>&FIM_HOME;</value></envar>
+    <envar><name>FIM_RUN</name><value>&FIM_RUN;</value></envar>
+    <envar><name>PARTITION</name><value>&PARTITION;</value></envar>
+    <envar><name>HOUR</name><value><cyclestr>@H</cyclestr></value></envar>
+    <envar><name>PROJECT</name><value>&PROJECT;</value></envar>
+    <envar><name>SCRIPTS</name><value>&SCRIPTS;</value></envar>
+    <envar><name>FCST_INTERVAL</name><value>&FCST_INTERVAL;</value></envar>
+    <envar><name>yyyymmddhhmm</name><value><cyclestr>@Y@m@d@H@M</cyclestr></value></envar>
+    <envar><name>yyyymmddhh</name><value><cyclestr>@Y@m@d@H</cyclestr></value></envar>
+    <envar><name>PES</name><value>&PES;</value></envar>
+    <envar><name>GLVL</name><value>&GLVL;</value></envar>
+    <envar><name>NVL</name><value>&NVL;</value></envar>
+    <envar><name>T</name><value>#fcst#</value></envar>
+    <envar><name>T1</name><value>#t2#</value></envar>
+    <envar><name>T2</name><value>#t2#</value></envar>
+    <envar><name>GRID_NAMES</name><value>fim</value></envar>
+    <envar><name>GRID_SPECS</name><value>fim</value></envar>
+    <dependency>
+      <and>
+        <datadep age="120"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/fim_C/fim_out_2D__000#t2#hr</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/fim_C/fim_out_hgtP000#t2#hr</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/fim_C/fim_out_up3P000#t2#hr</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/fim_C/fim_out_vp3P000#t2#hr</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/fim_C/fim_out_oz3D000#t2#hr</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/fim_C/fim_out_ph3D000#t2#hr</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/fim_C/fim_out_pr3D000#t2#hr</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/fim_C/fim_out_rh3D000#t2#hr</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/fim_C/fim_out_rp3P000#t2#hr</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/fim_C/fim_out_td3D000#t2#hr</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/fim_C/fim_out_tk3D000#t2#hr</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/fim_C/fim_out_tmpP000#t2#hr</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/fim_C/fim_out_us3D000#t2#hr</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/fim_C/fim_out_vs3D000#t2#hr</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/fim_C/fim_out_vv3P000#t2#hr</cyclestr></datadep>
+        <datadep age="120"><cyclestr>&FIM_RUN;/fim_&GLVL;_&NVL;_&PES;_@Y@m@d@H@M/fim_C/fim_out_ws3D000#t2#hr</cyclestr></datadep> 
+      </and>
+    </dependency>
+  </task>

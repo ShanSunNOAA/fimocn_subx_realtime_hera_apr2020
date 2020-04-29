@@ -1,0 +1,9 @@
+    character(len=100)::debughdr
+    integer::ierr,levels
+    real,allocatable::glbvar(:)
+#ifndef SERIAL
+    integer::cmd(cmdsize),ct,expected,hi,lo,mpistatus(mpi_status_size),mpitype,&
+      received,segment_size,tag,wt
+    integer,allocatable::displs(:)
+    real,allocatable::segment(:)
+#endif /* SERIAL */

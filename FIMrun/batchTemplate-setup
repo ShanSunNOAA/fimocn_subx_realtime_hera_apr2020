@@ -1,0 +1,262 @@
+#!/bin/ksh --login
+
+CONTEXT="batchTemplate-setup"
+
+# Source functions.ksh if needed.
+
+if [[ -z "$functions_sourced" ]] then
+  test -n "$WFM" && prefix=$FIM_RUN || prefix=.
+  . $prefix/functions.ksh # Most function definitions can be found here.
+fi
+
+ksh_insist # Ensure that we are running in ksh93
+
+xsource ./chem_functions.ksh
+
+# Set fimnamelist to the absolute pathname of our namelist file. If we're
+# running via WFM, this should already be set, so retain the preset value.
+# Otherwise, we're running via manual queue submission, so use the namelist
+# file in the current directory.
+
+test -n "$NLFILE" && fimnamelist="$NLFILE" || get_fimnamelist
+
+# From here on, NLFILE refers to the standard filename of FIM's namelist file,
+# and fimnamelist refers to the absolute path to the run's master version of
+# that file.
+
+NLFILE="FIMnamelist"
+
+# Non-WFM runs need to set yyyymmddhhmm (which is exported as an environment
+# variable by WFM) to the value specified in the namelist.
+
+if [[ -z "$WFM" ]] then
+  get_nl_value "$fimnamelist" TIMEnamelist yyyymmddhhmm yyyymmddhhmm
+  test -z "$yyyymmddhhmm" && fail "Cannot determine yyyymmddhhmm from $fimnamelist."
+  yyyymmddhhmm=$(print $yyyymmddhhmm | tr -d '"' | tr -d "'")
+fi
+
+# If the namelist file has been copied to the prep dir, use the copy there. For
+# WFM runs, this keeps us from continuing to read the copy in the FIMrun_* dir,
+# which could be overwritten at any time
+
+#if [[ -n "$WFM" && "$(context_peek)" != "batchTemplate-prep" ]] then 
+# PREP and RUNDIR are as assigned below
+#  RUNDIR="$FIM_RUN/fim${GLVL}_${NVL}_${PES}_$yyyymmddhhmm"
+#  PREP="$RUNDIR/prep_$MEMBER_ID"
+#  test -r $PREP/$NLFILE && fimnamelist="$PREP/$NLFILE"
+#fi
+
+print "Using $NLFILE at $fimnamelist"
+
+# Compute/set some variables values.
+
+get_build_config
+get_parallelism
+get_pes
+get_runmaster
+
+BINDIR=$RUNMASTER
+SUBDIR=$PWD
+
+# Set up run-time environment and print results via "verbose".
+
+xsource_notrace $RUNMASTER/envset
+
+# Read variable values from the namelist file.
+
+get_nl_value "$fimnamelist" cntlnamelist glvl GLVL
+get_nl_value "$fimnamelist" cntlnamelist nvl  NVL
+
+get_nl_value "$fimnamelist" queuenamelist datadir DATADIR
+get_nl_value "$fimnamelist" queuenamelist datadr2 DATADR2
+get_nl_value "$fimnamelist" queuenamelist fimdir  FIMDIR
+get_nl_value "$fimnamelist" queuenamelist prepdir PREPDIR
+
+chem_on && CHEMFLAG="true" || CHEMFLAG="false"
+
+# Put test on chemistry true and readrestart true in here because subroutine chem_init may not
+# successfully kill all MPI tasks in its similar test (because the write tasks don't execute
+# chem_init(). Delete the code in both spots when chemistry works with restart.
+
+if [[ "$CHEMFLAG" == "true" ]] then
+  get_nl_value "$fimnamelist" OUTPUTnamelist readrestart READRESTART
+  logically_true "$READRESTART" && \
+    fail "Cannot enable chemistry with READRESTART."
+fi
+
+get_nl_value "$fimnamelist" writetasknamelist max_write_tasks_per_node mwtpn
+
+# jdate binary gives no trailing newline => "read" fails => execute in subshell
+
+JDATE=$($BINDIR/jdate $yyyymmddhhmm) || \
+  fail "Cannot extract Julian date from $yyyymmddhhmm."
+
+print $JDATE | cut -c6-7 | read hh || \
+  fail "Cannot derive hours from Julian date $JDATE."
+test -z "$hh" && fail "Cannot determine hour from $JDATE."
+
+# Set other variables.
+
+if [[ "$WFM" == "ENSEMBLE" ]] then
+  print "Setting up environment variables for Ensemble Run"
+  sanlFilename=$sanlFile
+  sfcanlFilename=$sfcanlFile
+  if [[ "$MEMBER_ID" == "EM" ]] then
+    print "This is the Ensemble Mean"
+    sfcanlFile=${DATADR2}/${yyyymmddhh}/ens20/sfcanl60_${yyyymmddhh}_ensmean
+    sanlFile=${DATADR2}/${yyyymmddhh}/ens20/sanl60_${yyyymmddhh}_ensmean
+  else
+    sfcanlFile=${DATADR2}/${yyyymmddhh}/ens20/sfcanl_${yyyymmddhh}_mem0${MEMBER_ID}
+    sanlFile=${DATADR2}/${yyyymmddhh}/ens20/sanl_${yyyymmddhh}_mem0${MEMBER_ID}
+  fi
+fi
+GMPIENVVAR="F_UFMTENDIAN"
+dpsig="../dpsig${NVL}.txt"
+ocn_dpmin="../ocn_dpmin${KDM}.txt"
+ocn_target="../ocn_target${KDM}.txt"
+fimgribtable="../fim_gribtable"
+REDUCE="../reduce"
+reduceinput="../REDUCEinput"
+smsnamelist="../SMSnamelist" # optional: controls SMS run-time options
+gptlnamelist="../GPTLnamelist" # namelist for timing library
+thetacoor="../theta_coor${NVL}.txt"
+topgrid="../top_grid"
+
+# Log git diffs for this run.
+
+test -f $RUNMASTER/git.diff && cat $RUNMASTER/git.diff
+
+compare_var_setup "$fimnamelist" "$PES" "$parallelism"
+
+# A compare_var run is only possible if NumCacheBlocksPerPE=1, with correct camel-case in both the
+# name of the namelist (PREPnamelist) and name of variable (NumCacheBlocksPerPE)
+
+if ( logically_true "$COMPARE_VAR_ON" ) then
+  get_nl_value "$fimnamelist" PREPnamelist NumCacheBlocksPerPE NUMCACHEBLOCKSPERPE
+  test "$NUMCACHEBLOCKSPERPE" != "1" && fail "compare_var runs must set NumCacheBlocksPerPE=1. Got $NUMCACHEBLOCKSPERPE"
+  get_nl_value "$fimnamelist" PREPnamelist curve CURVE
+  test "$CURVE" != "0" && fail "compare_var runs must set curve=0. Got $CURVE"
+fi
+
+# Set various paths for WFM and non-WFM runs
+
+yyyymmddhh=$(print $yyyymmddhhmm | cut -c1-10)
+
+if [[ -n "$WFM" ]] then
+  RUNDIR="$FIM_RUN/fim${GLVL}_${NVL}_${PES}_$yyyymmddhh"
+# PREP="$RUNDIR/prep_$MEMBER_ID"
+# FIM="$RUNDIR/fim_$MEMBER_ID"
+# POST="$RUNDIR/post_$MEMBER_ID"
+  PREP="$RUNDIR/prep"
+  FIM="$RUNDIR/fim"
+  POST="$RUNDIR/post"
+  COMPARE_VAR_ON=$(logical_false)
+  DIR="$RUNDIR"
+else
+  if ( logically_true "$COMPARE_VAR_ON" ) then
+    # a more descriptive directory name...  
+    DIR="$SUBDIR/fim${GLVL}_${NVL}_cv.${COMPARE_VAR_NTASKS_1}.vs.${COMPARE_VAR_NTASKS_2}"
+  else
+    DIR="$SUBDIR/fim${GLVL}_${NVL}_${PES}"
+  fi
+  PREP="$DIR/prep"
+  FIM="$DIR/fim"
+  POST="$DIR/post"
+fi
+
+if [[ -d "$DIR_done" ]]; then
+   fail "Cannot make directory $DIR_done - this is done"
+   exit
+else
+  if [[ -n "$WFM" ]] then
+    echo "qq wfm: DIR=$DIR"
+  else
+    mkdir $DIR || fail "Cannot make directory $DIR."
+    print "Made directory $DIR"
+    mkdir $PREP || fail "Cannot make directory $PREP."
+    print "Made directory $PREP"
+  fi
+fi
+echo "qq DIR=$DIR PREP=$PREP"
+
+get_nl_value $fimnamelist prepnamelist atm_ic atm_ic
+if [[ ${atm_ic} == 2 ]] then
+  sanlFile="siganl.gdas.${yyyymmddhh}"
+  sfcanlFile="sfcanl.gdas.${yyyymmddhh}"
+  if [[ ${IC_TYPE} == 1 ]] then # read retro data
+    echo "spectralFile_subx_retro.ksh does it"
+  elif [[ ${IC_TYPE} == 2 ]] then
+    linksafe $CFS_IC_DIR/${JDATE}.cdas1.t${hh}z.sanl   $PREP/$sanlFile
+    linksafe $CFS_IC_DIR/${JDATE}.cdas1.t${hh}z.sfcanl $PREP/$sfcanlFile
+  else
+    linksafe $DATADR2/$sanlFile   $PREP  || fail
+    linksafe $DATADR2/$sfcanlFile $PREP  || fail
+  fi
+else
+  sanlFile="${JDATE}.gfs.t${hh}z.sanl"
+  sfcanlFile="${JDATE}.gfs.t${hh}z.sfcanl"
+  linksafe $DATADR2/$sanlFile   $PREP  || fail
+  linksafe $DATADR2/$sfcanlFile $PREP  || fail
+fi
+
+get_nl_value $fimnamelist prepnamelist ocn_ic ocn_ic
+if [[ "$ocn_ic" == 2 ]] then
+  ocnTSFile="ocnanl.gdas.${yyyymmddhh}.ocean_temp_salt.res.nc"
+  ocnIceFile="ocnanl.gdas.${yyyymmddhh}.ice_model.res.nc"
+  if [[ ${IC_TYPE} == 1 ]] then # read retro data
+    echo "spectralFile_subx_retro.ksh does it"
+  elif [[ ${IC_TYPE} == 2 ]] then  # read realtime data
+    linksafe $CFS_IC_DIR/${JDATE}.ocean_temp_salt.res.nc $PREP/$ocnTSFile  || fail
+    linksafe $CFS_IC_DIR/${JDATE}.ice_model.res.nc       $PREP/$ocnIceFile || fail
+  else
+    linksafe $DATADR2/$ocnTSFile  $PREP  || fail
+    linksafe $DATADR2/$ocnIceFile $PREP  || fail
+  fi
+fi 
+# Create run directory
+
+## SSun: disable the softlink
+#if [[ -n "$WFM" ]]
+#then
+#  yyyymmddhh=$(print $yyyymmddhhmm | cut -c1-10)
+#  if [[ ! -L ${FIM_RUN}/${yyyymmddhh} ]]
+#  then
+#    echo "link not there"
+#    ln -s $DIR ${FIM_RUN}/$yyyymmddhh
+#  fi
+#fi
+
+# Make directory for where FIM might make GRIB1 files.
+
+if [[ -n "$WFM" && ! -d "$POST/fim/NAT/grib1" ]] then
+  mkdir -p "$POST/fim/NAT/grib1" || fail "Cannot make directory $POST/fim/NAT/grib1."
+fi
+
+FIMEXEBASE="fim"                     # the FIM executable
+FIMEXE="$FIMEXEBASE"                 # default value
+GRID_FILE="icos_grid_level.dat"      # intermediate file
+INFO_FILE="icos_grid_info_level.dat" # intermediate file
+LATLON_FILE="latlonIJ.dat"           # needed by fim for post
+GLVL_FILE="glvl.dat"                 # needed by fim
+GFSFC_FILE="gfsfc.dat"               # needed by fim
+
+check_nems
+
+# When COMPARE_VAR is enabled, $taskcounts iterates through numbers of MPI tasks
+# assigned to each concurrent run. Otherwise $taskcounts just contains $PES.  
+
+if ( logically_true "$COMPARE_VAR_ON" ) then
+  taskcounts="$COMPARE_VAR_NTASKS_1 $COMPARE_VAR_NTASKS_2"
+else
+  taskcounts="$PES"
+fi
+
+# The batchTemplate-[prep|fim|post] scripts check if batchTemplate_setup_ran is
+# set and only call batchTemplate-setup if it is not. So, if those scripts are 
+# sourced inline by batchTemplate, batchTemplate-setup is only called once. For
+# WFM runs, where batchTemplate-[prep|fim|post] are each called independently,
+# batchTemplate-setup is called to initialize each of them.
+
+batchTemplate_setup_ran=1
+
+return 0

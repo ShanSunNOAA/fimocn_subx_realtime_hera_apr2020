@@ -1,0 +1,16 @@
+ddts_extends: 'theia_ocn_common'
+ddts_baseline: 'theiaintel_ocn'
+namelists:
+  cntlnamelist:
+    glvl: 5
+    nvl: 50
+  outputnamelist:
+    restart_freq: 999
+  postnamelist:
+    delta_t: 6
+    nsmooth_var: !unquoted "1,1,1,2,2,0,0,1,0"
+    t1: 0
+    t2: 24
+    var_list: !unquoted "'us3D','vs3D','pr3D','th3D','ph3D','pv3D','td3D','rh3D','up3P','vp3P','hgtP','tmpP','rsds','rlds','rsus','rlus','rlut','hfss','hfls','r12D','r22D','rn2D','s12D','thpv','cltt','ts2D','t22D','q22D','td2D','sm2D','runo','ms2D','w080','ustr','vstr','u12D','v12D','tmax','tmin'"
+  prepnamelist:
+    curve: 0

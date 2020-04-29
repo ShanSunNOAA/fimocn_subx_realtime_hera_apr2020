@@ -1,0 +1,13 @@
+#/bin/sh
+cd ..
+d=copygb-g95
+rm */*.o
+rm */*.a
+rm copygb.fd/copygb
+tar -cvf copygb-g95-linux.tar $d/CHANGE $d/README $d/makefile $d/tar_all \
+   $d/copygb.fd/ $d/bacio.old $d/iplib $d/splib $d/w3lib $d/*.doc
+
+# save new files on web
+scp $d/CHANGE rzdm:ftp/copygb/Changes
+scp  copygb-g95-linux.tar rzdm:ftp/copygb/
+

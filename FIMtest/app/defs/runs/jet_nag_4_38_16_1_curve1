@@ -1,0 +1,8 @@
+ddts_extends: 'jet_nag_common'
+namelists:
+  outputnamelist:
+    fixedgridorder: !unquoted '.true.'
+  prepnamelist:
+    curve: 1
+  queuenamelist:
+    maxqueuetime: '00:35:00'

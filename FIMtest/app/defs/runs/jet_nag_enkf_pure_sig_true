@@ -1,0 +1,5 @@
+ddts_extends: 'jet_nag_enkf_common'
+ddts_baseline: 'jet_enkf_pure_sig_true'
+namelists: 
+  modelnamelist:
+    pure_sig: !unquoted '.true.'

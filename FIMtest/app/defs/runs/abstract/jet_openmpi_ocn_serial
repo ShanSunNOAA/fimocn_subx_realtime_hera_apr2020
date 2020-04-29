@@ -1,0 +1,2 @@
+ddts_extends: 'jet_openmpi_ocn_common'
+ddts_build: 'jet_openmpi_serial'

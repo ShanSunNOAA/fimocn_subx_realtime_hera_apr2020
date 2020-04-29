@@ -1,0 +1,18 @@
+ddts_extends: 'theiaintel_omp_parallel'
+ddts_baseline: 'theiaintel_trisect'
+namelists:
+  cntlnamelist:
+    glvl: 4
+    subdivnum: !unquoted '2 2 2 3'
+  outputnamelist:
+    archvtimeunit: 'ts'
+    archvintvl: 90
+    totaltime: 180
+  postnamelist:
+    delta_t: 90
+    t1: 0
+    t2: 180
+  queuenamelist:
+    computetasks: '16'
+  writetasknamelist:
+    num_write_tasks: 0

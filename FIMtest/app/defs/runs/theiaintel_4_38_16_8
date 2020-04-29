@@ -1,0 +1,5 @@
+ddts_extends: 'theiaintel_debug_common'
+namelists:
+  writetasknamelist:
+    max_write_tasks_per_node: 2
+    num_write_tasks: 2

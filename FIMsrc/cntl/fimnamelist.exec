@@ -1,0 +1,279 @@
+  
+! fimnamelist.exec begin
+  
+  print *,'enter exec, first_call=',first_call
+  if (first_call) then
+
+    print *,'enter first_call'
+    u = getunit ()
+    if (u < 0) then
+      print*,'fimnamelist: getunit failed. Stopping'
+      stop
+    end if
+
+    open (u,file=nlfile,status='old',action='read',iostat=ierr)
+    if (ierr.ne.0) then
+      write (*,'(3a)') "readnl: ERROR, could not open namelist file '",nlfile,"'"
+      stop
+    endif
+
+100 format ('namelist',i3,' ----------------------------------------------')
+    do i=1,number_of_namelists
+!   print *,'i=',i
+
+      rewind (u)
+
+      select case (i)
+
+      case (1)
+        do
+          read (u,nml=chemwrf,iostat=ierr)
+          if (ierr.eq.0) then	! successful read
+            write (*,100) i
+            write (*,chemwrf)
+            go to 1
+          end if
+          if (ierr.lt.0) exit   ! end of file
+        end do
+        write (*,'(a)') 'readnl: ERROR, chemwrf not read, exiting...'
+        stop
+
+      case (2)
+        do
+          read (u,nml=CNTLnamelist,iostat=ierr)
+          if (ierr.eq.0) then	! successful read
+            write (*,100) i
+            write (*,CNTLnamelist)
+            go to 1
+          end if
+          if (ierr.lt.0) exit   ! end of file
+        end do
+        write (*,'(a)') 'readnl: ERROR, CNTLnamelist not read, exiting...'
+        stop
+
+      case (3)
+        do
+          read (u,nml=DIAGnamelist,iostat=ierr)
+          if (ierr.eq.0) then	! successful read
+            write (*,100) i
+            write (*,DIAGnamelist)
+            go to 1
+          end if
+          if (ierr.lt.0) exit   ! end of file
+        end do
+        write (*,'(a)') 'readnl: ERROR, DIAGnamelist not read, exiting...'
+        stop
+
+      case (4)
+        do
+          read (u,nml=gfsphys,iostat=ierr)
+          if (ierr.eq.0) then	! successful read
+            write (*,100) i
+            write (*,gfsphys)
+            go to 1
+          end if
+          if (ierr.lt.0) exit   ! end of file
+        end do
+        write (*,'(a)') 'readnl: ERROR, gfsphys not read, exiting...'
+        stop
+
+      case (5)
+        do
+          read (u,nml=ISOBARICnamelist,iostat=ierr)
+          if (ierr.eq.0) then	! successful read
+            write (*,100) i
+            write (*,ISOBARICnamelist)
+            go to 1
+          end if
+          if (ierr.lt.0) exit   ! end of file
+        end do
+        write (*,'(a)') 'readnl: ERROR, ISOBARICnamelist not read, exiting...'
+        stop
+
+      case (6)
+        do
+          read (u,nml=LANDnamelist,iostat=ierr)
+          if (ierr.eq.0) then	! successful read
+            write (*,100) i
+            write (*,LANDnamelist)
+            go to 1
+          end if
+          if (ierr.lt.0) exit   ! end of file
+        end do
+        write (*,'(a)') 'readnl: ERROR, LANDnamelist not read, exiting...'
+        stop
+
+      case (7)
+        do
+          read (u,nml=MODELnamelist,iostat=ierr)
+          if (ierr.eq.0) then	! successful read
+            write (*,100) i
+            write (*,MODELnamelist)
+            go to 1
+          end if
+          if (ierr.lt.0) exit   ! end of file
+        end do
+        write (*,'(a)') 'readnl: ERROR, MODELnamelist not read, exiting...'
+        stop
+
+      case (8)
+        do
+          read (u,nml=OCEANnamelist,iostat=ierr)
+          if (ierr.eq.0) then	! successful read
+            write (*,100) i
+            write (*,OCEANnamelist)
+            go to 1
+          end if
+          if (ierr.lt.0) exit   ! end of file
+        end do
+        write (*,'(a)') 'readnl: ERROR, OCEANnamelist not read, exiting...'
+        stop
+
+      case (9)
+        do
+          read (u,nml=OUTPUTnamelist,iostat=ierr)
+          if (ierr.eq.0) then	! successful read
+            write (*,100) i
+            write (*,OUTPUTnamelist)
+            go to 1
+          end if
+          if (ierr.lt.0) exit   ! end of file
+        end do
+        write (*,'(a)') 'readnl: ERROR, OUTPUTnamelist not read, exiting...'
+        stop
+
+      case (10)
+        do
+          read (u,nml=PHYSICSnamelist,iostat=ierr)
+          if (ierr.eq.0) then	! successful read
+            write (*,100) i
+            write (*,PHYSICSnamelist)
+            go to 1
+          end if
+          if (ierr.lt.0) exit   ! end of file
+        end do
+        write (*,'(a)') 'readnl: ERROR, PHYSICSnamelist not read, exiting...:'
+        stop
+
+      case (11)
+        do
+          read (u,nml=POSTnamelist,iostat=ierr)
+          if (ierr.eq.0) then	! successful read
+            write (*,100) i
+            write (*,POSTnamelist)
+            go to 1
+          end if
+          if (ierr.lt.0) exit   ! end of file
+        end do
+        write (*,'(a)') 'readnl: ERROR, POSTnamelist not read, exiting...'
+        stop
+
+      case (12)
+        do
+          read (u,nml=PREPnamelist,iostat=ierr)
+          if (ierr.eq.0) then	! successful read
+            write (*,100) i
+            write (*,PREPnamelist)
+            go to 1
+          end if
+          if (ierr.lt.0) exit   ! end of file
+        end do
+        write (*,'(a)') 'readnl: ERROR, PREPnamelist not read, exiting...'
+        stop
+
+      case (13)
+        do
+          read (u,nml=QUEUEnamelist,iostat=ierr)
+          if (ierr.eq.0) then	! successful read
+            write (*,100) i
+            write (*,QUEUEnamelist)
+            go to 1
+          end if
+          if (ierr.lt.0) exit   ! end of file
+        end do
+        write (*,'(a)') 'readnl: ERROR, QUEUEnamelist not read, exiting...'
+        stop
+
+      case (14)
+        do
+          read (u,nml=SYSTEMnamelist,iostat=ierr)
+          if (ierr.eq.0) then	! successful read
+            write (*,100) i
+            write (*,SYSTEMnamelist)
+            go to 1
+          end if
+          if (ierr.lt.0) exit   ! end of file
+        end do
+        write (*,'(a)') 'readnl: ERROR, SYSTEMnamelist not read, exiting...'
+        stop
+
+      case (15)
+        do
+          read (u,nml=TIMEnamelist,iostat=ierr)
+          if (ierr.eq.0) then	! successful read
+            write (*,100) i
+            write (*,TIMEnamelist)
+            go to 1
+          end if
+          if (ierr.lt.0) exit   ! end of file
+        end do
+        write (*,'(a)') 'readnl: ERROR, TIMEnamelist not read, exiting...'
+        stop
+
+      case (16)
+        do
+          read (u,nml=TOPOnamelist,iostat=ierr)
+          if (ierr.eq.0) then	! successful read
+            write (*,100) i
+            write (*,TOPOnamelist)
+            go to 1
+          end if
+          if (ierr.lt.0) exit   ! end of file
+        end do
+        write (*,'(a)') 'readnl: ERROR, TOPOnamelist not read, exiting...'
+        stop
+
+      case (17)
+        do
+          read (u,nml=wrfphysics,iostat=ierr)
+          if (ierr.eq.0) then	! successful read
+            write (*,100) i
+            write (*,wrfphysics)
+            go to 1
+          end if
+          if (ierr.lt.0) exit   ! end of file
+        end do
+        write (*,'(a)') 'readnl: ERROR, wrfphysics not read, exiting...'
+        stop
+
+      case (18)
+        do
+          read (u,nml=WRITETASKnamelist,iostat=ierr)
+          if (ierr.eq.0) then	! successful read
+            write (*,100) i
+            write (*,WRITETASKnamelist)
+            go to 1
+          end if
+          if (ierr.lt.0) exit   ! end of file
+        end do
+        write (*,'(a)') 'readnl: ERROR, WRITETASKnamelist not read, exiting...'
+        stop
+
+      end select
+
+1   end do
+
+    if(ComputeTasks=='S'.or.ComputeTasks=='s') then
+      nprocs=1
+    else
+      read(ComputeTasks,*) nprocs
+    endif
+
+    close (u)
+    call returnunit (u)
+
+    first_call=.false.
+
+  endif
+
+! fimnamelist.exec end

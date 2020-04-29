@@ -1,0 +1,628 @@
+NB: Search for "original file:" to locate different sections
+------------------------------------------------------------------------------
+original file: README
+------------------------------------------------------------------------------
+
+NOTE: For the make there is a new script called makefim (see below) and now
+      qsubfim takes no arguments.  Both makefim and qsubfim create a
+      different directory structure than before (see below). SRCDIR now
+      must point to the new directory made by makefim (see below).
+
+NOTE: FIM now works once again with the SMS COMPARE_VAR feature.  See even 
+      further below.  
+
+WARNING: Do not comment out the FIMnamelist line containing SRCDIR or in
+         any way add the string "SRCDIR" to any FIMnamelist line becasue
+         qsubfim greps SRCDIR out of FIMnamelist to determine where
+         everything is at.
+
+This is the Flow-following-finite-volume Icosahedral Model (FIM).  FIM
+is a global model. This directory contains:
+
+  FIMrun/  FIMsrc/  FIMverifStandAlone/ FIMwfm/  README
+
+The FIMsrc directory contains everything necessary to build the FIM
+modeling system and the FIMrun directory contains everything necessary to
+run the FIM modeling system. To run the test case on jet with ten
+processors using the fim account, check out FIM, enter the checked-out
+directory, and do the following:
+
+  cd FIMsrc
+  makefim
+  cd ../FIMrun
+  cp FIMnamelist.default FIMnamelist
+  qsubfim
+
+and the test case will run on jet. If you are not in the fim group you will
+have to change the account in qsubfim from fim to your account, that is
+change "-A fim".
+
+The FIMwfm directory contains the setup for making daily runs using the
+work flow manager.
+
+The FIMsrc directory contains.
+
+  Makefile  bacio/  cntl/  fim_setup.ksh* makefim*  prep/   w3/
+  Makesub   bin/	  fim/	 lib/		        post/     utils/
+
+The FIMsrc/bacio directory contains byte-addressable I/O modules used by
+the pre-processing (prep) and post-processing (post). FIMsrc/cntl contains
+the control subroutines used by the prep, the FIM code (fim), and
+post. FIMsrc/fim contains the FIM code in two sub-directories, column and
+horizontal. FIMsrc/post contains the source for post processing,
+FIMsrc/prep contains the source for pre-processing, and FIMsrc/w3 contains
+the NCEP w3 libraries used by prep and post.
+
+FIM is a dynamic memory model and is build using the makefim script which
+takes 0, 1, or 2 arguments which specify which compiler/MPI combination to
+use and whether to do a parallel or serial build.  Using makefim with no
+arguments builds the default case which is a parallel build using
+openmpi/1.2.6 and the intel-9.1 compiler.  See the comments at the top of
+makefim for an explanation of the arguments or for a synopsis do:
+
+  makefim usage
+
+The makefim script copies all the source to ../FIMsrc_CompilerMPI
+
+where CompilerMPI is either debug, openmpi, mvapich, lahey, or nems
+depending on the type of build. The meaning of CompilerMPI is:
+
+  debug:   openmpi/1.2.6-intel-9.1 with debug flags
+  openmpi: openmpi/1.2.6-intel-9.1
+  mvapich: mvapich2/1.0.3_ofed-1.3.1-intel-9.1
+  lahey:   mvapich2/1.0.3_ofed-1.3.1-lahey-8.00a with debug flags
+  nems:    mvapich2/1.0.3_ofed-1.3.1-intel-9.1 with ESMF
+
+The build takes place in the FIMsrc_CompilerMPI directory and the
+executables are put in the FIMsrc_CompilerMPI/bin directory.
+
+Example builds:
+
+  makefim               #Builds with openmpi/1.2.6-intel-9.1
+  makefim serial        #Serial build using openmpi/1.2.6-intel-9.1
+  makefim lahey         #Builds with the Lahey compiler for debugging
+  makefim lahey serial  #Serial build with the Lahey compiler for debugging
+  makefim serial lahey  #Serial build with the Lahey compiler for debugging
+
+Once the build has been done, the FIM model can be executed from the FIMrun
+directory by doing
+
+qsubfim
+
+Before running qsubfim, issue the command "cp FIMnamelist.default FIMnamelist"
+in the FIMrun directory to create a working copy of FIMnamelist from the default
+template. This step prevents changes to a working-copy namelist from being
+inadvertently committed to the revision-control system (svn).
+
+The script qsubfim takes no arguments. The run is controlled by the
+FIMnamelist file which is in FIMrun. See FIMnamelist for a list of
+available options and their meaning. FIMnamelist values that are typically
+changed are ComputeTasks, MaxQueueTime, glvl, nvl, and SRCDIR. Note that
+MaxQueueTime is the total run-time for the job and is set to 10 minutes
+which is enough for the test case but not enough for a typical
+forecast. Also note that SRCDIR points to FIMsrc_CompilerMPI which is the
+directory that contains the bin directory with the executables, and SRCDIR
+can be a full path name.
+
+The qsubfim script makes a subdirectory called qsubfim_PID, where PID is
+the script's process ID, and copies everything from FIMrun into qsubfim_PID
+so anything in FIMrun can immediately be changed in preparation for another
+run.
+
+In qsubfim_PID, qsubfim invokes another script called batchTemplate which
+creates another directory of the form fim8_50_240_133867 where GLVL=8,
+NVL=50, ComputeTasks=240 and 133867 is the qsub job ID.  Under this
+directory are created three sub-directories
+
+fim/  post/  prep/
+
+for running the pre-processing (prep), FIM (fim), and the post processing
+(post). The batchTemplate script cd's to the respective sub-directory, runs
+there, and writes all output files to that sub-directory. Explicitly, for
+prep, batchTemplate copies FIMnamelist, the necessary executables, and all
+input data (from DATADIR and DATADR2) to prep and then runs in prep and
+writes all output data to prep, with stdout out going to the file
+fim8_50_240.o133867. Then for fim, batchTemplate copies FIMnamelist and the
+fim executable to the fim sub-directory and then links to prep for all
+input data and runs the fim executable which writes all output to the fim
+sub-directory, including standard out which goes to a file called stdout.
+Then for post, batchTemplate copies FIMnamelist, fim_gribtable, and pop to
+the post sub-directory and runs pop which reads all input data from the fim
+sub-directory, and writes the output grib files to the post sub-directory
+and writes stdout to fim8_50_240.o133867.
+
+FIM is parallelized using the Scalable Modeling System (SMS). The path on
+jet to SMS is set in FIMsrc/Makefile. To build FIM on a different machine
+SMS must be built on that machine and the SMS path in FIMsrc/Makefile must
+be set accordingly.  Also, if building on another machine and using the 
+"nems" setting for "CompilerMPI", the Makefile must be modified to change 
+ESMF_INSTALL_LIBDIR_ABSPATH to point to the local ESMF installation.  If not 
+using ESMF on another machine, please comment out 
+"include $(ESMF_INSTALL_LIBDIR_ABSPATH)/esmf.mk" in FIMsrc/Makefile.  Note 
+that these edits will not be required in a future version.  
+
+By default, everything is compiled with the Intel compiler and the
+vertical (column) part of FIM is compiled using double precision (-r8)
+and the dynamics (horizontal) part of FIM is compiled with -r4.  
+
+The date in FIMnamelist is of the form yyyymmddhhmm whereas the date on the
+spectral files is the Julian date so you must make the conversion.
+
+More information about fim:
+
+FIM produces a separate output file for each 3D output variable. All
+the 2D variables are written to one file. These output files should be
+bit-wise exact for different numbers of processors on the same machine
+with the same compile options. Standard out goes to a file called
+stdout. At each output, FIM writes out a line labeled MAXMIN to sdtout
+from output.F90 with the following print statement:
+
+  print"('MAXMIN',i10,1p6e10.3)",its,maxqv3d,aveqv3d,minqv3d,maxdp3d,avedp3d,mindp3d
+
+These four digit numbers should all be non-negative and for different
+machines and different compile options, the averages should match to three
+digits and the MINs and MAXs should match to two digits.
+
+The total time for a run is given by "Total Time" in the last line
+of the file stdout:
+
+ Total time =   6301.25255918502
+
+Generation of the icosahedral grid divides the world into ten rhombuses
+plus a point at each pole. For ten processors, each processor has one
+rhombus which works well. Best decompositions are achieved with processor
+counts that are multiples of ten. For more than ten processors, each
+rhombus is further decomposed (subdivided) into rectangles so that each
+processor has a rectangular footprint which is a sub-domain of a rhombus.
+Each processor footprint has a halo which holds needed points from other
+processors. For first order differencing, the size of the halo depends on
+three things; the number of points in the footprint, the shape of the
+footprint, and the ordering of the points in the rhombus.
+
+The optimum ordering occurs when the points are ordered so that the entire
+rectangle is covered before any point falls outside the rectangle which can
+be accomplished by block IJ ordering. For rectangles, a square has the
+minimum perimeter to area ratio so the optimum rectangle for minimizing the
+halo is a square. On P=10*N**2 processors (N=1,2,3,...), the number of
+processors on each rhombus is a square which is one prerequisite for a
+square footprint. The other prerequisite is that N divides the rhombus side
+evenly. Since the number of points on each rhombus is a power of two, the
+length of the sides of the rhombus is a power of two, so power-of-two
+processors on each rhombus are the best choice. So P=10*N**2 (N=1,2,4,8...)
+gives nearly optimal halos, optimal being 4*sqrt(F) where F is the number
+of points in the footprint. Halo size can never be optimal because of the
+two extra points at each pole. For example, for 40 processors (N=2), the
+footprint is 256 and the halo size is 67 and the optimal halo size is
+64. For block IJ ordering, the halos are reasonably small on N*40
+processors where N has factors about the same size. This is accomplished by
+making the footprints rectangular at the expense of creating different
+sized footprints.
+
+One option is to generate the points in each rhombus by a Hilbert curve
+which is a space filling curve.  The way the Hilbert curve fills a rhombus
+is to fill each quarter, 16th, 64th, etc. so the interior of each quarter,
+16th, etc. is covered completely before the Hilbert curves leaves that
+section.  Consequently, for the Hilbert curve, P==10*N**2 (N=1,2,4,8...)
+also gives nearly optimal halos identical to block IJ ordering. However,
+for rectangular halos, the Hilbert is inferior to block IJ ordering because
+block IJ ordering adjusts the footprints to be rectangular.
+
+The sweet spot for proposed applications is about 2500 points per processor
+and, for level 8, 240 processors gives 2731 points per processor with a
+halo size of 315. The optimal halo size would be 209.
+
+
+Use of the SMS COMPARE_VAR feature to locate errors in parallel FIM
+
+COMPARE_VAR is an SMS feature that eases debugging of distributed-memory 
+parallel programs.  A full description can be found in the SMS Users Guide. 
+In brief, COMPARE_VAR allows simultaneous launch of two FIM model runs on 
+different numbers of tasks.  Runs are executed concurrently, exchanging 
+information whenever an SMS "COMPARE_VAR" directive is encountered in 
+FIM model code.  If any elements of arrays specified in a directive differ, 
+an error message is printed and the program exits, indicating the presence 
+of a parallelization error (usually nearby).  
+
+The COMPARE_VAR feature is enabled at runtime by setting 
+"compare_var_on = .true." in the SMSnamelist file.  Then set 
+"compare_var_ntasks_1" and "compare_var_ntasks_2" to the numbers of 
+tasks desired for each FIM model run.  Finally, set "ComputeTasks" to the 
+sum of compare_var_ntasks_1+compare_var_ntasks_2 in FIMnamelist.  Then 
+launch FIM using qsubfim as usual.  
+
+At present, COMPARE_VAR has the following limitations: 
+ - It will not work with FIM write tasks.  
+ - It will not work with NEMS.  
+ - It will not work with a serial build.  
+
+Also, since two FIM jobs are running concurrently, all output files written 
+by the FIM models during a COMPARE_VAR runs will contain incorrect contents.  
+This not a problem since FIM output files are not relevant when debugging at 
+this level.  Simply turn COMPARE_VAR off when finished debugging to restore 
+correct output behavior.  
+
+WARNING:  Do not put COMPARE_VAR directives inside serial regions or inside 
+parallel loops!  
+
+WARNING:  Use of COMPARE_VAR in FIM has only been tested with relatively low 
+task counts.  It is possible that large counts will expose task-count-specific 
+differences in files created by prep.  batchTemplate will detect any 
+differences and exit.  Any such files will need to be handled by embedding 
+task count in their name in the same manner as HaloSize_*.dat.  All 
+dependencies on task count in prep should be removed, eventually.  
+
+----------------------------------------------------------------------------
+10/27/11 FIM RESTART CAPABILITY
+
+Quick start for the simplest and most common usage:
+
+1) Set OUTPUTnamelist variable restart_freq = <same_value_as_TotalTime>. This
+   will cause FIM to write one restart file, at run termination.
+2) Ensure that OUTPUTnamelist variable readrestart = .false. (i.e. start
+   from an initial file as normal rather then trying to read a restart file).
+3) Run qsubfim for the initial run as normal.
+4) To do the restart run, "cd" into the qsubfim_<number> directory created in
+   step 3) and type "qsubfim.restart". This will automatically set namelist
+   variable "readrestart" to .true. and resubmit the job to pick up from the
+   last restart file written.
+
+Caveats:
+
+o Restart capability has not yet been enabled for the following
+configurations. The model will print an error message and die if any of these
+are set in restart mode:
+  - chem_opt > 0
+  - digifilt = .true.
+  - enkfanl = .true.
+  - updatesst = .true.
+  - NEMS
+
+Detailed instructions:
+
+To enable the writing of restart files from FIM, set &OUTPUTnamelist variable
+restart_freq = <some_number>, where <some_number> is in the units specified
+by ArchvTimeUnit. Depending on the relationship between restart_freq and
+TotalTime, some number of restart files will be written during the
+run. Assuming restart_freq <= TotalTime, there will be a soft link to the
+last restart file written by FIM at the end of the run. The soft link name is
+"rpointer". You can freely change this before submitting a restart run
+(described in the next paragraph), but in most cases you'll want to leave it
+as is, i.e. pointing to the last restart file written.
+
+To enable FIM to start up from a restart file rather than an initial state,
+just "cd" into the appropriate batch directory from an earlier run
+(e.g. qsubfim_12345), and type "qsubfim.restart". This script was
+auto-generated by qsubfim when it was run. It will modify the FIMnamelist
+contents to change the value of "readrestart" from .false. to .true., and
+submit the restart job to the batch queue. A true value of "readrestart"
+tells FIM to read the restart file pointed to by "rpointer" rather than
+starting from scratch. If running on IBM systems, the restart script name
+will be either "llsubmitfim.restart" or "bsubfim.restart", as
+appropriate. You can submit as many restart runs in succession as you like,
+but it is critical to ensure that a new one is not submitted before the
+previous one completes.
+
+When the restart run is submitted, it will move important files such as
+stdout and previous versions of FIMnamelist in various directories to backup
+versions. This creates a "trail of bread crumbs" which can be followed if one
+or more restart runs are done.
+
+IMPORTANT NOTE: The intent of implementing restart capability in FIM was to
+exactly regenerate what would have happened if an initial run had been done
+for the full simulation length. But there are no checks done on restart to
+ensure that namelist variables aren't changed or other things done which
+might alter simulation results. Assuming nothing but the value of FIMnamelist
+variable "readrestart" is changed, checks have been done before code mods were
+committed to ensure that history files written by FIM are bitwise-identical
+between initial and restart runs.
+
+A second use of the restart utility is in debugging. Debugging typically does
+require parameter changes and frequent recompilations. Suppose you are on zeus
+and use the command 'makefim zeusintel' to compile the code. Your working
+directory is thenFIMrun/zeussubfim_NNNNN. Here are some hints on how to
+proceed during debugging.
+
+(1) Replace the executable 'fim' by the symbolic link
+           ln -s ../../FIMsrc_zeusintel/bin/fim .
+This will make new compilations appear automatically in the run directory.
+(Analogous links can be established on jet and for compilers other than the
+intel compiler.)
+
+(2) If namelist parameters need to be changed, the FIMnamelist to modify is
+fimX_Y_Z/fim/FIMnamelist (where X=glvl, Y=nvl, Z=ComputeTasks).
+
+(3) The parameters glvl, nvl, and ComputeTasks cannot be modified (obviously).
+For quick turnaround during debugging, it is therefore advisable to use as
+few ComputeTasks as feasible in the initial run creating the restart file.
+
+(4) The run time (MaxQueueTime) for restart run(s) is NOT set in the
+above-mentioned FIMnamelist but in zeussubfim.batch.restart.
+
+(5) If debug runs take < 30min of run time, turnaround can be improved by
+changing '-q batch' into '-q debug' in zeussubfim.batch.restart. Make sure
+'walltime' in zeussubfim.batch.restart is 0:30:00 or less in that case.
+----------------------------------------------------------------------------
+10/27/11 Unit number interface
+
+After FIM revision 1824, Fortran unit numbers are parcelled out via module
+"units". To obtain and then return a Fortran unit number, use code that looks
+like: 
+
+  use units
+  integer :: unitno   ! Fortran unit number
+  ...
+  unitno = getunit ()
+  if (unitno < 0) then
+    write(6,*)'<Error>'
+    stop
+  end if
+  ...
+  close (unitno)
+  call returnunit (unitno)
+
+If you need a specific unit number, e.g. a unit for which byte-swapping is
+enabled, you can use, e.g.:
+
+  unitno = getunit (33)
+  if (unitno < 0) then
+    write(6,*)'<Error>'
+    stop
+  end if
+  ...
+  close (unitno)
+  call returnunit (unitno)
+
+In this case, if unit 33 is already in use, the error condition will apply.
+
+As new files are added to FIM for I/O, unit number allocation should always
+be done using this module. This ensures against inadvertently using a unit
+number already open for another purpose.
+
+
+----------------------------------------------------------------------------
+10/27/11 Initialize allocated variables to infinity
+
+After FIM revision 1824 when adding a new dynamically allocated floating
+point variable, users are encouraged to initialize the variable to infinity
+using module "infnan". This helps debugging. It is also best to disable this
+feature for LAHEY builds. Here is example usage:
+
+  use infnan
+  ...
+  allocate (myarr(nip))
+  #if ( ! defined LAHEY )
+  myarr(:) = inf
+  #endif
+
+For integer data, module infnan also defines a constant "negint", that can be
+used to initialize the variable to -999
+
+----------------------------------------------------------------------------
+original file: README.zeus-MF
+----------------------------------------------------------------------------
+ 
+    Building/testing FIM on Zeus -- the basic recipe using 'qsubfim'
+			      Mike Fiorino
+			       5 May 2014
+
+
+prerequisites:
+
+a) have a gsdforge.fsl.noaa.gov account
+b) you must be member of 'fim' or 'rtfim' group (needed for set the account when running)
+c) running the tcsh
+
+1) define a base dir with write permission, for this doc:
+
+cd /scratch1/portfolios/BMC/fim/fiorino/fimtmp/
+
+2) svn co the model, e.g., from the trunk
+
+svn checkout https://gsdforge.fsl.noaa.gov/svn/fim/trunk/ r4177/
+
+r4177/ can be any name the revision # was 4177 at the time...
+
+the https:// means you can checkin changes -- DON'T DO THIS when checking out from the trunk!!!!
+
+you'll be prompted for a login/passwd the first time
+
+3) make the model -- using the intel commpiler
+
+cd r4177
+cd FIMsrc
+makefim zeusintel
+
+4) set up the namelist and run script
+
+cd ../FIMrun
+cp FIMnamelist.zeus FIMnamelist
+vi zeussubfim and change the 
+#PBS -A rtfim
+to
+#PBS -A fim
+
+5) submit the run to the queue
+
+zeussubfim
+
+and you'll get something like:
+
+Made directory zeussubfim_11952 #*********************** dir under FIMrun/ with output _11952 is the queue number
+Currently Loaded Modulefiles:
+  1) intel/12-12.0.4.191   2) netcdf/3.6.3-intel    3) mpt/2.06              4) grads/2.0.1a          5) ncl/6.1.2             6) imagemagick/6.7.6-8
+whence ifort: /apps/intel/composerxe-2011.4.191/composerxe-2011.4.191/bin/intel64/ifort
+Submitting job to queue batch:
+compute tasks:      12
+write tasks:        0 (write nodes: 0)
+mpi tasks per node: 12
+nthreads:           12 (only relevant if OpenMP enabled)
+cores per node:     12
+do_nothing tasks:   11
+total core request: 288 (no partial nodes)
+The job 53247064.bqs1.zeus.fairmont.rdhpcs.noaa.gov has been submitted.
+
+
+6) checking status (tcsh aliases)
+
+* alias qs 'showq -n -w user=$USER'  # shows the status of the batch job
+* alias qa 'qstat -u $USER'          # older way
+
+
+7) when finished look at the output
+
+cd zeussubfim_11952
+
+ZEUS FE7(LINUX)[W2:ESRL]{Michael.Fiorino}: /scratch1/portfolios/BMC/fim/fiorino/fimtmp/r4177 190 > 
+
+cd FIMrun/zeussubfim_11952/fim5_64_12/
+drwxr-sr-x 5 Michael.Fiorino fim  4096 May  5 22:46 .
+drwxr-sr-x 3 Michael.Fiorino fim  4096 May  5 22:43 ..
+drwxr-sr-x 2 Michael.Fiorino fim 12288 May  5 22:46 fim
+drwxr-sr-x 2 Michael.Fiorino fim  4096 May  5 22:50 post  # grib1 output
+drwxr-sr-x 2 Michael.Fiorino fim  4096 May  5 22:44 prep
+
+cd post/
+total 3722932
+drwxr-sr-x 2 Michael.Fiorino fim      4096 May  5 22:50 .
+drwxr-sr-x 5 Michael.Fiorino fim      4096 May  5 22:46 ..
+-rw-r--r-- 1 Michael.Fiorino fim 761843636 May  5 22:47 0719800000000  # tau 00
+-rw-r--r-- 1 Michael.Fiorino fim 765134836 May  5 22:48 0719800000006  # tau 06
+-rw-r--r-- 1 Michael.Fiorino fim 763779636 May  5 22:49 0719800000012  # tau 12
+-rw-r--r-- 1 Michael.Fiorino fim 762037236 May  5 22:50 0719800000018  # tau 18
+-rw-r--r-- 1 Michael.Fiorino fim 759326836 May  5 22:51 0719800000024  # tau 24
+-rw-r--r-- 1 Michael.Fiorino fim     15970 May  5 22:46 fim_gribtable
+-rw-r--r-- 1 Michael.Fiorino fim     10816 May  5 22:46 FIMnamelist
+lrwxrwxrwx 1 Michael.Fiorino fim       105 May  5 22:46 grid_129_coeffs -> /scratch1/portfolios/BMC/fim/fiorino/fimtmp/r4177/FIMrun/zeussubfim_11952/fim5_64_12/prep/grid_129_coeffs
+lrwxrwxrwx 1 Michael.Fiorino fim       105 May  5 22:46 grid_228_coeffs -> /scratch1/portfolios/BMC/fim/fiorino/fimtmp/r4177/FIMrun/zeussubfim_11952/fim5_64_12/prep/grid_228_coeffs
+lrwxrwxrwx 1 Michael.Fiorino fim       114 May  5 22:46 icos_grid_info_level.dat -> /scratch1/portfolios/BMC/fim/fiorino/fimtmp/r4177/FIMrun/zeussubfim_11952/fim5_64_12/prep/icos_grid_info_level.dat
+-rw-r--r-- 1 Michael.Fiorino fim       169 May  5 22:46 output_isobaric_levs.txt
+lrwxrwxrwx 1 Michael.Fiorino fim        77 May  5 22:46 pop -> /scratch1/portfolios/BMC/fim/fiorino/fimtmp/r4177/FIMrun/zeussubfim_11952/pop
+lrwxrwxrwx 1 Michael.Fiorino fim        87 May  5 22:46 pop_read_init -> /scratch1/portfolios/BMC/fim/fiorino/fimtmp/r4177/FIMrun/zeussubfim_11952/pop_read_init
+lrwxrwxrwx 1 Michael.Fiorino fim        80 May  5 22:46 reduce -> /scratch1/portfolios/BMC/fim/fiorino/fimtmp/r4177/FIMrun/zeussubfim_11952/reduce
+-rw-r--r-- 1 Michael.Fiorino fim       401 May  5 22:46 REDUCEinput
+
+to inventory using the wgrib utility:
+
+module load wgrib
+
+wgrib 0719800000006  outputs:
+
+1:0:d=07071700:td:kpds5=17:kpds6=109:kpds7=1:TR=0:P1=6:P2=0:TimeU=1:hybrid lev 1:6hr fcst:NAve=0
+2:1936084:d=07071700:td:kpds5=17:kpds6=109:kpds7=2:TR=0:P1=6:P2=0:TimeU=1:hybrid lev 2:6hr fcst:NAve=0
+3:3872168:d=07071700:td:kpds5=17:kpds6=109:kpds7=3:TR=0:P1=6:P2=0:TimeU=1:hybrid lev 3:6hr fcst:NAve=0
+4:5808252:d=07071700:td:kpds5=17:kpds6=109:kpds7=4:TR=0:P1=6:P2=0:TimeU=1:hybrid lev 4:6hr fcst:NAve=0
+5:7744336:d=07071700:td:kpds5=17:kpds6=109:kpds7=5:TR=0:P1=6:P2=0:TimeU=1:hybrid lev 5:6hr fcst:NAve=0
+6:9680420:d=07071700:td:kpds5=17:kpds6=109:kpds7=6:TR=0:P1=6:P2=0:TimeU=1:hybrid lev 6:6hr fcst:NAve=0
+7:11616504:d=07071700:td:kpds5=17:kpds6=109:kpds7=7:TR=0:P1=6:P2=0:TimeU=1:hybrid lev 7:6hr fcst:NAve=0
+
+.
+.
+.
+
+323:745387048:d=07071700:DSWRF:kpds5=204:kpds6=1:kpds7=1:TR=0:P1=6:P2=0:TimeU=1:sfc:6hr fcst:NAve=0
+324:748097532:d=07071700:DLWRF:kpds5=205:kpds6=1:kpds7=1:TR=0:P1=6:P2=0:TimeU=1:sfc:6hr fcst:NAve=0
+325:750614416:d=07071700:psl:kpds5=129:kpds6=102:kpds7=1:TR=0:P1=6:P2=0:TimeU=1:MSL:6hr fcst:NAve=0
+326:752744100:d=07071700:sno:kpds5=65:kpds6=1:kpds7=1:TR=0:P1=6:P2=0:TimeU=1:sfc:6hr fcst:NAve=0
+327:757777784:d=07071700:USWRF:kpds5=211:kpds6=1:kpds7=1:TR=0:P1=6:P2=0:TimeU=1:sfc:6hr fcst:NAve=0
+328:760294668:d=07071700:ULWRF:kpds5=212:kpds6=1:kpds7=1:TR=0:P1=6:P2=0:TimeU=1:sfc:6hr fcst:NAve=0
+329:762811552:d=07071700:rlt:kpds5=114:kpds6=1:kpds7=1:TR=0:P1=6:P2=0:TimeU=1:sfc:6hr fcst:NAve=0
+
+note that now pressure level fields are produced
+
+8) next steps -- go into 'w2' mode for access to python/grads to do more advanced display and analysis
+
+cd /scratch1/portfolios/BMC/fim/fiorino/w21
+source .w2rc
+
+----------------------------------------------------------------------------
+original file: README.linuxpcgnu
+----------------------------------------------------------------------------
+ 
+This README is for users who want to build and run fim on a Linux PC. As of
+the commit that includes this README.linuxpcgnu, FIM has been successfully
+ported and run for 1 simulated day on my desktop x86_64 running RedHat
+Enterprise Linux, with gcc 4.4.0 compilers. The results have not yet
+undergone validation. The name "linuxpcgnu" reflects that the target is a
+Linux PC, with GNU compilers.
+
+System and software requirements are:
+
+o gfortran compiler with release level at least 4.4
+o The following user-buildable libs are also required:
+
+  - mpich MPI library. Can be downloaded from
+    http://www.mcs.anl.gov/research/projects/mpich2/ 
+
+  - makedepf90 (fortran dependency generator). Executable can be copied from
+    ~rosinski/bin/makedepf90  
+
+  - netcdf library (required by wrfio). I (Rosinski) built this as a user, so
+    fim_setup.ksh expects the lib and include files to live under
+    $HOME/x86_64. Lib and include files are in ~rosinski/x86_64/lib and
+    ~rosinski/x86_64/include, respectively, on nix.fsl.noaa.gov.
+
+  - SMS. macros.make.linuxpcgnu looks for $HOME/sms_r76_gcc-mpich. This can
+    be copied from ~rosinski.
+
+After building fim, to run it use the script "runfim" in FIMrun/. There is a
+FIMnamelist.linuxpcgnu in FIMrun/ for a test run. It points to datasets in
+/Volumes/scratch/rosinski, which is a locally mounted file system. You'll
+need to modify FIMnamelist appropriately, and copy these same datasets from
+the jet sysetm to your local file system before running fim.
+
+The stock mpich library requires a daemon, mpd, to be running before
+launching an MPI job. Just run "mpd &". This daemon looks for a file in your
+home directory named .mpd.conf. Following the directions in the MPICH
+distribution, I did the following:
+
+cd ~
+echo MPD_SECRETWORD=mr45-j9z > .mpd.conf
+chmod 600 .mpd.conf
+
+----------------------------------------------------------------------------
+original file: README.macgnu
+----------------------------------------------------------------------------
+
+This README is for users who want to build and run fim on a Mac. As of the
+commit that includes this README.macgnu, FIM has been successfully ported and
+run for 1 simulated day on Mac running Darwin OS. The results have not yet
+undergone validation. The name "macgnu" reflects that the target is a Mac,
+with GNU compilers.
+
+System and software requirements are:
+
+o Darwin OS
+o gfortran compiler with release level at least 4.4
+o The following user-buildable libs are also required. For
+  convenience, feel free to copy source and/or pre-built libs from: 
+  nfs://homestar-ab/vol/ab_vol0/abhome/rosinski/mac-darwin/
+  (I'll refer to this as $MACHOME from here on).
+
+  - mpich MPI library. AB sysadmins installed mpich2-1.2.1p1 in /usr/local on
+    my machine. FIM Makefiles reflect this. Complete build is on:
+    $MACHOME/mpich2-1.2.1p1
+
+  - makedepf90 (fortran dependency generator). Available from:
+    $MACHOME/makedepf90-2.8.8
+
+  - netcdf library (required by wrfio). I (Rosinski) built this as a user, so
+    fim_setup.ksh expects the lib and include files to live under
+    $HOME. Complete build is on $MACHOME/netcdf-3.6.3.
+
+  - SMS. macros.make.macgnu looks for $HOME/sms_r97. Complete build is on:
+    $MACHOME/sms_r97
+
+After building fim, to run it use the script "runfim" in FIMrun/. There is a
+FIMnamelist.macgnu in FIMrun/ for a test run. It points to datasets in
+/Volumes/scratch/rosinski, which is a locally mounted file system. You'll
+need to modify FIMnamelist appropriately, and copy these same datasets from
+the jet sysetm to your local file system before running fim.
+
+The stock mpich library requires a daemon, mpd, to be running before
+launching an MPI job. Just run "mpd &". This daemon looks for a file in your
+home directory named .mpd.conf. Following the directions in the MPICH
+distribution, I did the following:
+
+cd ~
+echo MPD_SECRETWORD=mr45-j9z > .mpd.conf
+chmod 600 .mpd.conf

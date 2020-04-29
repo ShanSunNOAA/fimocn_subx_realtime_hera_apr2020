@@ -1,0 +1,15 @@
+ddts_extends: 'theiaintel_debug_common'
+ddts_baseline: 'theia_wrfphy'
+namelists:
+  outputnamelist:
+    archvintvl: 6
+  physicsnamelist:
+    ideep_cnv: 2
+    physicsinterval: 0
+    radiationinterval: !delete
+  postnamelist:
+    delta_t: 6
+  queuenamelist:
+    computetasks: '9'
+  writetasknamelist:
+    num_write_tasks: 0

@@ -1,0 +1,17 @@
+  <task name="SpectralFileRetro_#member#" maxtries="7">
+    <command>&SCRIPTS;/spectralFile_archive_ens.ksh</command>
+    <account>&PROJECT;</account>
+    <cores>1</cores>
+    <queue>&SERVICE;</queue>
+    &PARTITION_SERVICE;
+    <walltime>00:20:00</walltime>
+    <jobname><cyclestr offset="&OFFSET;">spectral_@H</cyclestr></jobname>
+    <join><cyclestr offset="&OFFSET;">&FIM_LOG;/spectral/spectral_ens_#member#_@Y@m@d@H.log</cyclestr></join>
+    <envar><name>FIM_RUN</name><value>&FIM_RUN;</value></envar>
+    <envar><name>yyyymmdd</name><value><cyclestr offset="&OFFSET;">@Y@m@d</cyclestr></value></envar> 
+    <envar><name>YYYY</name><value><cyclestr offset="&OFFSET;">@Y</cyclestr></value></envar>
+    <envar><name>MEMBER_ID</name><value>#member#</value></envar> 
+    <envar><name>YR</name><value><cyclestr offset="&OFFSET;">@y</cyclestr></value></envar>
+    <envar><name>JDY</name><value><cyclestr offset="&OFFSET;">@j</cyclestr></value></envar>
+    <envar><name>HOUR</name><value><cyclestr offset="&OFFSET;">@H</cyclestr></value></envar>
+  </task>

@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 30
+/svn/icosio/!svn/ver/153/trunk
+END
+stringlist.F90
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/icosio/!svn/ver/143/trunk/stringlist.F90
+END
+icosio_in_receive.exec
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/icosio/!svn/ver/153/trunk/icosio_in_receive.exec
+END
+icosio.F90
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/icosio/!svn/ver/153/trunk/icosio.F90
+END
+icosio_in_receive.decl
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/icosio/!svn/ver/153/trunk/icosio_in_receive.decl
+END
+ignore_unused.F90
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/icosio/!svn/ver/153/trunk/ignore_unused.F90
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/svn/icosio/!svn/ver/153/trunk/Makefile
+END

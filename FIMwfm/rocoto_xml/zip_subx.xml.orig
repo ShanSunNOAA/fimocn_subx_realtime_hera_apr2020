@@ -1,0 +1,24 @@
+  <task name="zip" maxtries="2">
+    <command>&SCRIPTS;/zip_subx.ksh</command>
+    <account>&PROJECT;</account>
+    <memory>4G</memory>
+    <cores>1</cores>
+    <partition>&SERVICE;</partition>
+    <walltime>00:20:00</walltime>
+    <jobname><cyclestr>zip_@d@H@m@Y</cyclestr></jobname>
+    <join><cyclestr>&FIM_LOG;/zip/zip_@Y@m@d@H.log</cyclestr></join>
+    <envar><name>NC3D_DIR</name><value>&NC3D_DIR;</value></envar>
+    <envar><name>NC_SUBX_DIR</name><value>&NC_SUBX_DIR;</value></envar>
+    <envar><name>YEAR</name><value><cyclestr>@Y</cyclestr></value></envar>
+    <envar><name>MMM</name><value><cyclestr>@b</cyclestr></value></envar>
+    <envar><name>MM</name><value><cyclestr>@m</cyclestr></value></envar>
+    <envar><name>DAY</name><value><cyclestr>@d</cyclestr></value></envar>
+    <envar><name>HH</name><value><cyclestr>@H</cyclestr></value></envar>
+    <envar><name>jday</name><value><cyclestr>@j</cyclestr></value></envar>
+    <dependency>
+      <and>
+        <taskdep task="rtnc"/>
+        <datadep age="60"><cyclestr>&NC3D_DIR;/fim&GLVL;_@Y@m@d06.nc</cyclestr></datadep>
+      </and>
+    </dependency>
+  </task>

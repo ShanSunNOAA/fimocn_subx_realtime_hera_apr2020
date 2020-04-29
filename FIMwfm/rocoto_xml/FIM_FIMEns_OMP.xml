@@ -1,0 +1,34 @@
+  <task name="fim_#member#" maxtries="3">
+      <command><cyclestr offset="&OFFSET;">&FIM_RUN;/batchTemplate-fim</cyclestr></command>
+      <account>&PROJECT;</account>
+      <nodes>&NPROC;:ppn=2</nodes>
+      &PARTITION_JET_FIM;
+      <walltime>&FIM_WALLTIME;</walltime>  <!-- CHANGE THIS !!! -->
+      <jobname>fim_#member#_&GLVL;_&NVL;_&PES;</jobname>
+      <join><cyclestr offset="&OFFSET;">&FIM_LOG;/fim/fim_ens_#member#_@Y@m@d@H_omp.log</cyclestr></join>
+      <envar> <name>WFM</name> <value>1</value> </envar>
+      <envar> <name>ARCHVTIMEUNIT</name> <value>&ARCHVTIMEUNIT;</value> </envar>
+      <envar> <name>GETJOBID</name> <value>&FIM_RUN;/qsubGetJobID</value> </envar>
+      <envar> <name>FIM_HOME</name> <value>&FIM_HOME;</value> </envar>
+      <envar> <name>FIM_RUN</name> <value>&FIM_RUN;</value> </envar>
+      <envar> <name>DATADIR</name> <value>&DATADIR;</value> </envar>
+      <envar> <name>DATADR2</name> <value>&DATADR2;</value> </envar>
+      <envar> <name>yyyymmddhhmm</name> <value><cyclestr offset="&OFFSET;">@Y@m@d@H@M</cyclestr></value> </envar>
+      <envar> <name>MEMBER_ID</name> <value>#member#</value> </envar>
+      <envar> <name>NLFILE</name> <value>&NLFILE;</value> </envar>
+
+      <dependency>
+        <and>
+           <taskdep task="fimprep_#member#"/>
+           <datadep age="120"><cyclestr>&FIM_RUN;/@Y@m@d@H/prep_#member#/gfsfc.dat</cyclestr></datadep>
+        </and>
+      </dependency>
+
+      <hangdependency>
+        <and>
+          <datadep age="900"><cyclestr offset="&OFFSET;">&FIM_RUN;/@Y@m@d@H/fim_#member#/stdout</cyclestr></datadep>
+          <datadep age="900"><cyclestr offset="&OFFSET;">&FIM_LOG;/fim/fim_ens_#member#_@Y@m@d@H_omp.log</cyclestr></datadep>
+        </and>      
+      </hangdependency>
+
+  </task>

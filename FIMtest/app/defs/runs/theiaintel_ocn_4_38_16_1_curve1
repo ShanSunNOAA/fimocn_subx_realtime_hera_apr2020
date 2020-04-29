@@ -1,0 +1,11 @@
+ddts_extends: 'theiaintel_debug_ocn_common'
+namelists:
+  outputnamelist:
+    archvintvl: 4
+    fixedgridorder: !unquoted '.true.'
+    totaltime: 8
+  postnamelist:
+    delta_t: 4
+    t2: 8
+  prepnamelist:
+    curve: 1

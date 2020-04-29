@@ -1,0 +1,8 @@
+ddts_extends: 'jet_openmpi_common'
+ddts_build: 'jet_openmpi_parallel'
+namelists:
+  oceannamelist:
+    atmonly: !unquoted '.true.'
+    coupled: !unquoted '.false.'
+  prepnamelist:
+    cfsr_data: !unquoted '.false.'

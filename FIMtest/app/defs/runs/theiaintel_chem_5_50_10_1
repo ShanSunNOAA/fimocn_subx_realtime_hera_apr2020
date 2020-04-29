@@ -1,0 +1,8 @@
+ddts_extends: 'theiaintel_omp_5_50_10_1'
+ddts_baseline: 'theiaintel_chem'
+namelists:
+  chemwrf:
+    chem_opt: 300
+  postnamelist:
+    nsmooth_var: !unquoted '1,1,0,0,0,0,1,2,2,0,0,1,0'
+    var_list: !unquoted "'pr3D','ph3D','td3D','us3D','vs3D','ms2D','sn2D','rsds','rlds','ia2D','ib2D','io2D','id2D'"

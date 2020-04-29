@@ -1,0 +1,32 @@
+ddts_extends: 'jet_common'
+ddts_baseline: 'jet_nag'
+ddts_build: 'jet_nag_parallel'
+namelists:
+  cntlnamelist:
+    glvl: 4
+    nvl: 38
+    subdivnum: !unquoted '2 2 2 2'
+  oceannamelist:
+    atmonly: !unquoted '.true.'
+    coupled: !unquoted '.false.'
+  outputnamelist:
+    archvintvl: 3
+    archvtimeunit: 'ts'
+    restart_freq: 999
+    totaltime: 6
+  physicsnamelist:
+    radiationinterval: 1800
+  postnamelist:
+    delta_t: 3
+    nsmooth_var: !unquoted '1,1,1,2,2,0,0,1,0'
+    t1: 0
+    t2: 6
+    var_list: !unquoted "'pr3D','ph3D','td3D','us3D','vs3D','ms2D','sn2D','rsds','rlds'"
+  prepnamelist:
+    cfsr_data: !unquoted '.false.'
+    curve: 0
+  queuenamelist:
+    computetasks: '16'
+    maxqueuetime: '00:20:00'
+  writetasknamelist:
+    num_write_tasks: 1

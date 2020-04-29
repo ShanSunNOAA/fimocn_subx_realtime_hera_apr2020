@@ -1,0 +1,15 @@
+ddts_extends: 'theiaintel_omp_common'
+ddts_baseline: 'theiaintel_altphys'
+ddts_build: 'theiaintel_omp_serial'
+namelists:
+  outputnamelist:
+    readrestart: !unquoted '.false.'
+    restart_freq: 999
+    totaltime: 24
+  physicsnamelist:
+    physicsinterval: 1000
+    radiationinterval: 2880
+    sstinterval: 86400
+  queuenamelist:
+    computetasks: '1'
+    maxqueuetime: '00:20:00'

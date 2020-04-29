@@ -1,0 +1,6 @@
+ddts_extends: 'theiaintel_debug_common'
+namelists:
+  outputnamelist:
+    fixedgridorder: !unquoted '.true.'
+  prepnamelist:
+    curve: 1

@@ -1,0 +1,6 @@
+ddts_extends: 'theiaintel_4_38_16_8'
+ddts_build: 'theiaintel_omp_parallel_debug'
+namelists:
+  writetasknamelist:
+    max_write_tasks_per_node: 1
+    num_write_tasks: 1

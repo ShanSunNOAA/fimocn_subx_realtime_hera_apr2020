@@ -1,0 +1,262 @@
+#!/bin/ksh --login
+
+# NOTE: When run via Rocoto, this script's output will be in FIMwfm/logs/fim.
+# Also see FIMwfm/logs/workflow for general Rocoto messages.
+
+CONTEXT="batchTemplate-fim"
+
+test -n "$WFM" && print "Rocoto FIM_RUN: $FIM_RUN"
+
+# For WFM runs, enter the appropriate run directory.
+
+if [[ -n "$WFM" && -n "$FIM_HOME" ]]
+then
+  cd $FIM_RUN || fail "Cannot cd to $FIM_RUN."
+fi
+
+# Source functions.ksh if needed.
+
+if [[ -z "$functions_sourced" ]]
+then
+  test -n "$WFM" && prefix=$FIM_RUN || prefix=.
+  . $prefix/functions.ksh # Most function definitions can be found here.
+fi
+
+ksh_insist # Ensure that we are running in ksh93
+
+# Run batchTemplate-setup if it has not already been run.
+
+test -z "$batchTemplate_setup_ran" && xsource ./batchTemplate-setup
+
+# Enter the appropriate run directory (as defined by batchTemplate-setup).
+
+FIMRUN="$PWD"
+cd $DIR || fail "Cannot cd to $DIR."
+
+# Preserve a pre-existing WFM fim dir by renaming with a timestamp.
+
+if [[ -n "$WFM" && -d "$FIM" ]] then
+  ls -ld --time-style=+%Y%m%d%H%M%S $FIM | awk '{print $6}' | \
+    read timestamp || fail "Cannot ls $FIM."
+  test -z "$timestamp" && fail "Cannot determine timestamp for $FIM."
+  mv $FIM $FIM.$timestamp || fail "Cannot move $FIM -> $FIM.$timestamp."
+fi
+
+# Make the fim directory if it doesn't already exist (which it will
+# if this is a restart run)
+
+if [[ ! -d $FIM ]] then
+  mkdir $FIM || fail "Cannot make directory $FIM."
+fi
+
+# If a pre-existing fim directory was identified, link its contents.
+
+if [[ -d "$FIMDIR" ]] then
+  linksafe $FIMDIR/* $FIM
+else
+
+  # Copy needed items.
+
+  if [[ -d "$PREPDIR" ]]
+  then
+    (test -f $FIM/$NLFILE || cp $fimnamelist $FIM/$NLFILE) || \
+      fail "Cannot copy $fimnamelist -> $FIM/$NLFILE."
+  else
+    (test -f $FIM/$NLFILE || cp $PREP/$NLFILE $FIM) || \
+      fail "Cannot copy $PREP/$NLFILE -> $FIM."
+  fi
+
+  get_co2file
+
+  # Link data files.
+
+  linksafe $DATADIR/global_o3prdlos.f77        $FIM
+  linksafe $DATADIR/sfc_emissivity_idx.txt     $FIM
+  linksafe $DATADIR/solarconstant_noaa_an.txt  $FIM
+  linksafe $DATADIR/co2historicaldata_glob.txt $FIM
+  linksafe $co2file                            $FIM
+
+  # NEMS configuration files
+#TODO:  At present, namelist file must be kept in sync with fim.configure
+#TODO:  by hand.  Automate.
+  cp ../model_configure $FIM || \
+    fail "Cannot copy ../model_configure -> $FIM"
+  cp ../atmos.configure $FIM || \
+    fail "Cannot copy ../atmos.configure -> $FIM"
+  cp ../fim.configure $FIM || \
+    fail "Cannot copy ../fim.configure -> $FIM"
+
+  if [[ -f "$smsnamelist" ]] then
+    cp $smsnamelist $FIM/SMSnamelist || \
+      fail "Cannot copy $smsnamelist -> $FIM/SMSnamelist."
+  fi
+
+  if [[ -f "$gptlnamelist" ]] then
+    cp $gptlnamelist $FIM/GPTLnamelist || \
+      fail "Cannot copy $gptlnamelist -> $FIM/GPTLnamelist."
+  fi
+
+  # Enter the fim directory.
+
+  cd $FIM || fail "Cannot cd to $FIM."
+
+  # Link items.
+
+  linksafe $FIMRUN/$FIMEXE
+#TBH:  $NEMSX is full path to NEMS executable (/foo/bar/NEMS.x)
+  if [[ -n "$NEMSX" ]] then
+    linksafe $NEMSX
+    FIMEXEBASE=$(basename $NEMSX)
+  fi
+
+  #JR fim will need the gribtable if post is being run as a part of the model proper
+  cp ../$fimgribtable $FIM || \
+    fail "Cannot copy ../$fimgribtable -> $FIM"
+
+  #JR Need $INFO_FILE in $FIM in case post is being run as part of fim
+  test -f "$INFO_FILE" || linksafe $PREP/$INFO_FILE
+
+  # For ensemble runs, we overwrote these variables, so restore them
+  if [[ "$WFM" == "ENSEMBLE" ]] then
+    sanlFile=$sanlFilename
+    sfcanlFile=$sfcanlFilename
+    ocnTSFile=$ocnTSFilename
+    ocnIceFile=$ocnIceFilename
+  fi
+  get_nl_value "$NLFILE" PREPnamelist gfsltln_file GFSLTLNFILE
+  test -z "$GFSLTLNFILE" && fail "Could not get gfsltln filename from $PWD/$NLFILE."
+  get_nl_value "$NLFILE" PREPnamelist aerosol_file AEROSOLFILE
+  test -z "$AEROSOLFILE" && fail "Could not get aerosol filename from $PWD/$NLFILE."
+  get_nl_value "$NLFILE" ISOBARICnamelist isobaric_levels_file ISOBARIC_LEVELS_FILE
+  test -z "$ISOBARIC_LEVELS_FILE" && fail "Could not get isobaric_levels_file filename from $PWD/$NLFILE."
+  #JR Get the number of threads from the namelist--if not set assume 1 (unthreaded)
+  get_nl_value "$NLFILE" WRITETASKnamelist nthreads NTHREADS
+  test -z "$NTHREADS" && NTHREADS=1
+
+  for file in $LATLON_FILE $GLVL_FILE $sanlFile $sfcanlFile $GFSLTLNFILE gfsfc.dat $ocnTSFile $ocnIceFile \
+    theta_coor.txt dpsig.txt top_grid $AEROSOLFILE sst_dat ocean_bcs_ltln \
+    $ISOBARIC_LEVELS_FILE ocn_dpmin.txt ocn_target.txt grid_spec_05.nc.T382 volcanic_aerosols_1990-1999.txt volcanic_aerosols_1980-1989.txt
+  do
+    linksafe $PREP/$file
+  done
+
+  get_nl_value "$fimnamelist" OCEANnamelist atmonly runatm
+  if (logically_true "$runatm") then
+      linksafe $PREP/sst_dat
+  fi
+
+  # If COMPARE_VAR is enabled, link two DecompInfo*.dat files; otherwise link
+  # link only one.
+
+  for taskcount in $taskcounts
+  do
+    decompfile="$PREP/DecompInfo_$taskcount.dat"
+    linksafe $decompfile
+  done # for taskcount in $taskcounts
+
+  big_endian_units="76 82"
+  little_endian_units="30"
+
+  endian_big $big_endian_units
+  endian_little $little_endian_units
+
+  chem_fim_setup
+
+  # Set the thread stacksize in case OpenMP is enabled (needs to accommodate
+  # t574 input as well as t382. G5 tests have shown as little as 320M can
+  # work but we'll need some padding so for now use 384M
+
+  omp_stacksize=384M
+  OMP_ARG="OMP_SCHEDULE=guided OMP_NUM_THREADS=$NTHREADS OMP_STACKSIZE=$omp_stacksize"
+
+  if [[ "$parallelism" == "serial" ]] then # serial run
+    print "Current directory is $PWD" >stdout
+    #JR At some point, serial run config. should probably account for threading the
+    #JR same way as parallel runs (see below).
+    OMP_ARG+=" MV2_ENABLE_AFFINITY=0"
+    print "$CONTEXT on host $(hostname) running: env $OMP_ARG ./$FIMEXEBASE " >>stdout
+    env $OMP_ARG ./$FIMEXEBASE >>stdout 2>&1 || fail "./$FIMEXEBASE failed."
+    print "\n$FIMEXEBASE finished\n"
+  elif [[ "$parallelism" == "parallel" ]] then # parallel run
+
+    # Get number of tasks for mpirun.
+
+    $BINDIR/get_num_cores | grep "num_tasks_mpirun:" | sed 's/^.*://' | read PES_ARG || fail "Could not get num_tasks_mpirun."
+
+    # Set PES_ARG depending on target.
+    # On jet+mvapich, endianness is no longer required on the command line.
+    # jet scripts need MV2_ENABLE_AFFINITY=0 to work properly with OpenMP
+
+    if [[ "$BUILD_CONFIG" =~ "mvapich" && "$BUILD_CONFIG" =~ "omp" ]] ; then
+# Pure OMP case on jet: turn off affinity everywhere
+      OMP_ARG+=" MV2_ENABLE_AFFINITY=0"
+    fi
+
+    # Run FIM (PES_ARG may be blank).
+
+    get_nl_value "$NLFILE" SYSTEMnamelist MPIRUNCMD MPIRUNCMD
+
+    # Set default cmd for threading enabled and threading disabled
+    if [[ $THREAD_FIM == no && $THREAD_SS2ICOS == no ]] then
+      cmd="$MPIRUNCMD $PES_ARG ./$FIMEXEBASE"
+    else
+      cmd="env $OMP_ARG $MPIRUNCMD $PES_ARG ./$FIMEXEBASE"
+    fi
+
+    # Reset cmd for some architectures when threading partially or fully enabled
+    if [[ "$BUILD_CONFIG" =~ "theia" ]] then
+      # Default is no OMP anywhere
+      cmd="$MPIRUNCMD $PES_ARG ./$FIMEXEBASE"
+
+      if [[ $THREAD_FIM == yes && $NTHREADS -ge 2 ]] then
+# I_MPI_DEBUG recognized only by Intel-mpi
+        export I_MPI_DEBUG=5
+        cmd="env $OMP_ARG $MPIRUNCMD $PES_ARG ./$FIMEXEBASE"
+      else
+        if [[ $THREAD_SS2ICOS == yes ]] then
+          # Threading only ompss2icos: require hybrid mpirun construct which applies
+          # args for optimal threading to the first rank but not the others
+          let oneless=$PES_ARG-1
+          if [[ $oneless -eq 0 ]] then
+            cmd="env $OMP_ARG $MPIRUNCMD 1 -env I_MPI_PIN 0 ./$FIMEXEBASE"
+          else
+            cmd="env $OMP_ARG $MPIRUNCMD 1 -env I_MPI_PIN 0 ./$FIMEXEBASE : -np $oneless ./$FIMEXEBASE"
+          fi
+        fi
+      fi
+    elif [[ "$BUILD_CONFIG" == "stampede2" ]] then
+      if [[ "$SLURM_QUEUE" == "flat-quadrant" ]] then
+        cmd="env $OMP_ARG $MPIRUNCMD $PES_ARG numactl -m 1 ./$FIMEXEBASE"      
+      else
+        cmd="env $OMP_ARG $MPIRUNCMD $PES_ARG ./$FIMEXEBASE"      
+      fi
+    fi
+    print "$CONTEXT on host $(hostname) running: $cmd" > stdout
+    print "Current directory is $PWD" >> stdout
+
+    fimrun $cmd
+
+    # If a namelist file for the second FIMEnKF has been supplied by the test
+    # suite, symlink to it after backing up the old namelist and stdout files,
+    # then start the second run.
+
+    enkfnlfile="../../fimenkf_second_run"
+    if [[ -f $enkfnlfile ]] then
+      mv $NLFILE $NLFILE.$$ || fail "Cannot back up old $NLFILE."
+      mv stdout stdout.$$ || fail "Cannot backup old stdout."
+      linksafe $enkfnlfile $NLFILE
+      fimrun $cmd
+    fi
+
+  else # neither "serial" or "parallel" was specified
+    fail "Parallelism error."
+  fi # if serial/parallel
+
+  endian_reset
+
+fi # if [[ -d "$FIMDIR" ]]
+
+cat stdout || fail "Cannot cat stdout."
+cd $FIMRUN || fail "Cannot cd to $FIMRUN."
+print "\nDone with fim\n"
+return 0

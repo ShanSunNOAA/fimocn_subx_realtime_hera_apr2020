@@ -1,0 +1,99 @@
+#!/bin/ksh --login
+
+CONTEXT="batchTemplate-pop"
+
+# Set ISDIR
+if [ "$IS" -eq 1 ]; then
+  ISDIR="NAT"
+elif [ "$IS" -eq 2 ]; then
+  ISDIR="PRS"
+else
+  echo "Unsupported vertical coordinate option: $IS"
+  exit 1
+fi
+
+# Set the path to the run directory
+workdir=${POST}/${GRID_NAME}/${ISDIR}/grib1/pop_${T}
+
+# Move pre-existing workdir to a new name with a time stamp
+if [ -d $workdir ]; then
+  timestamp=`/bin/ls -ld --time-style=+%Y%m%d%H%M%S $workdir | awk '{print $6}'`
+  /bin/mv $workdir $workdir.$timestamp
+fi
+
+if [[ -z "$functions_sourced" ]]
+then
+  test -n "$WFM" && prefix=$FIM_RUN || prefix=.
+  . $prefix/functions.ksh # Most function definitions can be found here.
+fi
+
+# Create post dir, enter it and copy in needed files
+mkdir -p $workdir
+cd $workdir
+cp $PREP/$NLFILE ./$NLFILE
+cp $FIM_RUN/fim_gribtable .
+cp $BINDIR/pop .
+cp $BINDIR/pop_read_init .
+
+get_nl_value $workdir/$NLFILE ISOBARICnamelist isobaric_levels_file ISOBARIC_LEVELS_FILE
+
+if [ -f "$POST/$ISOBARIC_LEVELS_FILE" ]; then
+  cp $POST/$ISOBARIC_LEVELS_FILE . 
+else
+  echo "$POST/$ISOBARIC_LEVELS_FILE not found: aborting" 
+  exit 1
+fi
+
+# Set variables
+datestr=`echo $yyyymmddhhmm | sed 's/^\([0-9]\{4\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)/\1\/\2\/\3 \4\:\5/'`
+yyjjjhhmm=`date +%y%j%H%M -d "$datestr"`
+
+# Link files
+(. $FIM_RUN/functions.ksh ; linksafe $PREP/glvl.dat; linksafe $PREP/icos_grid_info_level.dat; linksafe $PREP/rucgrid)
+ln -s $PREP/grid_???_coeffs ./
+
+# Modify the namelist. Note trailing spaces!
+
+sets=""
+#  if == fim , id = 4, else pass in grid_name
+if [ "${GRID_NAME}" == "fim" ]; then
+   ID=4
+else
+   ID=$GRID_NAME
+fi
+sets+="--set POSTnamelist:grid_id=$ID "
+sets+="--set POSTnamelist:post_datadir='$FIM' "
+sets+="--set POSTnamelist:delta_t=$FCST_INTERVAL "
+sets+="--set POSTnamelist:is=$IS "
+sets+="--set POSTnamelist:t1=$T "
+sets+="--set POSTnamelist:t2=$T "
+if [[ $GRID_NAME = 129 ]]; then      
+  # only output total precip accumulation if Gaussian Grid
+  sets+="--set POSTnamelist:var_list='rn2D' "
+  sets+="--set POSTnamelist:nsmooth_var=0 "
+else
+  sets+="--set POSTnamelist:var_list="$VAR_LIST" "
+  sets+="--set POSTnamelist:nsmooth_var="$SMOOTH_VAR" "
+fi
+$(findabove nml) -i $NLFILE -o $NLFILE $sets
+
+# Run pop
+./pop_read_init # run pop in foreground
+status=$?
+if [ $status != 0 ]; then
+  echo "pop${GLVL}_${NVL} failed"
+  exit 1
+fi
+
+# Move the output to the output dir
+filename=`printf "$POST/$GRID_NAME/$ISDIR/grib1/pop_$T/${yyjjjhhmm}%04d" $T`
+mv $filename $POST/$GRID_NAME/$ISDIR/grib1
+
+# Check to see if all the output made it to the output dir
+filename=`printf "$POST/$GRID_NAME/${ISDIR}/grib1/${yyjjjhhmm}%04d" $T`
+if [ ! -s "$filename" ]; then
+  echo "ERROR: Output file, '$filename', is missing or is empty!"
+  exit 1
+fi
+
+exit 0

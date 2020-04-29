@@ -1,0 +1,29 @@
+3/2007:  bug fix iplib
+--------------------------------
+2/2007:  refresh of w3lib and copygb.f (bug fix)
+--------------------------------
+9/2005:  change of pgf90 options for fixing WRF problem
+--------------------------------
+9/2005:  some fixes to bacio.old, cleanup, update & bugfix portable w3lib (fix WRF)
+--------------------------------
+9/2005:   more Dusan changes (thank WRF) .. fixes to w3lib and suggest for new baio.old/open routines
+-------------------------------
+9/2005:   makefile changes .. dusan jovic for intel and portland linux compilers
+-------------------------------
+4/19/2005: Yet another fix.
+	some w3lib fixups
+	found a problem with bacio, went back to the older version
+	for reading and sequential format for writing
+
+3/21/2005:
+
+Bug fix: w3lib:getgb1s.f fixed
+         (bug also present in operational w3lib code)
+         Bug first reported by Bryan Weare using g95 copygb with NARR data.
+         (Thanks)
+
+9/2005: Modifications by Dusan Jovic enable compilations by portland and intel
+        linux compilers (needed by WRF post).  Note that support still remains
+        limited to the g95 compiler.  (This is all that I have on my linux
+        box.)
+

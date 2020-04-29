@@ -1,0 +1,313 @@
+    call setdebughdr(debughdr,this,its)
+
+    call check_setup_called(this,its)
+
+    write (msg,'(4a)') trim(debughdr),&
+      ' icosio_in_start must be called before ',this,'.'
+    call die_if(.not.in_start_called,ierr,msg)
+
+    have_write_tasks: if (using_write_tasks) then
+
+#ifndef SERIAL
+
+! If no input-receive requests have been processed this frame, select the write
+! task that was previously assigned to read the first file, as the current
+! request is to populate the model variable corresponding to the contents of
+! that file. If this is not the first input-receive request this frame, cycle
+! through the assigned readers round-robin.
+
+      if (reader.lt.0) then
+        reader=first_reader
+      else
+        reader=mod(reader+1,nwt)
+      end if
+
+! Set up the input-receive command.
+
+      cmd(1)=cmd_in_receive
+      cmd(2)=-1 ! not used
+      cmd(3)=-1 ! not used
+      cmd(4)=-1 ! not used
+
+! Send a command from the compute root to the selected write task. The write
+! task responds by sending to each compute task a segment composed of the
+! input data it owns.
+
+      if (i_am_compute_root) then
+
+        write (msg,'(2a,i0,a)') trim(debughdr),' Sending wt ',reader,&
+          ' input-receive command.'
+        call debugmsg
+
+        call mpi_ssend(cmd,cmdsize,mpi_integer,reader,tag_cmd,intercomm,ierr)
+        write (msg,'(2a)') trim(debughdr),&
+          ' Failed to send input-receive command.'
+        call die_if(ierr.ne.mpi_success,ierr,msg)
+
+        write (msg,'(2a,i0,a)') trim(debughdr),'    Sent wt ',reader,&
+          ' input-receive command.'
+        call debugmsg
+
+      end if
+
+! Receive the segment of input data owned by this compute task.
+
+      write (msg,'(2a,i0,a)') trim(debughdr),' Receiving input from wt ',&
+        reader,'...'
+      call debugmsg
+
+      expected=levels*interior_size()
+      mpitype=mpi_real
+      tag=tag_in_receive
+
+      call mpi_recv(var,expected,mpitype,reader,tag,intercomm,mpistatus,ierr)
+      write (msg,'(2a,i0,a)') trim(debughdr),&
+        ' Failed to receive input from wt ',reader,'.'
+      call die_if(ierr.ne.mpi_success,ierr,msg)
+
+      call mpi_get_count(mpistatus,mpitype,received,ierr)
+      write (msg,'(2a,2(i0,a))') trim(debughdr),' var expected ',expected,&
+        ' elements, received ',received,'.'
+      call die_if(received.ne.expected,ierr,msg)
+
+      write (msg,'(2a,i0,a)') trim(debughdr),'  Received input from wt ',&
+        reader,'.'
+      call debugmsg
+
+#endif /* SERIAL */
+
+    else ! not using write tasks...
+
+! If input-data permutation is to be done, the "perm_global" array is needed. If
+! it is not already available (i.e. if "perm_global" is unassociated), get it.
+
+      gather_perm_global: if (permute.and..not.associated(perm_global)) then
+
+#ifdef SERIAL
+
+! In serial mode, "perm" is already global, so simply point "perm_global" at it.
+
+        perm_global => perm
+
+#else
+
+! In parallel mode, gather the distributed segments of global_perm onto the
+! compute root. MPI_GATHERV requires a array of segment sizes, which in this
+! case are the interior sizes, so gather these from the compute tasks, if they
+! are not already available.
+
+        if (.not.allocated(interior_sizes)) then
+          
+          allocate(interior_sizes(0:nct-1),stat=ierr)
+          write (msg,'(2a)') trim(debughdr),&
+            ' Failed to allocate interior_sizes.'
+          call die_if(ierr.ne.0,ierr,msg)
+
+          write (msg,'(2a)') trim(debughdr),' Gathering interior_sizes...'
+          call debugmsg
+
+          call mpi_gather(interior_size(),1,mpi_integer,interior_sizes,1,&
+            mpi_integer,0,intracomm,ierr)
+          write (msg,'(2a)') trim(debughdr),' Failed to gather interior_sizes.'
+          call die_if(ierr.ne.mpi_success,ierr,msg)
+          
+          write (msg,'(2a)') trim(debughdr),'  Gathered interior_sizes.'
+          call debugmsg
+
+        end if
+
+! Allocate "perm_global" at global size on the compute root, and at unit size on
+! non-root compute tasks.
+
+        if (i_am_compute_root) then
+          allocate(perm_global(nip),stat=ierr)
+        else
+          allocate(perm_global(1),stat=ierr)
+        end if
+        write (msg,'(2a)') trim(debughdr),' Failed to allocate perm_global.'
+        call die_if(ierr.ne.0,ierr,msg)
+
+        allocate(displs(0:nct-1),stat=ierr)
+        write (msg,'(2a)') trim(debughdr),' Failed to allocate displs.'
+        call die_if(ierr.ne.0,ierr,msg)
+
+! Calculate the array of displacements required by MPI_GATHERV.
+
+        displs(0)=0
+        do ct=1,nct-1
+          displs(ct)=displs(ct-1)+interior_sizes(ct-1)
+        end do
+
+! Gather perm_global.
+
+        write (msg,'(2a)') trim(debughdr),' Gathering perm_global...'
+        call debugmsg
+
+        call mpi_gatherv(perm,interior_size(),mpi_integer,perm_global,&
+          interior_sizes,displs,mpi_integer,0,intracomm,ierr)
+        write (msg,'(2a)') trim(debughdr),' Failed to gather perm_global.'
+        call die_if(ierr.ne.mpi_success,ierr,msg)
+
+        write (msg,'(2a)') trim(debughdr),'  Gathered perm_global.'
+        call debugmsg
+
+        deallocate(displs)
+
+#endif /* SERIAL */
+        
+      end if gather_perm_global
+
+! On the compute root, read the next requested file into a globally-sized array.
+
+      if (i_am_compute_root) then
+
+        if (.not.associated(current_filename)) then
+          current_filename => stringlist_first(input_filenames)
+        end if
+
+        allocate (glbvar(levels*nip),stat=ierr)
+        write (msg,'(2a)') trim(debughdr),' Failed to allocate glbvar.'
+        call die_if(ierr.ne.0,ierr,msg)
+
+        write (msg,'(4a)') trim(debughdr),' Reading ',&
+          arr_to_str(current_filename%chararr,size(current_filename%chararr)),'.'
+        call debugmsg
+
+        open (lun,file=arr_to_str(current_filename%chararr,size(current_filename%chararr)),&
+          form='unformatted',status='old',iostat=ierr)
+        write (msg,'(4a)') trim(debughdr),' Failed to open file ',&
+          arr_to_str(current_filename%chararr,size(current_filename%chararr)),'.'
+        call die_if(ierr.ne.0,ierr,msg)
+
+! Read past (discard) the header record.
+
+        read (lun,iostat=ierr)
+        write (msg,'(2a)') trim(debughdr),' Failed to read header.'
+        call die_if(ierr.ne.0,ierr,msg)
+
+! Read the actual data into the globally-sized array.
+
+        read (lun,iostat=ierr) glbvar
+        write (msg,'(2a)') trim(debughdr),' Failed read to data.'
+        call die_if(ierr.ne.0,ierr,msg)
+
+        write (msg,'(4a)') trim(debughdr),'    Read ',&
+          arr_to_str(current_filename%chararr,size(current_filename%chararr)),'.'
+        call debugmsg
+
+        close (lun)
+
+! Permute the input data.
+
+        if (permute) then
+
+          write (msg,'(4a)') trim(debughdr),' Permuting input data from ',&
+            arr_to_str(current_filename%chararr,size(current_filename%chararr)),'...'
+          call debugmsg
+
+          call permute_input(glbvar,levels)
+
+          write (msg,'(4a)') trim(debughdr),'  Permuted input data from ',&
+            arr_to_str(current_filename%chararr,size(current_filename%chararr)),'.'
+          call debugmsg
+
+        end if
+
+! Advance the filename-list pointer to the next request.
+
+        current_filename => current_filename%next
+
+      end if
+
+! At this point, "glbvar" on the compute root (or serial task) holds the data
+! read from the input file.
+
+#ifndef SERIAL
+
+! For multile-task parallel configurations, send segments of "glbvar" from the
+! compute root to the non-root compute tasks.
+
+      single_task: if (.not.single) then
+
+! Call the (idempotent) "collect_bounds" routine to gather to the compute root
+! an array of local lower and local upper bound indices for all compute tasks.
+
+        call collect_bounds(its)
+
+        expected=levels*interior_size()
+
+! Create an array to hold the received input-data segment from the compute root.
+
+        allocate (segment(expected),stat=ierr)
+        write (msg,'(2a)') trim(debughdr),' Failed to allocate segment.'
+        call die_if(ierr.ne.0,ierr,msg)
+
+        mpitype=mpi_real
+        tag=tag_scatter_input_var
+
+        compute_root: if (i_am_compute_root) then
+
+! The compute root can set its own segment directly, with MPI comms.
+
+          segment=glbvar(ips:ipe)
+
+! Loop over the non-root compute tasks and send each its input-data segment.
+
+          do ct=1,nct-1
+
+            segment_size=levels*(bounds(2,ct)-bounds(1,ct)+1)
+
+            write (msg,'(2a,2(i0,a))') trim(debughdr),' Sending ',segment_size,&
+              '-element input segment to ct ',ct,'...'
+            call debugmsg
+
+            lo=levels*(bounds(1,ct)-1)+1
+            hi=levels* bounds(2,ct)
+
+            call mpi_ssend(glbvar(lo:hi),segment_size,mpitype,ct,tag,intracomm,ierr)
+
+            write (msg,'(2a,i0,a)') trim(debughdr),&
+              ' Failed to send input segment to ct ',ct,'.'
+            call die_if(ierr.ne.mpi_success,ierr,msg)
+
+            write (msg,'(2a,2(i0,a))') trim(debughdr),' Sent    ',&
+              segment_size,'-element input segment to ct ',ct,'.'
+            call debugmsg
+            
+          end do
+
+        else ! if on a non-root compute task...
+
+! On non-rooot compute tasks, receive input-data segments from the compute root.
+
+          write (msg,'(2a,i0,a)') trim(debughdr),' Receiving ',expected,&
+            '-element input segment from compute root...'
+          call debugmsg
+
+          call mpi_recv(segment,expected,mpitype,0,tag,intracomm,mpistatus,ierr)
+
+          write (msg,'(2a)') trim(debughdr),&
+            ' Failed to receive input segment from compute root.'
+          call die_if(ierr.ne.mpi_success,ierr,msg)
+
+          call mpi_get_count(mpistatus,mpitype,received,ierr)
+          write (msg,'(2a,2(i0,a))') trim(debughdr),' segment expected ',&
+            expected,' elements, received ',received,'.'
+          call die_if(received.ne.expected,ierr,msg)
+
+          write (msg,'(2a,i0,a)') trim(debughdr),' Received  ',expected,&
+            '-element input segment from compute root.'
+          call debugmsg
+
+        end if compute_root
+
+      end if single_task
+
+#endif /* SERIAL */
+
+    end if have_write_tasks
+
+! At this point, for parallel configurations, "segment" on each compute task
+! contains the chunk of input data it owns.
+
+    in_receive_called=.true.

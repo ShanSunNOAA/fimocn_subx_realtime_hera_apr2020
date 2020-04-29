@@ -1,0 +1,24 @@
+lib_build_prep: 'lib_build_prep_theia'
+lib_data: 'lib_data_theia'
+lib_run_prep: 'lib_run_prep_std'
+lib_run: 'lib_run_std'
+lib_submit_script: 'lib_submit_script_theia'
+namelists:
+  oceannamelist:
+    atmonly: !unquoted '.false.'
+    coupled: !unquoted '.true.'
+  outputnamelist:
+    archvintvl: 6
+    archvtimeunit: 'hr'
+    totaltime: 24
+  postnamelist:
+    grid_id: 228
+  prepnamelist:
+    atm_ic: 2
+    ocn_ic: 2
+    gfsltln_file: 'gfsltln_t574.dat'
+    mtnvar_file: 'global_mtnvar.t574'
+    numpostgrids: 1
+    postgridids: 228
+  timenamelist:
+    yyyymmddhhmm: '201101010000'

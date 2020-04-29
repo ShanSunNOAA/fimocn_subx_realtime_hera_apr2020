@@ -1,0 +1,25 @@
+ddts_extends: 'jet_common'
+ddts_build: 'jet_nag_serial'
+namelists:
+  chemwrf:
+    chem_opt: 300
+  cntlnamelist:
+    glvl: 4
+    nvl: 38
+    subdivnum: !unquoted '2 2 2 2'
+  outputnamelist:
+    archvintvl: 1
+    archvtimeunit: 'ts'
+    restart_freq: 999
+    totaltime: 1
+  postnamelist:
+    delta_t: 1
+    nsmooth_var: !unquoted '0,0,0,0'
+    t1: 0
+    t2: 1
+    var_list: !unquoted "'hgtP','pr3D','d1st','sulf'"
+  prepnamelist:
+    curve: 0
+  queuenamelist:
+    computetasks: '1'
+    maxqueuetime: '00:30:00'

@@ -1,0 +1,20 @@
+ddts_extends: 'theia_common'
+ddts_baseline: 'theiaintel'
+namelists:
+  cntlnamelist:
+    glvl: 5
+    nvl: 50
+  outputnamelist:
+    restart_freq: 999
+  postnamelist:
+    delta_t: 6
+    nsmooth_var: !unquoted "1,1,1,2,2,0,0,1,0"
+    t1: 0
+    t2: 24
+    var_list: !unquoted "'pr3D','ph3D','td3D','us3D','vs3D','ms2D','sn2D','rsds','rlds'"
+  prepnamelist:
+    curve: 0
+  writetasknamelist:
+    cpn: 48
+    mpipn: 2
+    nthreads: 24

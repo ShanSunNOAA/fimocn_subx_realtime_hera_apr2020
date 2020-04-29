@@ -1,0 +1,16 @@
+ddts_extends: 'jet_openmpi_common'
+ddts_baseline: 'jet_openmpi_altphys'
+ddts_build: 'jet_openmpi_parallel'
+lib_run: 'lib_run_restart'
+namelists:
+  outputnamelist:
+    readrestart: !unquoted '.false.'
+    restart_freq: 13
+    totaltime: 13
+  physicsnamelist:
+    physicsinterval: 1000
+    radiationinterval: 2880
+    sstinterval: 86400
+  queuenamelist:
+    computetasks: '10'
+    maxqueuetime: '00:15:00'

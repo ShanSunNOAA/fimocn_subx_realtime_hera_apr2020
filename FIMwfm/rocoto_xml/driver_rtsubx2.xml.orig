@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<!DOCTYPE workflow [
+  <!ENTITY FIM_HOME "/scratch1/BMC/gsd-fv3/rtsubx">
+  <!ENTITY PES "80">                     <!-- root node FALSE; 0 write tasks   -->
+  <!ENTITY NPROC "80">
+  <!ENTITY GLVL "7">
+  <!ENTITY NVL "64">
+  <!ENTITY FCST_INTERVAL "24">            <!-- needs to match ArchvIntvl in FIMnamelist! -->
+  <!ENTITY FCST_LENGTH "768">
+  <!-- set this to 3 character str - ex. 96 would be 096 - used for final FIM verification file required -->
+  <!ENTITY FCST_LENGTH_STR "768">
+  <!ENTITY FIM_WALLTIME "06:50:00">
+  <!ENTITY OFFSET "00:00:00">
+  <!ENTITY MEMBER_ID "C">
+  <!ENTITY IC_TYPE "2">    <!-- 1=retro; 2=rt; 0=default -->
+  <!ENTITY NC3D_DIR "/scratch1/BMC/gsd-fv3/rtsubx/rtsubx_FIMr1p1_nc3d">
+  <!ENTITY NC_SUBX_DIR "/scratch1/BMC/gsd-fv3/rtsubx/rtsubx_FIMr1p1_nc2d">
+   
+  <!-- External parameter entites -->
+  <!ENTITY % SITES  SYSTEM "all_sites.xml">     %SITES;
+  <!ENTITY % TASKS  SYSTEM "all_retro_tasks.xml">  %TASKS;
+
+  <!ENTITY FIM_RUN "&FIM_HOME;/FIMrun_theiaintel_p">
+  %theia;
+]>
+
+<workflow realtime="T" scheduler="&SCHEDULER;" cyclethrottle="20" cyclelifespan="0:48:00:00">
+  <log>
+    <cyclestr>&FIM_LOG;/workflow/workflow_@Y@m@d@H_omp.log</cyclestr>
+  </log>
+<!-- set this to year month day(s) hour(s) minute - NOTE if you are running this for an earlier time,
+       make sure you delete the .store file or it will not restart -->
+  <cycledef>202001211200 202112311200 168:00:00</cycledef>
+  <cycledef>202001211800 202112311800 168:00:00</cycledef>
+  <cycledef>202001220000 202112310000 168:00:00</cycledef>
+  <cycledef>202001220600 202112310600 168:00:00</cycledef>
+
+  <metatask>
+    <var name="member">01</var>
+    &spectral_subx_rt_task;
+    &prep_subx_task;
+    &fim_subx_task;
+    &fim2nc_subx_task;
+    &rtnc_subx_task;
+    &zip_subx_task;
+  </metatask>
+</workflow>

@@ -1,0 +1,49 @@
+  <task name="FIMVerif_GFS" maxtries="3">
+    <command>&SCRIPTS;/FIMVerifRetro.ksh</command>
+    <account>&PROJECT;</account>
+    <cores>1</cores>
+    <queue>&SERVICE;</queue>
+    &PARTITION_SERVICE;
+    <walltime>00:10:00</walltime>
+    <jobname><cyclestr>FIMVerif@H</cyclestr></jobname>
+    <join><cyclestr>&FIM_LOG;/verif/FIMVerif_GFS_@Y@m@d@H.log</cyclestr></join>
+    <envar><name>WFM</name><value>1</value></envar>
+    <envar><name>ANX_MODEL</name><value>GFS</value></envar>
+    <envar><name>ANX_DIR</name><value><cyclestr>&FIM_RUN;/fim_&FIM_VERIF_CYCLE;_@Y@m@d@H00/verif/GFS/</cyclestr></value></envar>
+    <envar><name>ANX_FILE_NAME</name><value><cyclestr>@y@j@H000000.grib1</cyclestr></value></envar>
+    <envar><name>RTFIM_HOME</name><value>&FIM_HOME;</value></envar>
+    <envar><name>FIM_HOME</name><value>&FIM_HOME;</value></envar>
+    <envar><name>FIM_RUN</name><value>&FIM_RUN;</value></envar>
+    <envar><name>RTFIM_RUN</name><value>&FIM_RUN;</value> </envar>
+    <envar><name>yyyymmddhhmm</name><value> <cyclestr>@Y@m@d@H@M</cyclestr></value></envar>
+    <envar><name>PES</name><value>&PES;</value></envar>
+    <envar><name>GLVL</name><value>&GLVL;</value></envar>
+    <envar><name>NVL</name><value>&NVL;</value></envar>
+    <envar><name>GRID_NAME</name><value>fim</value></envar>
+    <envar><name>SCRIPTS</name><value>&SCRIPTS;</value></envar>
+    <envar><name>FIM_VERIF_CYCLE</name><value>&FIM_VERIF_CYCLE;</value></envar>
+    <envar><name>FIM_POST_DIR_NAME</name><value>/post_C/&FIM_POST_DIR_NAME;</value></envar>
+    <envar><name>FCST_LENGTH</name><value>&FCST_LENGTH;</value></envar>
+    <envar><name>CLIMATE_FILE</name><value><cyclestr>&CLIMATE_DIR;/cmean_1d.1959@m@d</cyclestr></value></envar>
+    <envar><name>DIFFGB</name><value>&DIFFGB;</value></envar>
+    <envar><name>MODEL</name><value>&AC_MODEL_NAME;</value></envar>
+    <envar><name>VARIABLES</name><value>&VARIABLES;</value></envar>
+<!--Xue -->
+    <envar><name>NUM_VARIABLES</name><value>&NUM_VARIABLES;</value></envar>
+    <envar><name>NUM_LEVELS</name><value>&NUM_LEVELS;</value></envar>
+    <envar><name>T1</name><value>000</value></envar>
+<!--Xue -->
+    <envar><name>LEVELS</name><value>&LEVELS;</value></envar>
+    <envar><name>DBI_USER</name><value>&DBI_USER;</value></envar>
+    <envar><name>DBI_PASS</name><value>&DBI_PASS;</value></envar>
+    <envar><name>DBI_DSN</name><value>&DBI_DSN_AC;</value></envar>
+    <dependency> 
+      <and>
+<!-- Hamilton 09/22/14
+        <datadep age="120"> <cyclestr>&FIM_RUN;/fim_&FIM_VERIF_CYCLE;_@Y@m@d@H00/post_C/&FIM_POST_DIR_NAME;/@y@j@H000000</cyclestr></datadep>
+-->
+        <datadep age="120"> <cyclestr>&FIM_RUN;/fim_&FIM_VERIF_CYCLE;_@Y@m@d@H00/post_C/&FIM_POST_DIR_NAME;/@y@j@H000&FCST_LENGTH;</cyclestr></datadep>
+        <datadep age="120"> <cyclestr>&FIM_RUN;/fim_&FIM_VERIF_CYCLE;_@Y@m@d@H00/verif/GFS/@y@j@H000000.grib1</cyclestr></datadep>
+      </and>
+    </dependency>
+  </task>

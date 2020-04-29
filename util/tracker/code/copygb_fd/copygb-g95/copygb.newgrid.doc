@@ -1,0 +1,22 @@
+    
+         How to make custom lat-long grids with copygb
+
+
+NX = number of points on latitude cirle
+NY = number of points on longitude meridian
+LAT0 = latitude of origin * 1000  (lat = -90 .. 90)
+LON0 = longitude of origin * 1000  (lon=-360 .. 360 ?)
+LAT1 = latitude of extreme (last) point * 1000
+LON1 = longitude of extreme (last) point * 1000
+DX = latitudianal increment * 1000  (sign used)
+DY = longitudinal increment * 1000  (sign used)
+
+grid='255 0 NX NY LAT0 LON0 128 LAT1 LON1 DX DY 64'
+copygb -g"$grid" -x in.grb out.grb
+
+
+ex 0.1 x 0.1 degree grid from 25N to 45N and from 90W to 70W.
+grid='255 0 201 201 25000 270000 128 45000 290000 100 100 64'
+copygb -g"$grid" -x in.grb out.grb
+
+The resultant grid is S to N, E to W

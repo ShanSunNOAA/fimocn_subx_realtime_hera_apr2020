@@ -1,0 +1,84 @@
+<?xml version="1.0"?>
+<!DOCTYPE workflow [
+
+  <!ENTITY FIM_HOME "/scratch2/portfolios/BMC/fim/FIM_trunk_20150204/">
+  <!ENTITY PES "240">
+<!--  jet <!ENTITY NPROC "832"> -->
+  <!ENTITY NPROC "264"> 
+  <!ENTITY GLVL "8">
+  <!ENTITY NVL "64">
+  <!ENTITY ATCFNAME "FIM_trunk_20150204">               <!-- tracker name -->
+  <!ENTITY MODL "FIM_trunk_20150204">            <!-- plot name -->
+  <!ENTITY ANX_MODEL "GFS">               <!-- model analysis to use for AC stats -->
+  <!ENTITY AC_MODEL_NAME "FIM_trunk_20150204">   <!-- AC stats name -->
+  <!ENTITY SOUNDING_MODEL_NAME "FIM_trunk_20150204">
+  <!ENTITY SURFACE_MODEL_NAME "FIM_trunk_20150204">
+  <!ENTITY FCST_INTERVAL "6">
+  <!ENTITY FCST_LENGTH "240">
+  <!-- set this to 3 character str - ex. 96 would be 096 - used for final FIM verification file required -->
+  <!ENTITY FCST_LENGTH_STR "240">
+  <!ENTITY FIM_WALLTIME "08:00:00">
+  <!ENTITY POST_WALLTIME "01:00:00">
+   
+  <!ENTITY MEMBER_ID "C">
+  <!-- post parameters -->
+  <!ENTITY RUN_POP "T">
+  <!ENTITY RUN_INTERP "F">
+  <!ENTITY RUN_GRIB12 "T">
+  <!ENTITY RUN_TRACKER "T">
+  <!ENTITY RUN_NCL "F">
+  <!ENTITY GRID_NAMES "fimD130D83">
+  <!ENTITY GRID_SPECS "fim:130:83">
+<!--  <!ENTITY PARTITION "sjet">-->
+
+  <!--  if reservation FOR LATER  -->
+  <!-- <!ENTITY FIM_RESERVATION "      <native>-l partition=&PE;&FIM_RESERVATION;</native>">      <deadline><cyclestr offset="&DEADLINE_HFIP-FIM;">@Y@m@d@H@M</cyclestr></deadline> -->
+  <!-- !!!!! FIM_RESERVATION will have to start with a comma !!!!!  -->
+  <!ENTITY FIM_RESERVATION "">
+ <!-- <!ENTITY PARTITION_JET "<native>-l partition=&PARTITION;&FIM_RESERVATION;</native>"> -->
+<!--  <!ENTITY PARTITION_JET "<native>-l partition=&PARTITION;</native>">  -->
+
+
+  <!-- External parameter entites -->
+  <!ENTITY % SITES  SYSTEM "all_sites.xml">  %SITES;
+  <!ENTITY % TASKS  SYSTEM "all_retro_tasks.xml">  %TASKS;
+  <!ENTITY % DEFS   SYSTEM "all_defs.xml">   %DEFS;
+
+  %zeus_retro;
+  %dbi;
+  %metatasks;
+]>
+
+<!--<workflow realtime="F" scheduler="&SCHEDULER;" cyclethrottle="14" >-->
+<!--<workflow realtime="T" scheduler="&SCHEDULER;" cyclethrottle="3" cyclelifespan="0:25:00:00">-->
+<workflow realtime="F" scheduler="&SCHEDULER;" cyclethrottle="10">
+  <log>
+    <cyclestr>&FIM_LOG;/workflow/workflow_@Y@m@d@H.log</cyclestr>
+  </log>
+
+  <cycledef>201412250000 201501030000 24:00:00</cycledef>
+
+<!--  &spectral_task;
+  &prep_task;
+  &fim_task;-->
+
+<!--  <metatask throttle="18">
+    &post_240hr_metatask;
+    &post_task_fimout;
+    &fimoutPurge_task;                       
+  </metatask> -->
+
+<!-- &verif_file_task;
+  &verif_task;
+
+ <metatask>
+    &sounding_240hr_metatask;
+    &sounding_task;
+  </metatask>-->
+
+ <metatask>
+  &surface_72hr_metatask;
+    &surface_task;
+  </metatask>
+
+</workflow>

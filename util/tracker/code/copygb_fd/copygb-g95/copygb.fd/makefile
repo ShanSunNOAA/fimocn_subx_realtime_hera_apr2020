@@ -1,0 +1,24 @@
+FC=ifort
+# FFLAGS=-Wall -O2 -msse3
+FFLAGS=-Wall -O2 
+FFLAGS=-Wall -O2 -mieee-fp
+
+#FC=pgf90
+#FFLAGS=-O0 -g -Ktrap=fp -C
+
+#FC=ifort
+#FFLAGS=-assume byterecl
+
+CC=icc
+CFLAGS=-O2
+
+#libs=../iplib/iplib.a ../splib/splib.a  ../w3lib/w3lib.a ../bacio/libbacio.a
+libs=../iplib/iplib.a ../splib/splib.a  ../w3lib/w3lib.a ../bacio.old/balib.a
+#libs=../iplib/iplib.a ../splib/splib.a  ../w3lib-1.1/w3lib.a ../bacio.old/balib.a
+
+
+copygb:	copygb.f  ${libs}
+	$(FC) -o copygb $(FFLAGS) copygb.f ${libs} 
+
+${libs}:
+	cd $(*D) ; make FC="$(FC)" FFLAGS="$(FFLAGS)" CC="$(CC)" CFLAGS="$(CFLAGS)"

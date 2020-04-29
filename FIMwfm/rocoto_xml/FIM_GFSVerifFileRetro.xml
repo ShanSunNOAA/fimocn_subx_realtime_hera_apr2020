@@ -1,0 +1,25 @@
+<!-- get the GFS files needed for verification -->
+  <task name="GFS_verif_file_retro" maxtries="3">
+    <command>&SCRIPTS;/gfs_verif_file_retro.ksh</command>
+    <account>&PROJECT;</account>
+    <cores>1</cores>
+    <queue>&SERVICE;</queue>
+    &PARTITION_SERVICE;
+    <walltime>00:10:00</walltime>
+    <jobname><cyclestr>GFSFile_@H</cyclestr></jobname>
+    <join><cyclestr>&FIM_LOG;/gfsfile/GFSFile_@Y@m@d@H.log</cyclestr></join>
+    <envar><name>WFM</name><value>1</value></envar>
+    <envar><name>FIM_HOME</name><value>&FIM_HOME;</value></envar>
+    <envar><name>FIM_RUN</name><value>&FIM_RUN;</value></envar>
+    <envar><name>GFS_VERIF_DIR</name><value>&GFS_VERIF_DIR;</value></envar>
+    <envar><name>HOUR</name><value><cyclestr>@H</cyclestr></value></envar>
+    <envar><name>yyyymmddhhmm</name><value><cyclestr>@Y@m@d@H@M</cyclestr></value></envar>
+    <envar><name>PES</name><value>&PES;</value></envar> 
+    <envar><name>GLVL</name><value>&GLVL;</value></envar>
+    <envar><name>NVL</name><value>&NVL;</value></envar>
+    <envar><name>ANX_MODEL</name><value>GFS</value></envar>
+    <envar><name>CNVGRIB</name><value>&CNVGRIB;</value></envar>
+    <dependency>
+        <datadep age="120"><cyclestr>&GFS_VERIF_DIR;/@y@j@H@M0000.grib1</cyclestr></datadep>
+    </dependency>
+  </task>

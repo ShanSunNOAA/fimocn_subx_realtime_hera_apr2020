@@ -1,0 +1,11 @@
+ddts_extends: 'theiaintel_omp_ocn_parallel'
+namelists:
+  queuenamelist:
+    computetasks: '1'
+    maxqueuetime: '00:20:00'
+  writetasknamelist:
+    num_write_tasks: 0
+  oceannamelist:
+    atmonly: !unquoted '.false.'
+    ocnonly: !unquoted '.false.'
+    coupled: !unquoted '.true.'

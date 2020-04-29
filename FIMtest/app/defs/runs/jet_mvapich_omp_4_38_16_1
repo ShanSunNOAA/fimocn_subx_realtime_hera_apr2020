@@ -1,0 +1,6 @@
+ddts_extends: 'jet_nag_common'  # JLS start here
+ddts_baseline: 'jet_omp_debug'
+ddts_build: 'jet_mvapich_parallel_omp_debug'
+namelists:
+  writetasknamelist:
+    num_write_tasks: 1

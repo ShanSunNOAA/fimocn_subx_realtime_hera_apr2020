@@ -1,0 +1,55 @@
+  <task name="postncl_NAT_&MEMBER_ID;_#t1#_#t2#" maxtries="6">
+    <command>&FIM_RUN;/batchTemplate-post</command>
+    <account>&PROJECT;</account>
+    <cores>16</cores>
+    &PARTITION_JET;
+    <walltime>00:40:00</walltime>
+    <jobname><cyclestr offset="&OFFSET;">postncl_NAT_C_#t1#_#t2#_@H_&GLVL;_&NVL;</cyclestr></jobname>
+    <join><cyclestr offset="&OFFSET;">&FIM_LOG;/post/post_NAT_C_#t1#_#t2#_@Y@m@d@H.log</cyclestr></join>
+    <envar><name>WFM</name><value>1</value></envar>
+    <envar><name>GETJOBID</name><value>&FIM_RUN;/qsubGetJobID</value></envar>
+    <envar><name>COPYGB</name><value>&COPYGB;</value></envar>
+    <envar><name>CNVGRIB</name><value>&CNVGRIB;</value></envar>
+    <envar><name>TRACKER</name><value>&TRACKER;</value></envar>
+    <envar><name>TCVITALS</name><value>&TCVITALS;</value></envar>
+    <envar><name>ATCFNAME</name><value>&ATCFNAME;</value></envar>
+    <envar><name>GRID_NAMES</name><value>fimD201D236D130D244D83D129D224D242</value></envar>
+    <envar><name>GRID_SPECS</name><value>fim:201:236:130:244:83:129:224:242</value></envar>
+    <envar><name>FIM_HOME</name><value>&FIM_HOME;</value></envar>
+    <envar><name>FIM_RUN</name><value>&FIM_RUN;</value></envar>
+    <envar><name>NCL_HOME</name><value>&NCL_HOME;</value></envar>
+    <envar><name>MODL</name><value>&MODL;_&MEMBER_ID;</value></envar>
+    <envar><name>DATADIR</name><value>&DATADIR;</value></envar>
+    <envar><name>DATADR2</name><value>&DATADR2;</value></envar>
+    <envar><name>yyyymmddhh</name><value><cyclestr>@Y@m@d@H</cyclestr></value></envar>
+    <envar><name>yyyymmddhhmm</name><value><cyclestr offset="&OFFSET;">@Y@m@d@H@M</cyclestr></value></envar>
+    <envar><name>FCST_LENGTH</name><value>&FCST_LENGTH;</value></envar>
+    <envar><name>FCST_INTERVAL</name><value>&FCST_INTERVAL;</value></envar>
+    <envar><name>PES</name><value>&PES;</value></envar>
+    <envar><name>GLVL</name><value>&GLVL;</value></envar>
+    <envar><name>NVL</name><value>&NVL;</value></envar>
+    <envar><name>T1</name><value>#t1#</value></envar>
+    <envar><name>T2</name><value>#t2#</value></envar>
+    <envar><name>MEMBER_ID</name><value>&MEMBER_ID;</value></envar>
+    <envar><name>NLFILE</name><value>&NLFILE;</value></envar>
+    <envar><name>RUN_POP</name><value>F</value></envar>
+    <envar><name>RUN_INTERP</name><value>F</value></envar>
+    <envar><name>RUN_GRIB12</name><value>F</value></envar>
+    <envar><name>RUN_TRACKER</name><value>F</value></envar>
+    <envar><name>RUN_NCL</name><value>T</value></envar>
+    <dependency>
+      <or>
+        <and>
+          <datadep><cyclestr offset="&OFFSET;">&FIM_RUN;/@Y@m@d@H/post_C/fim/NAT/grib2/@y@j@H000#t2#</cyclestr></datadep>
+          <datadep><cyclestr offset="&OFFSET;">&FIM_RUN;/@Y@m@d@H/post_C/201/NAT/grib2/@y@j@H000#t2#</cyclestr></datadep>
+          <datadep><cyclestr offset="&OFFSET;">&FIM_RUN;/@Y@m@d@H/post_C/224/NAT/grib2/@y@j@H000#t2#</cyclestr></datadep>
+          <datadep><cyclestr offset="&OFFSET;">&FIM_RUN;/@Y@m@d@H/post_C/236/NAT/grib2/@y@j@H000#t2#</cyclestr></datadep>
+          <datadep><cyclestr offset="&OFFSET;">&FIM_RUN;/@Y@m@d@H/post_C/130/NAT/grib2/@y@j@H000#t2#</cyclestr></datadep>
+          <datadep><cyclestr offset="&OFFSET;">&FIM_RUN;/@Y@m@d@H/post_C/244/NAT/grib2/@y@j@H000#t2#</cyclestr></datadep>
+          <datadep><cyclestr offset="&OFFSET;">&FIM_RUN;/@Y@m@d@H/post_C/83/NAT/grib2/@y@j@H000#t2#</cyclestr></datadep>
+          <datadep><cyclestr offset="&OFFSET;">&FIM_RUN;/@Y@m@d@H/post_C/129/NAT/grib2/@y@j@H000#t2#</cyclestr></datadep>
+          <datadep><cyclestr offset="&OFFSET;">&FIM_RUN;/@Y@m@d@H/post_C/224/NAT/grib2/@y@j@H000#t2#</cyclestr></datadep>
+        </and>
+      </or>
+    </dependency>
+  </task>

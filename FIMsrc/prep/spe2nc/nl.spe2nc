@@ -1,0 +1,10 @@
+&spe2nc_nl
+!T574
+  sanlfile     = '/scratch1/portfolios/BMC/fim/rosinski/t574/142150000.gfs.t00z.sanl'
+  gfsltln_file = '/scratch1/portfolios/BMC/fim/fimdata/gfsltln_t574.dat'
+  outfile      = 't574.nc'
+!T1534
+!  sanlfile = '/scratch1/portfolios/BMC/fim/rosinski/t1534/142150000.gfs.t00z.sanl'
+!  gfsltln_file = '/scratch1/portfolios/BMC/fim/fimdata/gfsltln_t1534.dat'
+!  outfile      = 't1534.nc'
+/

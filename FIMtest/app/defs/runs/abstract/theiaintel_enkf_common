@@ -1,0 +1,22 @@
+ddts_extends: 'theiaintel_debug_common'
+lib_run_prep: 'lib_run_prep_enkf'
+namelists: 
+  cntlnamelist: 
+    nvl: 64
+  modelnamelist:
+    enkfio_in: !unquoted '.false.'
+    enkfio_out: !unquoted '.true.'
+  outputnamelist: 
+    archvintvl: 6
+    archvtimeunit: 'hr'
+    fixedgridorder: !unquoted '.false.'
+    totaltime: 6
+  postnamelist:
+    delta_t: 6
+  queuenamelist: 
+    computetasks: '32'
+    maxqueuetime: '00:35:00'
+  writetasknamelist:
+    num_write_tasks: 0
+#JR Changed root_own_node to true to get the benefit of threading ompss2icos
+    root_own_node: !unquoted '.true.'

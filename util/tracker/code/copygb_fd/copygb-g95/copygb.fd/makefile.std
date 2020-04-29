@@ -1,0 +1,12 @@
+w3=../w3lib/w3lib.a
+
+libs=../iplib/iplib.a ../splib/splib.a  ${w3}
+
+ba=../bacio.old/baopenr.ansi.standard.f ../bacio.old/baread.ansi.standard.f \
+   ../bacio.old/wryte.f
+
+copygb:	copygb.f  ${libs}
+	g95 -o copygb -fbounds-check copygb.f ${libs} ${ba}
+
+${libs}:
+	cd $(*D) ; make

@@ -1,0 +1,36 @@
+  <task name="SpectralFile" maxtries="10">
+    <command>&SCRIPTS;/spectralFile_subx_rt.ksh</command>
+    <account>&PROJECT;</account>
+    <cores>1</cores>
+    <partition>&SERVICE;</partition>
+    <walltime>00:10:00</walltime>
+    <jobname><cyclestr>spc_subx@d@H@m@Y</cyclestr></jobname>
+    <join><cyclestr>&FIM_LOG;/spectral/spc_subx@Y@m@d@H.log</cyclestr></join>
+    <envar><name>WFM</name><value>1</value></envar>
+    <envar><name>FIM_HOME</name><value>&FIM_HOME;</value></envar>
+    <envar><name>FIM_RUN</name><value>&FIM_RUN;</value></envar>
+    <envar><name>DATADR2</name><value>&DATADR2;</value></envar>
+    <envar><name>CFS_IC_DIR</name><value>&CFS_IC_DIR;</value></envar>
+    <envar><name>YEAR</name><value><cyclestr>@Y</cyclestr></value></envar>
+    <envar><name>MONTH</name><value><cyclestr>@m</cyclestr></value></envar>
+    <envar><name>DAY</name><value><cyclestr>@d</cyclestr></value></envar>
+<!--xue -->
+    <envar><name>HOUR</name><value><cyclestr>@H</cyclestr></value></envar>
+    <envar><name>yyyymmddhhmm</name><value><cyclestr>@Y@m@d@H@M</cyclestr></value></envar> 
+    <envar><name>PES</name> <value>&PES;</value></envar>
+    <envar><name>GLVL</name> <value>&GLVL;</value></envar> 
+    <envar><name>NC3D_DIR</name> <value>&NC3D_DIR;</value></envar> 
+    <envar><name>NVL</name> <value>&NVL;</value></envar>
+    <dependency>
+      <and>
+        <datadep age="60"> <cyclestr>&CFS_IC_DIR;/@y@j@H00.cdas1.t@Hz.sanl</cyclestr> </datadep>
+        <datadep age="60"> <cyclestr>&CFS_IC_DIR;/@y@j@H00.cdas1.t@Hz.sfcanl</cyclestr> </datadep>
+        <datadep age="60"> <cyclestr>&CFS_IC_DIR;/@y@j@H00.ocean_temp_salt.res.nc</cyclestr> </datadep>
+        <datadep age="60"> <cyclestr>&CFS_IC_DIR;/@y@j@H00.ice_model.res.nc</cyclestr> </datadep>
+      <not>
+        <datadep age="60"> <cyclestr>&NC3D_DIR;/fim&GLVL;_@Y@m@d@H.nc</cyclestr> </datadep>
+      </not>
+
+      </and>
+    </dependency>
+  </task>

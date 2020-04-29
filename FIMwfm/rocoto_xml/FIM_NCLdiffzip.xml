@@ -1,0 +1,20 @@
+  <task name="ncldiffzip" maxtries="3">
+    <command>&SCRIPTS;/nclzip.ksh</command>
+    <account>&PROJECT;</account>
+    <cores>1</cores>
+    &PARTITION_JET;
+    <walltime>00:35:00</walltime>
+    <jobname><cyclestr>ncldiffzip</cyclestr></jobname>
+    <join><cyclestr>&FIM_LOG;/ncldiff/ncldiffzip_@Y@m@d@H.log</cyclestr></join>
+    <envar><name>FIM_HOME</name><value>&FIM_HOME;</value></envar>
+    <envar><name>FIM_RUN</name><value>&FIM_RUN;</value></envar>
+    <envar><name>NCLDIR</name><value>ncldiff</value></envar>
+    <envar><name>MEMBER_ID</name><value>&MEMBER_ID;</value></envar>
+    <envar><name>yyyymmddhh</name><value><cyclestr>@Y@m@d@H</cyclestr></value></envar>
+    <dependency>
+      <or>
+        <taskdep task="ncl_diff_NAT_&MEMBER_ID;_&FCST_LENGTH;_&FCST_LENGTH;"/>
+        <timedep><cyclestr offset="012:30:00">@Y@m@d@H@M00</cyclestr></timedep>
+      </or>
+    </dependency>
+  </task>

@@ -1,0 +1,21 @@
+ddts_extends: jet_openmpi_5_50_10_1
+ddts_baseline: 'jet_t1534'
+ddts_build: 'jet_mvapich_parallel_omp'
+namelists:
+  outputnamelist:
+    totaltime: 6
+  postnamelist:
+    t2: 6
+  prepnamelist:
+    gfsltln_file: 'no_such_file'
+    mtnvar_file: 'no_such_file'
+  queuenamelist:
+    computetasks: '2'
+    maxqueuetime: '00:15:00'
+  timenamelist:
+    yyyymmddhhmm: '201409030000'
+  writetasknamelist:
+    num_write_tasks: 0
+    nthreads: 8
+    mpipn: 1
+    root_own_node: !unquoted .true.

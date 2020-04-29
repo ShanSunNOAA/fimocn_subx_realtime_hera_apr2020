@@ -1,0 +1,395 @@
+#!/bin/ksh
+#==========================================================================
+#
+# Description: Submits FIM job to batch queue.  If run_directory argument
+#              is present, assume we are running via test automation and
+#              cd to the specified directory before submitting the job.
+#
+# Necessary input files: functions.ksh
+#                        FIMnamelist
+#                        nml tool
+#                        get_num_cores
+#                        batchTemplate
+#                        batchTemplate-restart
+#
+# Output files: subfim.batch.init    script to be submitted
+#               subfim.batch.restart script to be submitted for restart
+#               subfim.init          script to perform batch submission
+#               subfim.restart       script to perform batch restart submission
+#
+# Usage: see function usage below
+#
+# Examples:
+#     > subfim jet
+#     > subfim -p sjet -a nim -q debug jet
+#     > subfim theia
+#     > subfim stampede2
+#
+#set -x     # Uncomment for debugging
+#==========================================================================
+function usage {
+
+  # Show this script's supported usage, and exit with an error code.
+
+  test -n "$1" && echo -e "\n$1"
+  echo
+  echo "USAGE: subfim [-a account] [-p partition] [-q queue] machine [run_directory]"
+  echo
+  echo "Where: account       [optional] examples : ${accounts[@]}      (default=gsd-fv3-test)"
+  echo "       partition     [optional] is one of: ${partitions[@]} (default=vjet)"
+  echo "       queue         [optional] examples : ${queues[@]}     (default=batch)"
+  echo "       machine       [required] is one of: ${machines[@]}"
+  echo "                     noqueue is for machines with no queueing system"
+  echo "       run_directory [optional] is set by the test suite"
+  echo
+  exit 1
+}
+
+function genbatch_jet
+{
+let total_mpi_tasks=${tot_nodes}*${mpipn}
+  cat > $1 << EOF
+#!/bin/csh
+#SBATCH -A $acct
+#SBATCH -J FIM
+#SBATCH -q $queue_name
+#SBATCH -N $tot_nodes
+#SBATCH -n $total_mpi_tasks
+#SBATCH -t $QT
+#SBATCH -p $partition
+./$2
+EOF
+#if [[ $parallelism = "serial" ]] ; then
+#  print "#SBATCH -lvmem=12G" >> $1
+#fi
+#if [[ $partition = "sjet" ]] ; then
+#  print "ulimit -a" >> $1
+#fi
+#print ". ./$2" >> $1
+  chmod 755 $1
+}
+
+function genbatch_stampede2
+{
+let total_mpi_tasks=${tot_nodes}*${mpipn}
+# Change script to csh because otherwise "module" does not work right
+  cat > $1 << EOF
+#!/bin/csh
+#SBATCH -A $acct
+#SBATCH -J FIM
+#SBATCH -q $queue_name
+#SBATCH -N $tot_nodes
+#SBATCH -n $total_mpi_tasks
+#SBATCH -t $QT
+## This does not work on stampede
+##SBATCH -d $PWD
+./$2
+EOF
+  chmod 755 $1
+}
+
+function genbatch_theia
+{
+let total_mpi_tasks=${tot_nodes}*${mpipn}
+  cat > $1 << EOF
+#!/bin/csh
+#SBATCH -A $acct
+#SBATCH -J FIM
+#SBATCH -q $queue_name
+#SBATCH -N $tot_nodes
+#SBATCH -n $total_mpi_tasks
+#SBATCH -t $QT
+./$2
+EOF
+  chmod 755 $1
+}
+
+function genbatch_noaaknl
+{
+  cat > $1 << EOF
+#!/bin/ksh
+#PBS -A $acct
+#PBS -d $PWD
+#PBS -j oe
+#PBS -l nodes=${tot_nodes}:ppn=$mpipn
+#PBS -l feature=knl68
+#PBS -l walltime=$QT
+#PBS -q $queue_name
+#PBS -W umask=022
+. ./$2
+EOF
+  chmod 755 $1
+}
+
+function gensub_jet
+{
+  cat > $1 << EOF1
+#!/bin/ksh
+cd $PWD
+EOF1
+print "tries=1" >> $1
+  cat >> $1 << EOF2
+while [[ \$tries -gt 0 ]]
+do
+  # The next statement actually submits the job
+  jobid=\$(sbatch $2)
+  status=\$?
+  test \$status -eq 0 && break
+  print "Retrying sbatch..."
+  let tries=\$tries-1
+done
+test \$status -ne 0 && print "Queue submission failed." && exit 1
+print "The job \$(echo \$jobid | tr -d '\n') has been submitted."
+exit 0
+EOF2
+  chmod 755 $1
+}
+
+function gensub_stampede2
+{
+  cat > $1 << EOF
+#!/bin/ksh
+cd $PWD
+tries=1
+while [[ \$tries -gt 0 ]]
+do
+  # The next statement actually submits the job
+  jobid=\$(sbatch $2)
+  status=\$?
+  test \$status -eq 0 && break
+  print "Retrying sbatch..."
+  let tries=\$tries-1
+done
+test \$status -ne 0 && print "Queue submission failed." && exit 1
+print "The job \$(echo \$jobid | tr -d '\n') has been submitted."
+exit 0
+EOF
+  chmod 755 $1
+}
+
+function gensub_theia
+{
+  cat > $1 << EOF
+#!/bin/ksh
+cd $PWD
+# The next statement actually submits the job
+    jobid=\$(sbatch $2)
+test \$? -ne 0 && print "Queue submission failed." && exit 1
+print "The job \$(echo \$jobid | tr -d '\n') has been submitted."
+exit 0
+EOF
+  chmod 755 $1
+}
+
+function gensub_noaaknl
+{
+  cat > $1 << EOF
+#!/bin/ksh
+cd $PWD
+# The next statement actually submits the job
+jobid=\$(qsub $2)
+test \$? -ne 0 && print "Queue submission failed." && exit 1
+print "The job \$(echo \$jobid | tr -d '\n') has been submitted."
+exit 0
+EOF
+  chmod 755 $1
+}
+
+CONTEXT="subfim"
+#-------------------------------------------------------------------------
+# Set up lists of valid options for error checking and parse command line options
+#-------------------------------------------------------------------------
+machines=( jet stampede stampede2 theia noaaknl noqueue )
+queues=( batch debug urgent normal development flat-quadrant es )
+accounts=( gsd-fv3-test gsd-fv3-dev gsd-fv3 gsd-hpcs )
+partitions=( njet tjet ujet sjet vjet xjet )
+
+# Initialize command line arguments
+CommandLineError=FALSE
+acct=null
+partition=null
+queue_name=null
+
+while getopts :a:p:q: arguments; do
+  case $arguments in
+    a)
+      acct=$OPTARG
+      ;;
+    p)
+      partition=$OPTARG
+      ;;
+    q)
+      queue_name=$OPTARG
+      ;;
+    \:)
+      # missing argument
+      CommandLineError=TRUE
+      ;;
+    \?)
+      # unknown option
+      CommandLineError=TRUE
+      ;;
+  esac
+done
+#-------------------------------------------------------------------------
+# get rid of parsed options
+#-------------------------------------------------------------------------
+shift $(($OPTIND - 1))
+
+if (( $# == 2 )) ; then     # This is a test suite run
+  machine=$1
+  rundir="$2"
+  test -d "$rundir" || fail "Run directory not found: $rundir."
+  cd "$rundir" || fail "Cannot cd to $rundir."
+elif (( $# == 1 )) ; then
+  machine=$1
+else
+  CommandLineError=TRUE
+fi
+
+if [[ $CommandLineError = "TRUE" ]] ; then
+  usage
+fi
+
+echo ${machines[@]} | grep -q $machine || usage "$CONTEXT: Unknown machine '$machine'."
+
+#-------------------------------------------------------------------------
+# If user has not set command line options, use defaults
+#-------------------------------------------------------------------------
+if [[ $machine =~ "stampede" ]] ; then 
+  if [[ $acct = "null" ]] ; then ; acct=TG-ATM160007 ; fi
+# Other stampede queues are "normal" and "normal-mic"
+  if [[ $queue_name = "null" ]] ; then ; queue_name="development" ; fi
+elif [[ $machine = "noqueue" ]] ; then
+  acct=null
+  queue_name=null
+else
+  if [[ $acct = "null" ]] ; then ; acct=gsd-fv3-test ; fi
+  if [[ $partition = "null" && $machine = "jet" ]] ; then 
+    acct=gsd-fv3
+    partition=vjet
+  fi
+  if [[ $queue_name = "null" ]] ; then ; queue_name="batch" ; fi
+fi
+
+print " "
+print "Submitting job on $machine, queue = $queue_name, account = $acct"
+if [[ $machine = "jet" ]] ; then 
+  print "      parition = $partition"
+fi
+print " "
+#-------------------------------------------------------------------------
+# Source shared-functions code & set up tracing
+#-------------------------------------------------------------------------
+. ./functions.ksh  # Most function definitions can be found here.
+set +o xtrace      # Comment out to enable verbose subfim trace.
+
+ksh_check # Verify that ksh93 is running/available.
+
+get_fimnamelist
+
+# Make sure FIMnamelist exists
+test -f "$fimnamelist" || \
+  fail "Please \"cp ${fimnamelist}.${machine} $fimnamelist\" and edit the latter \
+appropriately."
+
+# Set up run directory
+rundir="subfim_$(date +%s)"
+mkdir $rundir || fail "Cannot make directory $rundir."
+print "Made directory $rundir"
+# Sync files from $pwd to $rundir
+syncfiles $PWD $rundir f || fail "Cannot copy contents of $PWD -> $rundir."
+
+# Check if FIMnamelist is a link, if so, copy as a file 
+if [[ -h $fimnamelist ]] ; then
+  echo "${fimnamelist} is a soft link, copying file..."
+  cp -L ${fimnamelist} $rundir
+fi
+
+cd $rundir || fail "Cannot cd to $rundir."
+clean_submit_dir $0
+
+ksh_fix # Modify run scripts to use ksh93, if necessary.
+
+# Set up run-time environment
+xsource_notrace ./envset
+
+# Get number of cores to ask for
+./get_num_cores | grep "num_cores_batch:" | sed 's/^.*://' | read N || \
+  fail "Could not get num_cores_batch.  $(./get_num_cores)"
+
+# Get number of MPI tasks per node that will be used
+./get_num_cores | grep "num_tasks_per_node:" | sed 's/^.*://' | read mpipn || \
+  fail "Could not get num_tasks_per_node.  $(./get_num_cores)"
+
+# Get total nodes to ask for
+./get_num_cores | grep "tot_nodes:" | sed 's/^.*://' | read tot_nodes || \
+  fail "Could not get tot_nodes.  $(./get_num_cores)"
+
+# Find out if we'll run serial or parallel and set up appropriately
+get_nl_value "$fimnamelist" queuenamelist computetasks PES
+get_parallelism
+
+# Determine other runtime parameters
+get_nl_value "$fimnamelist" cntlnamelist glvl GLVL
+get_nl_value "$fimnamelist" cntlnamelist nvl NVL
+get_nl_value "$fimnamelist" queuenamelist maxqueuetime QT
+
+# Do COMPARE_VAR setup
+compare_var_setup "$fimnamelist" "$PES" "$parallelism"
+
+# Diagnostics
+
+check_nems
+
+./get_num_cores | grep "num_tasks_donothing:" | sed 's/^.*://' | read dnt || \
+  fail "Could not get num_tasks_donothing."
+
+./get_num_cores | grep "num_nodes_wt:" | sed 's/^.*://' | read num_nodes_wt || \
+  fail "Could not get num_nodes_wt."
+
+./get_num_cores | grep "num_threads:" | sed 's/^.*://' | read nthreads || \
+  fail "Could not get nthreads."
+
+./get_num_cores | grep "cores_per_node:" | sed 's/^.*://' | read cpn || \
+  fail "Could not get cores_per_node."
+
+print "Submitting job to queue $queue_name:"
+print "compute tasks:      $PES"
+print "write tasks:        $nwt (write nodes: $num_nodes_wt)"
+print "mpi tasks per node: $mpipn"
+print "nthreads:           $nthreads (only relevant if OpenMP enabled)"
+print "cores per node:     $cpn"
+print "do_nothing tasks:   $dnt"
+print "total core request: $N (no partial nodes)"
+print "total node request: $tot_nodes"
+
+if [[ $machine = "noqueue" ]] ; then
+
+  # Create script for later potential to restart the job
+cat > runfim.restart <<EOF
+#!/bin/ksh
+. ./batchTemplate-restart || fail "./batchTemplate-restart failed"
+EOF
+  chmod 755 runfim.restart
+
+  # Run prep, fim, and post
+  . ./batchTemplate || fail "./batchTemplate failed"
+
+  return 0
+
+else
+
+  # Generate scripts to be submitted to batch system
+  genbatch_${machine} subfim.batch.init    batchTemplate         # initial run
+  genbatch_${machine} subfim.batch.restart batchTemplate-restart # restart run
+
+  # Generate scripts to perform batch submission
+  gensub_${machine} subfim.init    subfim.batch.init    # initial run
+  gensub_${machine} subfim.restart subfim.batch.restart # restart run
+
+  # Submit the initial-run job
+
+  exec ./subfim.init
+
+fi

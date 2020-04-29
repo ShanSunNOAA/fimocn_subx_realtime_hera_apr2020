@@ -1,0 +1,3 @@
+  <!ENTITY % dbi                 SYSTEM  "dbi.xml">
+  <!ENTITY % metatasks           SYSTEM  "metatask_defs.xml">
+  <!ENTITY % ens_metatasks       SYSTEM  "ens_metatask_defs.xml">

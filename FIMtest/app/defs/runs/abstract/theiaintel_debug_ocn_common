@@ -1,0 +1,28 @@
+ddts_extends: 'theia_ocn_common'
+ddts_baseline: 'theiaintel_ocn_debug'
+ddts_build: 'theiaintel_parallel_debug'
+namelists:
+  cntlnamelist:
+    glvl: 4
+    nvl: 38
+    subdivnum: !unquoted '2 2 2 2'
+  outputnamelist:
+    archvintvl: 3
+    archvtimeunit: 'ts'
+    restart_freq: 999
+    totaltime: 6
+  physicsnamelist:
+    radiationinterval: 1800
+  postnamelist:
+    delta_t: 3
+    nsmooth_var: !unquoted '1,1,1,2,2,0,0,1,0'
+    t1: 0
+    t2: 6
+    var_list: !unquoted "'us3D','vs3D','pr3D','th3D','ph3D','pv3D','td3D','rh3D','up3P','vp3P','hgtP','tmpP','rsds','rlds','rsus','rlus','rlut','hfss','hfls','r12D','r22D','rn2D','s12D','thpv','cltt','ts2D','t22D','q22D','td2D','sm2D','runo','ms2D','w080','ustr','vstr','u12D','v12D','tmax','tmin'"
+  prepnamelist:
+    curve: 0
+  queuenamelist:
+    computetasks: '16'
+    maxqueuetime: '00:20:00'
+  writetasknamelist:
+    num_write_tasks: 1

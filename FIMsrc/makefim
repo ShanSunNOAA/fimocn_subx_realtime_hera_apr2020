@@ -1,0 +1,242 @@
+#!/bin/ksh
+#==========================================================================
+#
+# Description: This script builds FIM from FIMsrc and creates
+#   the directory FIMrun_${BUILD}_${P}${OMP_SUFFIX}${DEBUG_SUFFIX}
+#
+# Necessary input files:  macros.make.${BUILD}
+#                         fim_setup.ksh
+#                         ./FIMrun/FIMnamelist
+#
+# Necessary input parameters: Build name, which determines which
+#                             macros.make.${BUILD} file is used
+#
+# Optional input parameters:
+#       -p partition - partition to use on jet (option flag required,
+#                      and MUST be the first argument)
+#          clean     - cleans *all* FIMsrc_* directories
+#          debug     - use fortran compiler debug flags
+#          debugprint- use -DDEBUGPRINT ifdef option
+#          omp       - use fortran openmp compiler flags
+#          help      - display valid builds and options
+#          serial    - serial build, default is parallel
+#
+# NOTE: Using omp and/or -p partition (on jet) will result in
+#       modifications to mpi tasks and threading in the FIMnamelist
+#       in FIMrun_${BUILD}_${P}${OMP_SUFFIX}${DEBUG_SUFFIX} to 
+#       provide a basic setup for optimal use of the cores, nodes
+#       and threading on that hardware.  Please check these settings
+#       to be sure they meet your needs.
+#
+# Usage: see function usage below
+#
+# Examples:
+#     > makefim  (builds default openmpi parallel)
+#     > makefim help
+#     > makefim clean    
+#     > makefim -p sjet mvapich
+#     > makefim -p xjet mvapich omp
+#     > makefim theiaintel omp debugprint
+#
+# set -x     # Uncomment for debugging
+#==========================================================================
+
+# Define functions.
+
+function clean {
+  cmd="rm -rf ../FIMsrc_*"
+  echo "Executing ${cmd}..."
+  ${cmd}
+  exit 0
+}
+function debug   { sed -i 's/^DEBUG *= *.*/DEBUG = yes/' $1 || fail; }
+function omp     { sed -i 's/^OPENMP *= *.*/OPENMP = yes/' $1 || fail; }
+function xavx    { sed -i '/^OPTFLAGS *=/ s/$/ -xavx/' $1 || fail; }
+function fail    { test -n "$1" && print "\n$1\n"; exit 1; }
+function setonce { eval test "\$$1" && usage; eval $1=$2; }
+function debugprint { sed -i 's/^DEBUGPRINT *= *.*/DEBUGPRINT = yes/' $1 || fail; }
+function usage   { fail "Usage: \
+        $THIS [-p partition] build [debug] [omp] [serial] | clean | help\n\n \
+        Where: partition [optional] can be : ${PARTITIONS[*]} (default=vjet) \n \
+               build     [required] can be : ${BUILDS[*]} (default=$DEFAULT) \n \
+               debug     [optional] adds compiler debug flags \n \
+               debugprint[optional] uses -DDEBUGPRINT ifdef option \n \
+               omp       [optional] adds compiler openmp flags \n \
+               serial    [optional] serial build (default is parallel) \n \
+               clean     [optional] removes ALL FIMsrc_* directories \n \
+               help      [optional] display valid builds and options "; }
+
+function selectors {
+  test -n "$1" || fail "$0: No build-config string supplied"
+  case $1 in
+    jet*|lahey|mvapich|nems|openmpi) print "jet"              ;;
+    linuxpcgnu)                      print "linuxpcgnu"       ;;
+    macgnu)                          print "macgnu"           ;;
+    stampede)                        print "stampede"         ;;
+    stampede2)                       print "stampede2"        ;;
+    theia*)                          print "theia"            ;;
+  esac
+}
+
+function setup_runmaster {
+  rsync -au --exclude ".git" --exclude="/*/" --exclude "FIMnamelist.*" ../FIMrun/ $RUNMASTER/
+  # Only copy the namelist over for the first build, or if it doesn't exist
+  if [[ ! -f $RUNMASTER/FIMnamelist ]] ; then
+    suffix=$(selectors $BUILD | cut -d, -f1)
+    if [[ -n "$suffix" ]];then
+      rsync -au ../FIMrun/FIMnamelist.$suffix $RUNMASTER/FIMnamelist
+    else
+      rsync -au ../FIMrun/FIMnamelist.* $RUNMASTER
+    fi
+    # Modifying namelist for specific builds and real-time runs
+    . ../FIMrun/nml_mods.ksh $RUNMASTER $suffix $PARTITION $OMP_FLAG $P
+  else
+    echo "FIMnamelist exists from a previous build, not copying or modifying."
+  fi
+
+  rm $RUNMASTER/README*
+  cp envset $RUNMASTER
+  if [[ -x "$(whence git)" ]]; then
+    typeset out=$RUNMASTER/git.diff
+    (cd .. && git log --max-count=1 > $out && git --no-pager diff FIMrun FIMsrc >> $out)
+  fi
+}
+
+if [[ $1 = "clean" ]] ; then
+  clean
+fi
+
+# Initialize variables.
+
+unset BUILD DEBUG DEBUG_SUFFIX OMP OMP_SUFFIX MAKE SERIAL
+
+BUILDS=($(ls macros.make.* | sed 's/macros\.make\.//' | grep -v all))
+DEFAULT=openmpi
+PARTITIONS=( tjet ujet sjet vjet xjet ) 
+MMNEW=macros_make
+MMOLD=macros.make
+THIS=$(basename $0)
+
+# Insist on GNU Make.
+
+for x in gnumake gmake make
+do
+  $x --version 2>/dev/null | grep -q "GNU Make" && MAKE="$x" && break
+done
+test $MAKE || fail "GNU Make required but not found."
+
+# Create and process an array of command-line arguments. Select a default build
+# if none was specified, and ensure that the configuration is valid.
+
+# Parse  command line options
+PARTITION=null
+while getopts p: arguments; do
+  case $arguments in
+    p)
+      PARTITION=$OPTARG
+      ;;
+    \:)
+      # missing argument
+      usage
+      ;;
+    \?)
+      # unknown option
+      usage
+      ;;
+  esac
+done
+
+# get rid of parsed options
+
+shift $(($OPTIND - 1))
+
+set -A ARGV "$@"
+for x in ${ARGV[*]}
+do
+  case $x in
+    "clean")    clean   $MAKE  clean    ;;
+    "debug")    setonce DEBUG  debug    ;;
+    "debugprint") setonce DEBUGPRINT debugprint ;;
+    "omp")      setonce OMP    omp      ;;
+    "help")     usage                   ;;
+    "serial")   setonce SERIAL serial   ;;
+    *)          setonce BUILD  $x       ;;
+  esac
+done
+test -z "$BUILD" && BUILD=$DEFAULT
+print ${BUILDS[*]} | grep -qw "${BUILD}" || usage
+
+# Check the partition if this is jet
+suffix=$(selectors $BUILD | cut -d, -f1)
+if [[ ${suffix} == "jet" ]] ; then
+  if [[ ${PARTITION} == "null" ]] ; then
+    PARTITION=vjet 
+    echo "Using default partition vjet"
+  else
+    print ${PARTITIONS[*]} | grep -qw "${PARTITION}" || usage
+  fi
+fi
+
+# Do some error checking on the command-line input
+if [[ $BUILD == "nems" || $BUILD == "theianems" ]] ; then
+  test -n "$SERIAL" && fail "Build serial $BUILD not supported."
+fi
+if [[ $BUILD == "lahey" || $BUILD == "jetnag" ]] ; then
+  test -n "$OMP" && fail "OMP $BUILD build not supported."
+fi
+
+# Use -xavx flag for sjet and xjet
+if [[ $BUILD == "mvapich" ]] ; then
+  if [[ $PARTITION == "sjet" || $PARTITION == "xjet" ]] ; then
+    setonce XAVX xavx
+  fi
+fi
+
+# Copy files, set up environment and run make. If a previous build was performed
+# in the same directory, suggest a clean if macros.make has changed.
+
+test -z "$SERIAL" && P="p" || P="s"
+print -n "Copying files for build '$(print $BUILD ${PARTITION} $DEBUG $OMP $SERIAL $DEBUGPRINT| sed 's/  */ /g')' ..."
+
+# Create the FIMsrc and FIMrun directory names
+
+test -n "$DEBUG"     && DEBUG_SUFFIX="_debug"
+test -n "$OMP"       && OMP_SUFFIX="_omp"
+
+# If partition is vjet or null, don't append to FIMrun for test suite,
+# but preserve value for use in nml_mods.ksh
+if [[ $PARTITION == "vjet" || $PARTITION == "null" ]] ; then
+  DIR_SUFFIX=${BUILD}_${P}${OMP_SUFFIX}${DEBUG_SUFFIX}
+else
+  PARTITION_SUFFIX="_${PARTITION}"
+  DIR_SUFFIX=${BUILD}_${P}${OMP_SUFFIX}${DEBUG_SUFFIX}${PARTITION_SUFFIX}
+fi
+BUILDDIR=FIMsrc_${DIR_SUFFIX}
+RUNMASTER=$(cd .. && pwd)/FIMrun_${DIR_SUFFIX}
+BUILDMASTER=$(cd .. && pwd)/${BUILDDIR}
+rsync -a --exclude ".git" ../FIMsrc/ ../$BUILDDIR/ || fail
+print " done."
+cd ../$BUILDDIR || fail
+cp $MMOLD.$BUILD $MMNEW || fail
+
+# Append macros.make.all to end of macros.make
+cat macros.make.all >> $MMNEW
+
+# Modify macros.make for debug, omp, OPTFLAGS and/or DEBUGPRINT
+test -n "$DEBUG" && debug $MMNEW
+test -n "$DEBUGPRINT" && debugprint $MMNEW
+test -n "$OMP"   && omp   $MMNEW
+test -n "$XAVX"  && xavx  $MMNEW    # Append xavx to OPTFLAGS
+test ! -e $MMOLD && cp $MMNEW $MMOLD
+cmp -s $MMNEW $MMOLD || fail "Please run '$THIS clean' first."
+mv $MMNEW $MMOLD || fail
+
+./fim_setup.ksh ${BUILD}_${P} > envset || fail
+. ./envset
+ulimit -Su 512 2>/dev/null
+
+# Copy files from FIMrun to the specific RUNMASTER build directory
+test -z "$OMP" && OMP_FLAG="FALSE" || OMP_FLAG="TRUE"
+setup_runmaster
+
+$MAKE BUILDMASTER=$BUILDMASTER FC=$FC P=$P RUNMASTER=$RUNMASTER

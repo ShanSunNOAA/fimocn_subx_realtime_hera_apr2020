@@ -1,0 +1,39 @@
+  <task name="fim" maxtries="2">
+      <command><cyclestr offset="&OFFSET;">&FIM_RUN;/batchTemplate-fim</cyclestr></command>
+      <account>&PROJECTl;</account>
+      <nodes>&NPROC;:ppn=2</nodes>
+      <queue>&PE;</queue>
+      &PARTITION_JET_FIM;
+      <walltime>&FIM_WALLTIME;</walltime>  <!-- CHANGE THIS !!! -->
+      <jobname><cyclestr>fim_subx@d@H@m@Y</cyclestr></jobname>
+      <join><cyclestr offset="&OFFSET;">&FIM_LOG;/fim/fim_subx@Y@m@d@H_omp.log</cyclestr></join>
+      <envar> <name>WFM</name> <value>1</value> </envar>
+      <envar> <name>ARCHVTIMEUNIT</name> <value>&ARCHVTIMEUNIT;</value> </envar>
+      <envar> <name>GETJOBID</name> <value>&FIM_RUN;/qsubGetJobID</value> </envar>
+      <envar> <name>FIM_HOME</name> <value>&FIM_HOME;</value> </envar>
+      <envar> <name>FIM_RUN</name> <value>&FIM_RUN;</value> </envar>
+      <envar> <name>DATADIR</name> <value>&DATADIR;</value> </envar>
+      <envar> <name>DATADR2</name> <value>&DATADR2;</value> </envar>
+      <envar> <name>yyyymmddhhmm</name> <value><cyclestr offset="&OFFSET;">@Y@m@d@H@M</cyclestr></value> </envar>
+      <envar> <name>CFS_IC_DIR</name><value>&CFS_IC_DIR;</value></envar>
+      <envar> <name>IC_TYPE</name><value>&IC_TYPE;</value></envar>
+      <envar> <name>NLFILE</name> <value>&NLFILE;</value> </envar>
+
+      <dependency>
+        <and>
+           <taskdep task="fimprep"/>
+           <datadep age="20"><cyclestr>&FIM_RUN;/fim&GLVL;_&NVL;_&PES;_@Y@m@d@H/prep/gfsfc.dat</cyclestr></datadep>
+        <not>
+           <datadep age="20"><cyclestr>&NC3D_DIR;/fim&GLVL;_@Y@m@d@H.nc</cyclestr></datadep>
+        </not>
+        </and>
+      </dependency>
+
+      <hangdependency>
+        <and>
+          <datadep age="20"><cyclestr offset="&OFFSET;">&FIM_RUN;/fim&GLVL;_&NVL;_&PES;_@Y@m@d@H/fim/stdout</cyclestr></datadep>
+          <datadep age="20"><cyclestr offset="&OFFSET;">&FIM_LOG;/fim&GLVL;_&NVL;_&PES;_@Y@m@d@H/fim_omp.log</cyclestr></datadep>
+        </and>      
+      </hangdependency>
+
+  </task>

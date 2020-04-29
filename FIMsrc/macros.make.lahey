@@ -1,0 +1,143 @@
+# Target being built (i.e. as defined by makefim <target>)
+MAKEFIM_TARGET = lahey
+
+# Preprocessor and flags
+CPP = /lib/cpp
+CPPFLAGS = -C -P -DUSEMPIMOD
+
+# Lahey settings
+
+# The sigio library and other libaries are not TKR consistent so they cannot use
+# --chkglobal. However --chkglobal must be used in all routines if it is used at
+# all so it cannot be used anywhere. The sigio and other libraries should be
+# made TKR consistent.
+
+BACIO_FFLAGS     = $(FDEBUG)
+CC               = cc
+CFLAGS           = -g
+CHEM_FFLAGS      = $(FDEBUG)
+COL_FFLAGS       = --chk -g --trap --trace --info --dbl
+FDEBUG           = --chk -g --trap --trace --info
+FFLAGS_NO_DEBUG  = -g
+FIM_FFLAGS       = $(FDEBUG)
+FIXEDFLAG        = -Fixed
+FREEFLAG         = -Free
+GPTL_FLAGS       = 
+GRIBIO_CPPFLAGS  = -DSUN
+ICOSIO_FFLAGS    = 
+LINKFLAGS        = $(LINK_FLAGS_NOESMF)
+LINKLIBS         = $(LINK_LIBS_NOESMF)
+NEMS             =
+POST_FFLAGS      = $(FDEBUG)
+PREP_FFLAGS      = $(FDEBUG)
+SP_FFLAGS        =  # sp lib has underflow
+W3_FFLAGS        = $(FDEBUG)
+
+# Compile-time flag to enable debug print for PrintIpnDiag
+DEBUGPRINT = no
+ifeq ($(DEBUGPRINT),yes)
+  CPPFLAGS += -DDEBUGPRINT
+endif
+
+# Number of parallel tasks for gmake
+GMAKEMINUSJ = -j8
+
+# Record control word flag (currently required only by gfortran: specifies 4-byte RCW)
+RCWFLAG =
+
+# Flag to ensure local variables in routines in threaded regions are on thread-stack
+THREADSTACKFLAG =
+
+# Enable theading in prep/post
+OPENMP_PREPPOST = no
+ifeq ($(OPENMP_PREPPOST),yes)
+  OMPFLAG_PREPPOST = --openmp 
+endif
+
+# Flag to enable OpenMP in dynamics and ss2icos
+OPENMP = no
+ifeq ($(OPENMP),yes)
+  CPPFLAGS += -DWHOLE_MODEL_OMP -D_OPENMP
+  OMPFLAG = --openmp
+else
+# Flag to enable OpenMP in ss2icos only: Set to "no" only if failures in ss2icos occur
+  OPENMP_SS2ICOS = no
+  ifeq ($(OPENMP_SS2ICOS),yes)
+    CPPFLAGS += -D_OPENMP
+    OMPFLAG_SS2ICOS = --openmp
+  endif
+endif
+
+# Turn off the creation of patgen_icos 
+DOPATGEN = no
+
+# Optimization flags
+OPTFLAGS =
+
+# Load flags. In most cases this can be empty due to the use of MPI compiler wrappers
+LDFLAGS =
+
+# To turn on debugging, set DEBUG = yes. The -g option forces -O0 and cannot be
+# overriden.
+DEBUG = no
+ifeq ($(DEBUG),yes)
+  OPTFLAGS = --chk -g --info --trace --trap
+endif
+
+# gfortran doesn't provide all degree-based trig functions as intrinsics
+# Most compilers provide these and it is safe to set NEED_SINDCOSD = no
+NEED_SINDCOSD = no
+
+# To enable attaching a debugger such as gdb or ddd to a running process, set ATTACH_DEBUGGER = yes
+ATTACH_DEBUGGER = no
+
+# Default to using dummy GPTL stubs
+
+GPTL_CPPFLAGS = -I../../dummygptl
+GPTL_LDFLAGS = -L../../dummygptl -lgptl
+
+# Set "USE_GPTL = yes" to use the real GPTL
+
+USE_GPTL = no
+ifeq ($(USE_GPTL),yes)
+  ifeq ($(P),p) # parallel build
+    # Set include path for GPTL
+    GPTLROOT = /home/hpc/GPTL/gptl-4.3.2/lahey
+    GPTL_CPPFLAGS = -I$(GPTLROOT)/include
+    # For auto-profiling of MPI functions, set USE_PMPI=yes. The name of the GPTL
+    # library in this case is libgptl_pmpi.a. Otherwise the name is libgptl.a
+    USE_PMPI = no
+    ifeq ($(USE_PMPI),yes)
+      GPTL_LDFLAGS = -L$(GPTLROOT)/lib -lgptl_pmpi
+    else
+      GPTL_LDFLAGS = -L$(GPTLROOT)/lib -lgptl
+    endif
+    # AUTOINST=yes enables function-level compiler-generated auto-profiling,
+    AUTOINST = no
+    ifeq ($(AUTOINST),yes)
+      GPTL_FFLAGS = auto-instrumentation unavailable in lahey compiler
+      GPTL_LDFLAGS += auto-instrumentation unavailable in lahey compiler
+    endif
+    # If GPTL was built with PAPI support, add the required flags
+    # On jet systems, "module load papi" provides $PAPI_ROOT
+    HAVE_PAPI = no
+    ifeq ($(HAVE_PAPI),yes)
+      GPTL_LDFLAGS += -L$(PAPI_ROOT)/lib -lpapi
+    endif
+  else # serial build
+  endif
+endif
+
+# SMS settings
+
+# MPI include location
+INCMPI=$(MPIROOT)/include
+# Ruby interpreter location
+export SMS__RUBY=/home/hpc/SMS/ruby-1.9.3-p448/bin/ruby
+# SMS library location
+ifeq ($(USE_GPTL),yes)
+# If available, use SMS version compiled with auto-profiling flag
+  SMS = /home/hpc/SMS/sms_r828/jet-lahey-mvapich
+else
+  SMS = /home/hpc/SMS/sms_r828/jet-lahey-mvapich
+endif

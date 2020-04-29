@@ -1,0 +1,31 @@
+To run the full jet test suite:
+
+  $ fimts jet
+
+To run the full theia test suite:
+
+  $ fimts theia
+
+To exclude the NEMS run:
+
+  $ fimts jet_no_nems
+
+or
+
+  $ fimts theia_no_nems
+
+To see the definition of a suite:
+
+  $ fimts show suite <suite_name>
+
+To see the definition of a run listed in a suite definition:
+
+  $ fimts show run <run_name>
+
+To execute a single run from a suite:
+
+  $ fimts run <run_name>
+
+For other options:
+
+  $ fimts help

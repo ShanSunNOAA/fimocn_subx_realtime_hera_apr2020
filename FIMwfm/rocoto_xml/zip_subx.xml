@@ -1,0 +1,28 @@
+  <task name="zip_subx" maxtries="2">
+    <command>&SCRIPTS;/zip_subx.ksh</command>
+    <account>&PROJECT;</account>
+    <memory>4G</memory>
+    <cores>1</cores>
+    <partition>&SERVICE;</partition>
+    <walltime>00:20:00</walltime>
+    <jobname><cyclestr>zip_subx@d@H@m@Y</cyclestr></jobname>
+    <join><cyclestr>&FIM_LOG;/zip/zip_subx@Y@m@d@H.log</cyclestr></join>
+    <envar><name>WFM</name><value>1</value></envar>
+    <envar><name>FIM_HOME</name><value>&FIM_HOME;</value></envar>
+    <envar><name>FIM_RUN</name><value>&FIM_RUN;</value></envar>
+    <envar><name>NC3D_DIR</name><value>&NC3D_DIR;</value></envar>
+    <envar><name>NC_SUBX_DIR</name><value>&NC_SUBX_DIR;</value></envar>
+<!--xue -->
+    <envar><name>YEAR</name><value><cyclestr>@Y</cyclestr></value></envar>
+    <envar><name>MONTH</name><value><cyclestr>@m</cyclestr></value></envar>
+    <envar><name>DAY</name><value><cyclestr>@d</cyclestr></value></envar>
+<!--xue -->
+    <envar><name>HOUR</name><value><cyclestr>@H</cyclestr></value></envar>
+    <envar><name>yyyymmddhhmm</name><value><cyclestr>@Y@m@d@H@M</cyclestr></value></envar> 
+    <envar><name>PES</name> <value>&PES;</value></envar>
+    <envar><name>GLVL</name> <value>&GLVL;</value></envar> 
+    <envar><name>NVL</name> <value>&NVL;</value></envar>
+    <dependency>
+        <datadep age="60"><cyclestr>&NC3D_DIR;/fim&GLVL;_@Y@m@d@H.nc</cyclestr></datadep>
+    </dependency>
+  </task>

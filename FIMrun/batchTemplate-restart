@@ -1,0 +1,48 @@
+#!/bin/ksh --login
+
+# This file is based on batchTemplate, but skips prep, which is only executed
+# once for restart runs.
+
+CONTEXT="batchTemplate-restart"
+
+. ./functions.ksh # Most function definitions can be found here.
+
+ksh_insist # Ensure that we are running in ksh93
+
+# Run batchTemplate-setup, if it has not already been run, to provide values
+# for variables like $PREP, $FIM, etc.
+
+test -z "$batchTemplate_setup_ran" && xsource ./batchTemplate-setup
+
+# Preserve old namelist and stdout files.
+
+for x in $NLFILE $FIM/$NLFILE $FIM/stdout $POST/$NLFILE
+do
+  test -e $x && mv $x $x.$$
+done
+
+# Modify namelist file to enable restart.
+
+cp $FIM/$NLFILE.$$ $FIM/$NLFILE
+set_nl_value $FIM/$NLFILE outputnamelist readrestart t || fail
+cp $FIM/$NLFILE .
+
+# Run fim.
+
+let "stime=$(date +%s)"
+print "Starting batchTemplate-fim at $(date)"
+xsource ./batchTemplate-fim
+let "etime=$(date +%s)"
+let "delta=$etime-$stime"
+print "batchTemplate-fim took $delta seconds"
+
+# Run post.
+
+let "stime=$etime"
+print "Starting batchTemplate-post at $(date)"
+xsource ./batchTemplate-post
+let "etime=$(date +%s)"
+let "delta=$etime-$stime"
+print "batchTemplate-post took $delta seconds"
+
+return 0

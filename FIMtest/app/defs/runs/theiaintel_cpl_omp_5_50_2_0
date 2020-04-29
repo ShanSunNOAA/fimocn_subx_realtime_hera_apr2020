@@ -1,0 +1,14 @@
+ddts_extends: 'theiaintel_ocn_omp_5_50_1_0'
+ddts_build: 'theiaintel_omp_parallel'
+namelists:
+  queuenamelist:
+    computetasks: '2'
+  writetasknamelist:
+    cpn: 48
+    nthreads: 24
+    mpipn: 2
+    max_write_tasks_per_node: 1
+  oceannamelist:
+    atmonly: !unquoted '.false.'
+    ocnonly: !unquoted '.false.'
+    coupled: !unquoted '.true.'

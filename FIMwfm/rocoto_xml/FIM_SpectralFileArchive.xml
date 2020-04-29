@@ -1,0 +1,15 @@
+  <task name="SpectralFile" maxtries="3">
+    <command>&SCRIPTS;/spectralFile_GFS1534_archive.ksh</command>
+    <account>&PROJECT;</account>
+    <cores>1</cores>
+    <queue>&SERVICE;</queue>
+    &PARTITION_SERVICE;
+    <walltime>00:10:00</walltime>
+    <jobname><cyclestr offset="&OFFSET;">spectral_@H</cyclestr></jobname>
+    <join><cyclestr offset="&OFFSET;">&FIM_LOG;/spectral/spectral_@Y@m@d@H.log</cyclestr></join>
+    <envar><name>FIM_RUN</name><value>&FIM_RUN;</value></envar>
+    <envar><name>YR</name><value><cyclestr offset="&OFFSET;">@y</cyclestr></value></envar>
+    <envar><name>DOY</name><value><cyclestr offset="&OFFSET;">@j</cyclestr></value></envar>
+    <envar><name>HOUR</name><value><cyclestr offset="&OFFSET;">@H</cyclestr></value></envar>
+    <envar><name>yyyymmddhh</name><value><cyclestr offset="&OFFSET;">@Y@m@d@H</cyclestr></value></envar> 
+  </task>
